@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>《重生之贵女难求》阅读笔记</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #1a1413;
+    --bg-soft: #241b1a;
+    --bg-card: #2a201e;
+    --ink: #f3e9dc;
+    --ink-soft: #c8b8a4;
+    --ink-mute: #8a7a68;
+    --gold: #d4a857;
+    --gold-soft: #b88a3e;
+    --red: #c2473a;
+    --red-soft: #8b2e25;
+    --green: #6b8e4e;
+    --blue: #5a7a9e;
+    --purple: #8a6ba8;
+    --line: #3a2c28;
+    --shadow: 0 4px 24px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Serif SC", serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.85;
+    font-size: 16px;
+  }
+
+  /* 顶部封面 */
+  .hero {
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(212,168,87,0.15), transparent 60%),
+      radial-gradient(ellipse at 70% 80%, rgba(194,71,58,0.12), transparent 60%),
+      linear-gradient(180deg, #2a1f1c 0%, #1a1413 100%);
+    padding: 80px 24px 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "❀";
+    position: absolute;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    color: var(--gold);
+    font-size: 24px;
+    opacity: 0.6;
+  }
+  .hero h1 {
+    font-size: 44px;
+    margin: 0 0 16px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    font-weight: 600;
+    text-shadow: 0 2px 12px rgba(212,168,87,0.3);
+  }
+  .hero .author {
+    color: var(--ink-soft);
+    font-size: 16px;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+  }
+  .hero .meta {
+    display: inline-flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: var(--ink-mute);
+    font-size: 14px;
+  }
+  .hero .meta span {
+    padding: 4px 14px;
+    background: rgba(212,168,87,0.08);
+    border: 1px solid rgba(212,168,87,0.25);
+    border-radius: 999px;
+  }
+
+  /* 容器 */
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* 章节标题 */
+  .section-title {
+    font-size: 28px;
+    color: var(--gold);
+    margin: 56px 0 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--line);
+    position: relative;
+    letter-spacing: 2px;
+  }
+  .section-title::before {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+  }
+  .section-title .num {
+    color: var(--red);
+    margin-right: 12px;
+    font-weight: bold;
+  }
+
+  /* 整体结构 */
+  .overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .ov-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px;
+    border-left: 4px solid var(--gold);
+  }
+  .ov-card .label {
+    color: var(--ink-mute);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .ov-card .value {
+    color: var(--ink);
+    font-size: 18px;
+    margin-top: 8px;
+    font-weight: 600;
+  }
+
+  /* 阵营 */
+  .faction {
+    margin: 32px 0;
+    background: var(--bg-soft);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+  }
+  .faction-head {
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .faction-head .icon { font-size: 22px; }
+  .faction[data-color="zhuang"] .faction-head { background: linear-gradient(90deg, #8a5a3e, #6b4530); }
+  .faction[data-color="hero"]   .faction-head { background: linear-gradient(90deg, #2a4a6e, #1a3550); }
+  .faction[data-color="wei"]    .faction-head { background: linear-gradient(90deg, #5a3030, #3a1f1f); }
+  .faction[data-color="tang"]   .faction-head { background: linear-gradient(90deg, #4a6e4a, #2f4a2f); }
+  .faction[data-color="other"]  .faction-head { background: linear-gradient(90deg, #6e5a3a, #4a3d28); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+  }
+  th, td {
+    padding: 12px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    font-size: 14.5px;
+  }
+  th {
+    background: rgba(212,168,87,0.08);
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  td:first-child { color: var(--gold-soft); font-weight: 600; white-space: nowrap; }
+  td:nth-child(2) { color: var(--ink-soft); }
+  tr:hover { background: rgba(212,168,87,0.04); }
+  tr:last-child td { border-bottom: none; }
+
+  /* Mermaid */
+  .graph-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+  .graph-toolbar .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+  .graph-toolbar .legend i {
+    display: inline-block; width: 12px; height: 12px;
+    border-radius: 3px; margin-right: 6px; vertical-align: middle;
+  }
+  .graph-toolbar button {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all .2s;
+  }
+  .graph-toolbar button:hover { color: var(--gold); border-color: var(--gold); }
+
+  .mermaid-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    overflow: auto;
+    box-shadow: var(--shadow);
+    text-align: center;
+    min-height: 720px;
+  }
+  #graphContainer { width: 100%; }
+  #graphContainer svg {
+    max-width: 100%;
+    height: auto !important;
+    min-height: 680px;
+  }
+  #graphContainer .nodeLabel,
+  #graphContainer .edgeLabel { font-size: 14px !important; }
+
+  /* 全屏 */
+  .fs-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,6,5,0.97);
+    z-index: 999; padding: 24px;
+    flex-direction: column;
+  }
+  .fs-overlay.active { display: flex; }
+  .fs-overlay header {
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--gold); margin-bottom: 12px;
+  }
+  .fs-overlay .close {
+    background: var(--red); border: none; color: #fff;
+    width: 36px; height: 36px; border-radius: 50%;
+    font-size: 18px; cursor: pointer;
+  }
+  .fs-overlay .body {
+    flex: 1; background: var(--bg-card); border-radius: 12px;
+    overflow: auto; padding: 16px;
+  }
+  .fs-overlay .body svg {
+    width: 100% !important; height: 100% !important;
+    min-height: calc(100vh - 140px);
+  }
+
+  /* 时间轴 / 幕次 */
+  .timeline {
+    position: relative;
+    margin: 32px 0;
+    padding-left: 0;
+  }
+  .act {
+    position: relative;
+    margin-bottom: 32px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 28px 32px;
+    border-left: 5px solid var(--gold);
+    box-shadow: var(--shadow);
+    transition: transform .25s ease;
+  }
+  .act:hover { transform: translateX(4px); }
+
+  .act .act-no {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    color: #1a1413;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .act h3 {
+    font-size: 24px;
+    color: var(--ink);
+    margin: 0 0 8px;
+    letter-spacing: 1px;
+  }
+  .act .subtitle {
+    color: var(--red);
+    font-size: 15px;
+    font-style: italic;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .act .chapters {
+    color: var(--ink-mute);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* 基础梗概块 */
+  .basics {
+    background: rgba(90, 122, 158, 0.08);
+    border: 1px solid rgba(90, 122, 158, 0.25);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0 24px;
+  }
+  .basics h4 {
+    margin: 0 0 10px;
+    color: var(--blue);
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+  .basics .row { display: flex; gap: 10px; margin-bottom: 8px; }
+  .basics .key {
+    flex-shrink: 0;
+    color: var(--gold);
+    font-weight: 600;
+    min-width: 56px;
+  }
+  .basics .val { color: var(--ink-soft); }
+  .basics ul { margin: 4px 0 0 0; padding-left: 20px; color: var(--ink-soft); }
+  .basics ul li { margin-bottom: 4px; }
+
+  /* 故事块 */
+  .story {
+    background: linear-gradient(180deg, rgba(194,71,58,0.06), rgba(194,71,58,0.02));
+    border: 1px solid rgba(194,71,58,0.25);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+  .story h4 {
+    margin: 0 0 14px;
+    color: var(--red);
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+  .story p {
+    margin: 0 0 12px;
+    color: var(--ink);
+    line-height: 1.95;
+  }
+  .story blockquote {
+    margin: 14px 0;
+    padding: 10px 18px;
+    border-left: 3px solid var(--gold);
+    background: rgba(212,168,87,0.06);
+    color: var(--gold-soft);
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+  .story .scene-break {
+    text-align: center;
+    color: var(--gold);
+    margin: 16px 0;
+    letter-spacing: 4px;
+  }
+  .story strong { color: var(--gold); }
+  .story em { color: var(--ink-soft); font-style: normal; }
+
+  /* 主线暗线 */
+  .lines {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .line-card {
+    background: var(--bg-card);
+    padding: 18px 22px;
+    border-radius: 10px;
+    border-top: 3px solid var(--gold);
+  }
+  .line-card.hidden-1 { border-top-color: var(--purple); }
+  .line-card.hidden-2 { border-top-color: var(--blue); }
+  .line-card.hidden-3 { border-top-color: var(--green); }
+  .line-card.hidden-4 { border-top-color: var(--red); }
+  .line-card .tag {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(212,168,87,0.15);
+    color: var(--gold);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .line-card.hidden-1 .tag { background: rgba(138,107,168,0.15); color: var(--purple); }
+  .line-card.hidden-2 .tag { background: rgba(90,122,158,0.15); color: var(--blue); }
+  .line-card.hidden-3 .tag { background: rgba(107,142,78,0.15); color: var(--green); }
+  .line-card.hidden-4 .tag { background: rgba(194,71,58,0.15); color: var(--red); }
+  .line-card p {
+    margin: 4px 0 0;
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* 页脚 */
+  footer {
+    text-align: center;
+    color: var(--ink-mute);
+    padding: 40px 20px 30px;
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    margin-top: 40px;
+  }
+
+  /* Tab 导航栏 */
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(26,20,19,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: 0 16px;
+  }
+  .tabs-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs-inner::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 16px 22px;
+    background: transparent;
+    border: none;
+    color: var(--ink-mute);
+    font-size: 15px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    border-bottom: 3px solid transparent;
+    transition: all .25s ease;
+    font-weight: 500;
+  }
+  .tab-btn .num { color: var(--gold-soft); margin-right: 6px; font-weight: bold; }
+  .tab-btn:hover { color: var(--ink); background: rgba(212,168,87,0.05); }
+  .tab-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: rgba(212,168,87,0.08);
+  }
+  .tab-btn.active .num { color: var(--red); }
+
+  /* Panel 切换 */
+  .panel { display: none; animation: fadeIn .35s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* 在 panel 内的 section-title 顶部去掉过多间距 */
+  .panel > .section-title:first-child { margin-top: 16px; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 30px; letter-spacing: 2px; }
+    main { padding: 24px 16px 60px; }
+    .section-title { font-size: 22px; }
+    .act { padding: 20px 18px; }
+    .act h3 { font-size: 20px; }
+    th, td { padding: 10px 12px; font-size: 13.5px; }
+    .tab-btn { padding: 14px 14px; font-size: 14px; }
+    #graphContainer svg { min-height: 520px; }
+    .mermaid-wrap { min-height: 560px; padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc" style="display:none"></nav>
+
+<header class="hero">
+  <h1>重生之贵女难求</h1>
+  <div class="author">作者　千山茶客</div>
+  <div class="meta">
+    <span>📚 143 章 + 大结局</span>
+    <span>📝 约 100 万字</span>
+    <span>🌹 重生 · 宅斗 · 朝堂 · 江湖</span>
+    <span>💕 一对一宠文</span>
+  </div>
+  <a href="/play" style="display:inline-block;margin-top:24px;padding:14px 32px;background:linear-gradient(135deg,#d4a857,#b88a3e);color:#1a1413;border-radius:999px;text-decoration:none;font-weight:700;letter-spacing:3px;box-shadow:0 4px 24px rgba(212,168,87,0.4);transition:transform .2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+    🎭 沉浸式角色互动 · 第五幕暗巷追杀 →
+  </a>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab-btn active" data-tab="overview"><span class="num">壹</span>整体概览</button>
+    <button class="tab-btn" data-tab="characters"><span class="num">贰</span>主要人物</button>
+    <button class="tab-btn" data-tab="graph"><span class="num">叁</span>人物关系图</button>
+    <button class="tab-btn" data-tab="acts"><span class="num">肆</span>六幕剧情</button>
+    <button class="tab-btn" data-tab="lines"><span class="num">伍</span>主线与暗线</button>
+  </div>
+</nav>
+
+<main>
+  <div class="panel active" data-panel="overview">
+
+  <!-- 一、整体结构 -->
+  <h2 class="section-title" id="overview"><span class="num">壹</span>整体概览</h2>
+  <div class="overview">
+    <div class="ov-card">
+      <div class="label">总章节</div>
+      <div class="value">143 章 + 大结局</div>
+    </div>
+    <div class="ov-card">
+      <div class="label">字数</div>
+      <div class="value">约 100 万字</div>
+    </div>
+    <div class="ov-card">
+      <div class="label">女主 · 男主</div>
+      <div class="value">庄寒雁 × 傅云夕</div>
+    </div>
+    <div class="ov-card">
+      <div class="label">核心主题</div>
+      <div class="value">复仇 · 自救 · 改命 · 双向救赎</div>
+    </div>
+  </div>
+
+  <!-- 二、人物表 -->
+  </div><!-- /panel:overview -->
+  <div class="panel" data-panel="characters">
+  <h2 class="section-title" id="characters"><span class="num">贰</span>主要人物</h2>
+
+  <section class="faction" data-color="zhuang">
+    <div class="faction-head"><span class="icon">🏮</span>庄府（女主"假"家族）</div>
+    <table>
+      <thead><tr><th>人物</th><th>身份</th><th>关键作用</th></tr></thead>
+      <tbody>
+        <tr><td>庄寒雁（女主）</td><td>庄府嫡女<br/>(实为东侯王与唐小乔之女)</td><td>重生女主，前世被庶姐毒杀，重生十二岁开始复仇与改命</td></tr>
+        <tr><td>庄寒明</td><td>寒雁亲弟</td><td>寒雁唯一牵挂，习武于杨琦门下，后入成磊军中</td></tr>
+        <tr><td>庄仕洋</td><td>名义父亲，三品文官</td><td>凉薄势利，太后安插的"养父"，最终发配充军病死途中</td></tr>
+        <tr><td>王氏</td><td>名义生母</td><td>一生爱东侯王，代抚寒雁，被周氏害死</td></tr>
+        <tr><td>庄琴</td><td>三小姐(晚姨娘所出)</td><td>安静聪慧的庶姐，棋艺出众，与寒雁结盟</td></tr>
+        <tr><td>晚姨娘</td><td>通房出身姨娘</td><td>安分念佛，不参与争斗</td></tr>
+        <tr><td>媚姨娘</td><td>胡姬出身宠妾</td><td>假怀孕被揭穿，关入大牢</td></tr>
+        <tr><td>周氏</td><td>外室转继母</td><td>大反派之一，毒害王氏，最终入狱</td></tr>
+        <tr><td>庄语山</td><td>周氏所出庶女</td><td>前世毒杀寒雁的庶姐，结局疯癫被囚</td></tr>
+        <tr><td>大周氏</td><td>周氏之姐，张太师宠妾</td><td>心机最深，被揭奸情后跳河身亡</td></tr>
+        <tr><td>陈妈妈 / 汲蓝 / 姝红</td><td>寒雁忠仆</td><td>两世忠心相伴</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="faction" data-color="hero">
+    <div class="faction-head"><span class="icon">⚔️</span>玄清王府 / 皇家（男主阵营）</div>
+    <table>
+      <thead><tr><th>人物</th><th>身份</th><th>关键作用</th></tr></thead>
+      <tbody>
+        <tr><td>傅云夕（男主）</td><td>玄清王</td><td>冰山王爷，自幼中太后所下寒毒；与寒雁七年前红梅雪夜结缘</td></tr>
+        <tr><td>大宗皇帝</td><td>傅云夕同母兄长</td><td>兄弟情深，但作为帝王最终欲杀寒雁以绝后患</td></tr>
+        <tr><td>皇后 / 太子</td><td>母子</td><td>真贤后，太子被寒雁救后转性</td></tr>
+        <tr><td>静妃</td><td>皇上、傅云夕生母</td><td>被太后以麝香害死</td></tr>
+        <tr><td>太后</td><td>终极反派</td><td>害静妃、毒傅云夕、灭东侯王满门、勾结西戎逼宫</td></tr>
+        <tr><td>七皇子 / 陈贵妃</td><td>太后党</td><td>勾结西戎逼宫，最终凌迟</td></tr>
+        <tr><td>云霓郡主</td><td>皇室郡主</td><td>痴恋成磊</td></tr>
+        <tr><td>沐风 / 沐岩</td><td>傅云夕暗卫</td><td>沐岩与姝红有暧昧线</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="faction" data-color="wei">
+    <div class="faction-head"><span class="icon">🗡️</span>卫王府（前世仇家）</div>
+    <table>
+      <thead><tr><th>人物</th><th>身份</th><th>关键作用</th></tr></thead>
+      <tbody>
+        <tr><td>卫如风</td><td>卫王世子</td><td>前世毒杀寒雁的"夫君"，本世骗婚不成，最终随卫王诛九族</td></tr>
+        <tr><td>卫王</td><td>七皇子党核心</td><td>联姻图谋"东侯王遗诏"，最终被诛九族</td></tr>
+        <tr><td>李佳棋</td><td>右相千金</td><td>痴恋卫如风，被赐婚为世子妃，与庄语山宅斗</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="faction" data-color="tang">
+    <div class="faction-head"><span class="icon">🌿</span>东侯王 / 唐门（女主真实身世）</div>
+    <table>
+      <thead><tr><th>人物</th><th>身份</th><th>关键作用</th></tr></thead>
+      <tbody>
+        <tr><td>东侯王</td><td>先皇拟立的真命太子</td><td>寒雁生父，全府被太后灭门</td></tr>
+        <tr><td>唐小乔</td><td>唐门前堡主之女</td><td>寒雁生母</td></tr>
+        <tr><td>唐生</td><td>唐门现任堡主</td><td>寒雁外公，结局认亲并解寒毒</td></tr>
+        <tr><td>阿碧</td><td>王氏旧仆</td><td>知情人，被灭口于满村屠杀</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="faction" data-color="other">
+    <div class="faction-head"><span class="icon">🏯</span>朝堂武林 / 西戎</div>
+    <table>
+      <thead><tr><th>人物</th><th>身份</th><th>关键作用</th></tr></thead>
+      <tbody>
+        <tr><td>成磊</td><td>大将军</td><td>傅云夕挚友，最终守城破西戎</td></tr>
+        <tr><td>杨琦</td><td>顺昌武馆主</td><td>寒雁、寒明武学引路人</td></tr>
+        <tr><td>赫连煜</td><td>左相之子</td><td>京城第一美男，傅云夕好友</td></tr>
+        <tr><td>江玉楼</td><td>京城首富</td><td>富贵楼东家，傅云夕暗中盟友</td></tr>
+        <tr><td>吴太医</td><td>宫中御医</td><td>傅云夕寒毒唯一压制者</td></tr>
+        <tr><td>柴静</td><td>武馆杀手夫子</td><td>教授寒雁防身</td></tr>
+        <tr><td>邓婵</td><td>邓尚书千金</td><td>寒雁挚友，前世早夭，本世改命</td></tr>
+        <tr><td>卓七</td><td>西戎大皇子</td><td>男二，多次救助寒雁</td></tr>
+        <tr><td>伊琳娜</td><td>西戎公主</td><td>痴恋傅云夕</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 三、关系图 -->
+  </div><!-- /panel:characters -->
+  <div class="panel" data-panel="graph">
+  <h2 class="section-title" id="graph"><span class="num">叁</span>人物关系图</h2>
+  <div class="graph-toolbar">
+    <div class="legend">
+      <span><i style="background:#5a3a4a;border:1px solid #d4a857"></i>主角</span>
+      <span><i style="background:#3a2424;border:1px solid #c2473a"></i>反派 / 家族</span>
+      <span><i style="background:#2a3a4a;border:1px solid #5a7a9e"></i>盟友 / 配角</span>
+    </div>
+    <button onclick="openFullscreen()">🔍 全屏放大</button>
+  </div>
+  <div class="mermaid-wrap">
+    <div id="graphContainer" style="width:100%;text-align:center;"></div>
+    <textarea id="graphSource" style="display:none;">
+graph TD
+    HY["庄寒雁<br/>女主·重生"]
+    DHW["东侯王<br/>真生父"]
+    TXQ["唐小乔<br/>真生母"]
+    TS["唐生<br/>外公·唐门堡主"]
+    DHW -.夫妻.- TXQ
+    TS --> TXQ
+    DHW --生父--> HY
+    TXQ --生母--> HY
+
+    ZSY["庄仕洋<br/>名义父"]
+    WS["王氏<br/>名义母"]
+    ZHM["庄寒明<br/>亲弟"]
+    ZQ["庄琴<br/>庶姐·盟友"]
+    ZYS["庄语山<br/>前世仇人"]
+    ZHOU["周氏<br/>继母·反派"]
+    DZHOU["大周氏"]
+    MEI["媚姨娘"]
+    WAN["晚姨娘"]
+    ZSY -.夫妻.- WS
+    WS --抚养--> HY
+    WS --母子--> ZHM
+    ZSY -.纳妾.- ZHOU
+    ZHOU --母女--> ZYS
+    DZHOU -.姐妹.- ZHOU
+    WAN --母女--> ZQ
+    ZSY -.纳妾.- MEI
+    ZSY -.纳妾.- WAN
+    ZHOU -.毒杀.-> WS
+
+    FYX["傅云夕<br/>男主·玄清王"]
+    EMP["大宗皇帝"]
+    JF["静妃"]
+    EMPRESS["皇后"]
+    PRINCE["太子"]
+    JF --生母--> FYX
+    JF --生母--> EMP
+    EMP -.夫妻.- EMPRESS
+    EMPRESS --母子--> PRINCE
+
+    TH["太后<br/>终极反派"]
+    PR7["七皇子"]
+    CGF["陈贵妃"]
+    TH -.下毒.-> FYX
+    TH -.毒杀.-> JF
+    TH -.灭门.-> DHW
+    CGF --母子--> PR7
+    TH -.扶持.- PR7
+
+    WW["卫王"]
+    WRF["卫如风<br/>前世害死女主"]
+    LJQ["李佳棋"]
+    WW --父子--> WRF
+    WRF -.前世毒杀.-> HY
+    WRF -.被赐婚.- LJQ
+    WRF -.纳侧妃.- ZYS
+    WW -.同党.- PR7
+
+    FYX -.红梅雪夜结缘.- HY
+    FYX -.赐婚正妃.- HY
+
+    CL["成磊"]
+    YQ["杨琦"]
+    HLY["赫连煜"]
+    JYL["江玉楼"]
+    DOC["吴太医"]
+    DC["邓婵"]
+    CL -.挚友.- FYX
+    HLY -.挚友.- FYX
+    JYL -.盟友.- FYX
+    YQ --授艺--> ZHM
+    YQ --授艺--> HY
+    DC -.闺蜜.- HY
+
+    Z7["卓七<br/>西戎大皇子·男二"]
+    YLN["伊琳娜"]
+    Z7 -.数次救助.- HY
+    YLN -.单恋.- FYX
+
+    classDef hero fill:#5a3a4a,stroke:#d4a857,stroke-width:3px,color:#fff;
+    classDef villain fill:#3a2424,stroke:#c2473a,stroke-width:2px,color:#fff;
+    classDef family fill:#4a3a28,stroke:#b88a3e,color:#fff;
+    classDef ally fill:#2a3a4a,stroke:#5a7a9e,color:#fff;
+    class HY,FYX hero;
+    class TH,PR7,CGF,WW,WRF,ZHOU,DZHOU,ZYS,LJQ,YLN villain;
+    class ZSY,WS,ZHM,ZQ,WAN,MEI,EMP,JF,EMPRESS,PRINCE family;
+    class CL,YQ,HLY,JYL,DOC,DC,TS,Z7,DHW,TXQ ally;
+    </textarea>
+  </div>
+
+  <!-- 四、六幕 -->
+  </div><!-- /panel:graph -->
+  <div class="panel" data-panel="acts">
+  <h2 class="section-title" id="acts"><span class="num">肆</span>六幕剧情</h2>
+  <div class="timeline">
+
+    <!-- 第一幕 -->
+    <article class="act">
+      <span class="act-no">第一幕</span>
+      <h3>噩梦与重生</h3>
+      <div class="subtitle">朱砂洞房，雪夜归来</div>
+      <div class="chapters">楔子 ~ 第 4 章</div>
+
+      <div class="basics">
+        <h4>📋 基础梗概</h4>
+        <div class="row"><span class="key">场景</span><span class="val">洞房毒酒 → 重生回十二岁</span></div>
+        <div class="row"><span class="key">要点</span><span class="val">
+          <ul>
+            <li>庄语山毒杀；十二岁那年是命运的转折点</li>
+            <li>母死、继母进门、山贼劫持、明哥儿入狱伏笔</li>
+          </ul>
+        </span></div>
+        <div class="row"><span class="key">目标</span><span class="val">寒雁立誓"打掉牙咽进肚里"，开始为复仇与改命布局</span></div>
+      </div>
+
+      <div class="story">
+        <h4>🎬 主要故事：洞房一杯毒酒</h4>
+        <p>红烛高照，凤冠霞帔。</p>
+        <p>新婚夜的卫王世子府，庄寒雁端坐在喜床边，盖头下她笑得温婉——这一天她等了三年。卫如风一袭红袍掀开盖头，眉眼温柔得像三月的春水："雁儿，喝了这杯合卺酒，我们就是夫妻了。"</p>
+        <p>酒水入喉，甘冽中藏着一丝苦。三息之后，她喉间一阵剧痛，跌下床去，抬头看见的是亲庶姐 <strong>庄语山</strong> 端着空盏，倚在卫如风怀里轻笑："姐姐，你早该死了。这卫王世子妃的位置，本就是我的。"</p>
+        <p>卫如风低头吻在庶妹耳侧，淡淡道："她毕竟是嫡女，娶进门走个过场，遗诏到手便弃了。"</p>
+        <p>寒雁七窍流血，看着窗外漫天烟火——那是她庄府陪嫁的十里红妆烧成的灰。她死前最后一念是：<strong>娘，明哥儿，我对不住你们……</strong></p>
+        <div class="scene-break">⚡ 画面切换 ⚡</div>
+        <p>"咯——"一声鸡鸣。</p>
+        <p>她猛地睁眼，鼻尖是熟悉的旧帐子味。陈妈妈端着水进来："小姐，今儿个十二岁生辰，太太唤你过去呢。"</p>
+        <p>十二岁。母亲王氏还在，明哥儿还活着，周氏还没进门。</p>
+        <p>寒雁颤抖着摸向镜中那张稚气未脱的脸，慢慢露出一个笑——一个十二岁孩子不该有的、阴冷的笑。</p>
+        <blockquote>"打掉牙，咽进肚里。这一世，我庄寒雁，要让欠我的，一个都跑不掉。"</blockquote>
+      </div>
+    </article>
+
+    <!-- 第二幕 -->
+    <article class="act">
+      <span class="act-no">第二幕</span>
+      <h3>内宅布局</h3>
+      <div class="subtitle">红梅雪夜，初遇玄清</div>
+      <div class="chapters">第 5 ~ 30 章</div>
+
+      <div class="basics">
+        <h4>📋 基础梗概</h4>
+        <div class="row"><span class="key">场景</span><span class="val">庄府初战 → 与杨琦立约 → 红梅雪夜街遇玄清王 → 宫宴献画</span></div>
+        <div class="row"><span class="key">要点</span><span class="val">
+          <ul>
+            <li>庄府"鹬蚌相争"：周氏 vs 媚姨娘内斗，寒雁两头借力</li>
+            <li>顺昌武馆习武，明哥儿拜师杨琦</li>
+            <li>富贵楼倒卖号鹏，拆掉周氏第一波陷阱</li>
+            <li>宫宴震慑李佳棋、敲打太子张威，被傅云夕暗中注意</li>
+          </ul>
+        </span></div>
+        <div class="row"><span class="key">目标</span><span class="val">稳住后院、积攒人脉、与男主埋下七年前的伏笔</span></div>
+      </div>
+
+      <div class="story">
+        <h4>🎬 主要故事：富贵楼"号鹏"骗局反杀</h4>
+        <p>周氏带着两个儿子刚入庄府就开始作妖。她哄骗庄仕洋拿出三千两体己，要去富贵楼"投资"一种叫"号鹏"的西域名马，说倒手能赚十倍。</p>
+        <p>寒雁早从前世记忆里知道，这是周氏勾结大周氏，想把庄府公中钱卷出去补贴娘家张府的局。</p>
+        <p>她不动声色，反而主动请缨："父亲，女儿陪母亲去看马吧，我懂些相马之术。"</p>
+        <p>富贵楼三楼雅间，周氏正与马商眉来眼去。寒雁却笑吟吟拉着掌柜进来："这位老板，我家最近也想买十匹号鹏——不过我听说真号鹏额头上有月牙印，您这马……"她伸出小手在马额心一抹，黑漆掉了大半。</p>
+        <p>满堂死寂。</p>
+        <p>寒雁转身对周氏行了个标准的礼："母亲明鉴，这是假马。三千两若是没了，父亲一年的俸禄都填不上呢。"</p>
+        <p>周氏脸色青白交错，咬牙切齿却发不出声——她不能承认自己是同谋。</p>
+        <p>回府路上，寒雁掀开马车帘子，一片大雪正落下。前头街口梅林深处，一袭玄色狐裘的男子正负手而立，身后跟着两个佩刀侍卫。</p>
+        <p>他听见动静回头，眉目清隽得像画里走出来的人，眸光却冷得像冰湖。</p>
+        <p>四目相对，仅仅一瞬。</p>
+        <blockquote>"小女子庄家寒雁，谢公子让路。"</blockquote>
+        <p>那人没说话，只在她经过时，极轻地"嗯"了一声。</p>
+        <p>车帘落下，陈妈妈小声道："小姐，方才那位……怕是玄清王。"</p>
+        <p>寒雁的指尖在膝上轻轻一颤——前世她死时，京城传闻玄清王已远征西戎，这一世，他怎么会站在这里？</p>
+        <p>而她不知道的是，那男子在她走后，弯腰从雪地里捡起她不慎掉落的一支梅花，看了很久。</p>
+      </div>
+    </article>
+
+    <!-- 第三幕 -->
+    <article class="act">
+      <span class="act-no">第三幕</span>
+      <h3>朝堂初识</h3>
+      <div class="subtitle">祠堂索吻，永不为妾</div>
+      <div class="chapters">第 31 ~ 65 章</div>
+
+      <div class="basics">
+        <h4>📋 基础梗概</h4>
+        <div class="row"><span class="key">场景</span><span class="val">庄府筵席捉奸 → 卫如风提"姐妹同侍" → 寒雁宣"永不为妾" → 玄清王求赐婚 → 祠堂索吻</span></div>
+        <div class="row"><span class="key">要点</span><span class="val">
+          <ul>
+            <li>卫如风现伪君子真面目，前世面具被一层层剥下</li>
+            <li>玄清王正面介入，传字条"另觅佳婿"</li>
+            <li>太后首次出手反对，西戎伊琳娜伏笔出场</li>
+            <li>庄语山被卫王府纳为侧妃；李佳棋赐婚做世子妃</li>
+          </ul>
+        </span></div>
+        <div class="row"><span class="key">目标</span><span class="val">与卫家彻底切割、立"玄清王正妃"名分、打开朝堂局面</span></div>
+      </div>
+
+      <div class="story">
+        <h4>🎬 主要故事：卫府提亲与玄清王赐婚之争</h4>
+        <p>卫王上门提亲了。</p>
+        <p>聘礼摆了一条街，卫如风一袭月白长袍，眉眼温柔得能滴出水。他亲手把一对羊脂玉镯放到寒雁面前："雁儿，等你及笄，我便十里红妆迎你入门。"</p>
+        <p>满府皆惊——卫王世子提亲庄家嫡女，这是天大的体面。庄仕洋激动得手都在抖。</p>
+        <p>只有寒雁淡淡地笑："世子厚爱，只是寒雁听闻，世子的表妹李佳棋姑娘心慕世子已久。寒雁不愿夺人所爱。"</p>
+        <p>第二天宫宴。李佳棋故意推倒寒雁的茶盏，溅湿她裙裾："庄家妹妹真笨手笨脚。"</p>
+        <p>寒雁站起身，朝卫如风走去三步，蹲下，捡起卫如风方才掉落的玉佩，递回："世子，您的玉佩。听闻这是您母亲所赠，丢了可不好。"</p>
+        <p>李佳棋的脸瞬间惨白——那玉佩是她 <strong>亲手</strong> 送给卫如风的定情信物。</p>
+        <p>就在这时，殿门外内监高唱："玄清王到——"</p>
+        <p>一袭墨蓝蟒袍的男子缓步而入，越过满殿跪迎之人，径直走到御前，一撩袍跪下：</p>
+        <blockquote>"皇兄，臣弟近日新得一幅《雪梅图》，画中人甚妙。臣弟想求皇兄一道赐婚旨——赐庄家嫡女庄寒雁，与臣弟为正妃。"</blockquote>
+        <p>整个大殿，鸦雀无声。太后手中佛珠"啪"地断了一颗。</p>
+        <p>那夜她被太后留在祠堂"训诫"。冷风灌进单薄衣衫里，她跪了两个时辰。夜深，一只手伸来，将她抱起。是傅云夕。</p>
+        <p>他将她按在祠堂柱上，呼吸炙热："庄寒雁，你既不愿做卫家妇，便做我玄清王妃。"</p>
+        <p>不等她回答，他低头吻了下来，霸道又克制。</p>
+        <p>寒雁红着眼："你为何选我？"</p>
+        <p>他低低地笑："七年前红梅雪夜，你救过一个濒死的少年——那少年，叫傅云夕。"</p>
+        <p>她浑身一震。</p>
+      </div>
+    </article>
+
+    <!-- 第四幕 -->
+    <article class="act">
+      <span class="act-no">第四幕</span>
+      <h3>身世迷雾与情定</h3>
+      <div class="subtitle">春祭刺杀，邪神反局</div>
+      <div class="chapters">第 66 ~ 95 章</div>
+
+      <div class="basics">
+        <h4>📋 基础梗概</h4>
+        <div class="row"><span class="key">场景</span><span class="val">阿碧线索 → 唐门蜀锦"乔" → 卓七闯庄府 → 春祭追杀 → 庄府"邪神局"翻盘</span></div>
+        <div class="row"><span class="key">要点</span><span class="val">
+          <ul>
+            <li>寒雁开始追查身世（东侯王 / 唐小乔之女的猜想成形）</li>
+            <li>玄清王为寒雁挡刺、解春毒（其血"至冷"，与寒雁血相生）</li>
+            <li>一举端掉媚姨娘 + 周氏 + 大周氏</li>
+            <li>七皇子与卫王勾结的反派阵营彻底浮出水面</li>
+          </ul>
+        </span></div>
+        <div class="row"><span class="key">目标</span><span class="val">破内宅终局之战、确定真实身世、与男主真正相互托付</span></div>
+      </div>
+
+      <div class="story">
+        <h4>🎬 主要故事：春祭一箭，王爷以血挡刃</h4>
+        <p>清明春祭，皇家车驾浩浩荡荡出城。</p>
+        <p>寒雁随母亲坐在第三辆马车里。行至山道半腰，忽然林中飞箭如蝗——黑衣刺客从两侧山崖跃下，目标直指她一人。</p>
+        <p>"是冲我来的。"她一把推开惊呆的丫鬟，钻出马车。</p>
+        <p>混乱中，一支淬毒的弩箭直射她心口。千钧一发——</p>
+        <p>一道墨色身影从天而降，傅云夕用自己的肩膀替她接下了那支箭。鲜血浸透墨蓝蟒袍，他却紧紧将她按在怀里，沉声道："别怕。"</p>
+        <p>寒雁颤抖着想拔箭，他按住她的手："是春毒，唯有……"他顿了顿，"以阳血解之。"</p>
+        <p>她毫不犹豫咬破自己指尖，将血滴入伤口。</p>
+        <p>那一刻她才知道——傅云夕的血是冷的，冷得像千年寒冰，而她的血一滴落入，竟瞬间化开了那片黑紫色的毒。</p>
+        <p>她终于明白他为什么从不近女色——<strong>他自幼被太后下了寒毒，全身血液冰冷，唯有"她"的血能解。</strong></p>
+        <p>更让她震惊的是，吴太医偷偷告诉她："王爷的寒毒，七年前曾被一名小姑娘以血暂解一回。那时王爷才十六岁，重伤逃亡，是个十岁出头的小丫头从雪地里把他拖回家……"</p>
+        <p>七年前。那年她九岁，跟父亲去庄子上避暑，曾在后山救过一个浑身是血的少年，喂过他半碗自己手腕滴血的姜汤。</p>
+        <p>原来命运的红线，七年前就已牢牢系住。</p>
+        <p>回京后，她借春祭遇刺一事，把媚姨娘"假怀孕"、周氏"偷换药材"、大周氏"与张太师管家私通"三条罪状一齐捅出来。</p>
+        <p>那夜庄府火光冲天，大周氏跳河自尽，周氏被关进祠堂，媚姨娘押入大牢。</p>
+        <blockquote>寒雁站在母亲灵位前点了三炷香："娘，女儿替你还了一半。"</blockquote>
+      </div>
+    </article>
+
+    <!-- 第五幕 -->
+    <article class="act">
+      <span class="act-no">第五幕</span>
+      <h3>寒毒与离散</h3>
+      <div class="subtitle">一年之约，休书一封</div>
+      <div class="chapters">第 96 ~ 125 章</div>
+
+      <div class="basics">
+        <h4>📋 基础梗概</h4>
+        <div class="row"><span class="key">场景</span><span class="val">出征西戎 → 一年之约 → 凯旋带回伊琳娜 → 被迫"休妻" → 暗巷追杀</span></div>
+        <div class="row"><span class="key">要点</span><span class="val">
+          <ul>
+            <li>傅云夕寒毒急剧加重，皇兄令他另娶以引"东侯王遗诏"出局</li>
+            <li>皇上派御前侍卫刺杀寒雁（皇位忌惮压过兄弟情）</li>
+            <li>傅云夕戴鬼面暗中救人挡刀，明面"和离"、暗中同心</li>
+            <li>寒雁通过吴太医、媚姨娘口中证实身世真相</li>
+            <li>与卓七合作（条件：傅云夕痊愈她随他归西戎，实为缓兵之计）</li>
+          </ul>
+        </span></div>
+        <div class="row"><span class="key">目标</span><span class="val">营造"玄清王已无威胁"假象，引太后七皇子入瓮</span></div>
+      </div>
+
+      <div class="story">
+        <h4>🎬 主要故事：玄清王休妻，暗巷生死刺</h4>
+        <p>西戎犯境。</p>
+        <p>傅云夕接旨那夜，一个人坐在书房良久，最后将寒雁拥入怀里："等我一年。一年内不归，你便改嫁。"</p>
+        <p>她咬着唇："我等你十年。"</p>
+        <p>他笑了，眼底有泪光："傻丫头。"</p>
+        <p>一年又两月，他凯旋。可同行的还有西戎公主 <strong>伊琳娜</strong>——金发碧眼的异族美人，国书上明明白白：愿以两国和平为聘，下嫁玄清王。</p>
+        <p>更让寒雁措手不及的是，皇上当朝下旨："玄清王正妃庄氏，三年无所出，且出身存疑，准其和离。"</p>
+        <p>那夜傅云夕回府，将一纸休书放在她面前，指节因用力而发白："寒雁，离开我。"</p>
+        <p>她红着眼："你要娶伊琳娜？"</p>
+        <p>他不答，只是别过脸："出王府，越远越好。"</p>
+        <p>她拿着休书，一步一步走出玄清王府，雨夜里她浑身湿透，却没掉一滴泪。</p>
+        <p>可就在她走过暗巷时，七八个黑衣御前侍卫从墙头跃下，刀光霍霍——</p>
+        <blockquote>"皇上有令：庄寒雁乃东侯王余孽，就地格杀！"</blockquote>
+        <p>她终于明白——皇上为了坐稳皇位，要灭东侯王最后的血脉；傅云夕休她，是为了让她离开是非中心。</p>
+        <p>雨幕里一道戴着鬼面的黑影破空而至，长剑挑飞三柄刀。鬼面下露出半截下颌——是傅云夕。</p>
+        <p>他一边格挡一边怒吼："让你走，你为何还不走！"</p>
+        <p>寒雁哭着扑进他怀里："傅云夕，你这个混蛋——你病得这么重，还来救我！"</p>
+        <p>那夜他咳血晕倒在她怀里，她抱着他坐了一整夜，做了一个决定：<strong>去找卓七，去找唐门外公，无论如何要解他的寒毒。</strong></p>
+      </div>
+    </article>
+
+    <!-- 第六幕 -->
+    <article class="act">
+      <span class="act-no">第六幕</span>
+      <h3>逼宫与大结局</h3>
+      <div class="subtitle">金殿诈死，江南赏春</div>
+      <div class="chapters">第 126 ~ 143 章</div>
+
+      <div class="basics">
+        <h4>📋 基础梗概</h4>
+        <div class="row"><span class="key">场景</span><span class="val">天牢审媚姨娘 → 玄清王"诈死" → 西戎大举进攻 → 七皇子金殿逼宫 → 玄清王临殿擒贼</span></div>
+        <div class="row"><span class="key">要点</span><span class="val">
+          <ul>
+            <li><strong>三重大局</strong>：装病丧 → 引太后七皇子勾结西戎 → 成磊归来破城 → 玄清王临殿亲擒</li>
+            <li>太后赐全尸、七皇子凌迟、卫王诛九族、庄仕洋发配、庄语山疯癫被囚</li>
+            <li>唐生（外公）认亲 + 唐门秘药配寒雁之血，彻底解寒毒</li>
+            <li><strong>结局</strong>：两年后江南，寒雁有孕，傅云夕鬓染霜白携手赏春</li>
+          </ul>
+        </span></div>
+        <div class="row"><span class="key">目标</span><span class="val">清算所有反派、解开寒毒与身世两条暗线、给双主角圆满归宿</span></div>
+      </div>
+
+      <div class="story">
+        <h4>🎬 主要故事：玄清王"灵堂"擒贼</h4>
+        <p>举国哀恸。</p>
+        <p>玄清王傅云夕，旧伤迸发，薨于王府。年仅二十三岁。</p>
+        <p>灵堂白幡漫天，太后亲临，七皇子主持丧仪，朝野上下尽数披麻戴孝。</p>
+        <p>而西戎，于此时大举叩关——三十万铁骑直逼大宗北境，七皇子在朝堂之上"声泪俱下"："父皇病重，皇兄无能，儿臣愿监国应敌！"</p>
+        <p>太后含泪点头：<strong>"准奏。"</strong></p>
+        <p>就在七皇子接过监国玉玺的那一刻——</p>
+        <blockquote>"等等。"</blockquote>
+        <p>殿外一道清越男声。</p>
+        <p>百官回头——白衣胜雪、鬓角微霜的玄清王，从灵堂深处一步一步走入金殿，每一步都踩在七皇子骤然发白的脸上。</p>
+        <p>"皇兄久病初愈，七弟监什么国？"</p>
+        <p>七皇子失声尖叫："你……你不是死了！？"</p>
+        <p>傅云夕淡淡一笑："本王诈死三月，只为今日。"</p>
+        <p>殿外"轰隆"一声，成磊大将军亲率三万铁骑入宫；东侯王旧部、唐门弟子、富贵楼江玉楼私兵从四面八方涌出，将七皇子党团团围住。</p>
+        <p>寒雁一袭红衣登上金殿，将一卷明黄圣旨展开——那是先皇遗诏，确认东侯王为真正太子，她为东侯王嫡女。</p>
+        <p>"太后毒杀静妃、谋害东侯王满门、暗通西戎，三条死罪，请皇兄定夺。"</p>
+        <p>皇上闭眼半晌，最终颓然挥手："赐全尸。"</p>
+        <p>七皇子凌迟，卫王诛九族，庄仕洋发配充军，庄语山疯癫被囚。</p>
+        <p>唐生（外公）连夜入京，以唐门秘药配合寒雁之血，终于解了傅云夕缠身二十年的寒毒。</p>
+        <div class="scene-break">⚡ 两年后，江南 ⚡</div>
+        <p>烟雨朦胧的西湖边，一袭素白的傅云夕鬓角染了一缕霜，仙风道骨。</p>
+        <p>寒雁穿着藕荷色襦裙，挺着五个月的孕肚，正在湖边折一支新开的桃花。</p>
+        <p>她回头笑唤："王爷，过来啊——"</p>
+        <p>他走过去，从身后揽住她，下巴搁在她发顶："雁儿，这一世，值了。"</p>
+        <p>远处画舫上，传来稚童咿呀的笑声——那是他们已经一岁的女儿，扑在乳娘怀里，伸出胖手要抓桃花。</p>
+        <blockquote style="text-align:center;">— 全 文 终 —</blockquote>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- 五、主线暗线 -->
+  </div><!-- /panel:acts -->
+  <div class="panel" data-panel="lines">
+  <h2 class="section-title" id="lines"><span class="num">伍</span>主线与暗线</h2>
+  <div class="lines">
+    <div class="line-card">
+      <span class="tag">明线</span>
+      <p>寒雁宅斗复仇 → 与傅云夕情定 → 共破皇宫阴谋</p>
+    </div>
+    <div class="line-card hidden-1">
+      <span class="tag">暗线 1 · 身世</span>
+      <p>庄寒雁实为东侯王与唐小乔之女，东侯王本是先皇钦点真命天子</p>
+    </div>
+    <div class="line-card hidden-2">
+      <span class="tag">暗线 2 · 寒毒</span>
+      <p>太后年幼时给皇上、傅云夕下双倍寒毒，欲扶傀儡上位</p>
+    </div>
+    <div class="line-card hidden-3">
+      <span class="tag">暗线 3 · 皇位</span>
+      <p>先皇遗诏存世，太后欲找出销毁；本世皇上为坐稳江山欲杀寒雁</p>
+    </div>
+    <div class="line-card hidden-4">
+      <span class="tag">暗线 4 · 西戎</span>
+      <p>卓七夺位失败逃亡大宗，反派国主与太后里应外合谋大宗</p>
+    </div>
+  </div>
+  </div><!-- /panel:lines -->
+
+</main>
+
+<!-- 关系图全屏遮罩 -->
+<div class="fs-overlay" id="fsOverlay">
+  <header>
+    <span style="font-size:18px;letter-spacing:2px;">🔗 人物关系图（全屏）</span>
+    <button class="close" onclick="closeFullscreen()">✕</button>
+  </header>
+  <div class="body" id="fsBody"></div>
+</div>
+
+<footer>
+  📖 阅读笔记 · 整理于 2026-05-26 · 共 143 章 · 约 100 万字
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    themeVariables: {
+      darkMode: true,
+      background: '#2a201e',
+      primaryColor: '#d4a857',
+      primaryTextColor: '#f3e9dc',
+      primaryBorderColor: '#d4a857',
+      lineColor: '#8a7a68',
+      secondaryColor: '#5a3a4a',
+      tertiaryColor: '#3a2c28',
+      fontFamily: 'PingFang SC, Microsoft YaHei, serif',
+      fontSize: '15px'
+    },
+    flowchart: { curve: 'basis', padding: 20, nodeSpacing: 50, rankSpacing: 70, htmlLabels: true }
+  });
+
+  // 关系图按需渲染（避免在 display:none 容器里渲染失败）
+  let graphRendered = false;
+  async function renderGraph() {
+    if (graphRendered) return;
+    const src = document.getElementById('graphSource').value.trim();
+    const container = document.getElementById('graphContainer');
+    try {
+      const { svg } = await mermaid.render('relationGraph', src);
+      container.innerHTML = svg;
+      graphRendered = true;
+    } catch (err) {
+      container.innerHTML = '<div style="color:#c2473a;padding:40px;">关系图渲染失败：' + err.message + '</div>';
+      console.error(err);
+    }
+  }
+
+  // Tab 切换
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.panel').forEach(p => {
+        p.classList.toggle('active', p.dataset.panel === target);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (target === 'graph') {
+        // 等待 panel 显示后再渲染
+        setTimeout(renderGraph, 50);
+      }
+    });
+  });
+
+  // 关系图全屏
+  function openFullscreen() {
+    const svg = document.querySelector('#graphContainer svg');
+    if (!svg) { alert('请先等待关系图加载完成'); return; }
+    const clone = svg.cloneNode(true);
+    clone.removeAttribute('style');
+    clone.setAttribute('width', '100%');
+    clone.setAttribute('height', '100%');
+    const body = document.getElementById('fsBody');
+    body.innerHTML = '';
+    body.appendChild(clone);
+    document.getElementById('fsOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeFullscreen() {
+    document.getElementById('fsOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeFullscreen();
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>第五幕 · 暗巷生死刺 · 互动文游</title>
+<style>
+  :root {
+    --bg: #0e0a09;
+    --bg-soft: #1a1413;
+    --bg-card: #241b1a;
+    --ink: #f3e9dc;
+    --ink-soft: #c8b8a4;
+    --ink-mute: #8a7a68;
+    --gold: #d4a857;
+    --gold-soft: #b88a3e;
+    --red: #c2473a;
+    --green: #6b8e4e;
+    --blue: #5a7a9e;
+    --line: #3a2c28;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Serif SC", serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.85;
+    font-size: 16px;
+    min-height: 100vh;
+    /* 雨夜氛围 */
+    background-image:
+      radial-gradient(ellipse at 50% 0%, rgba(90,122,158,0.08), transparent 60%),
+      linear-gradient(180deg, #0e0a09 0%, #1a1413 100%);
+  }
+
+  /* 顶部状态栏 */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(14,10,9,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    padding: 12px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .topbar .scene-info { font-size: 14px; color: var(--ink-soft); }
+  .topbar .scene-info b { color: var(--gold); margin-right: 8px; }
+  .topbar .progress {
+    flex: 1; max-width: 260px; margin: 0 16px;
+    height: 6px; background: var(--bg-card); border-radius: 3px; overflow: hidden;
+  }
+  .topbar .progress > i {
+    display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--red));
+    width: 0%; transition: width .5s ease;
+  }
+  .topbar .role { font-size: 13px; color: var(--ink-mute); }
+  .topbar .role b { color: var(--gold-soft); }
+
+  /* 主容器 */
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 200px;
+  }
+
+  /* 旁白卡片 */
+  .narration-card {
+    background: linear-gradient(180deg, rgba(212,168,87,0.08), rgba(212,168,87,0.02));
+    border: 1px solid rgba(212,168,87,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    color: var(--ink-soft);
+    font-style: italic;
+    line-height: 1.9;
+    animation: fadeIn .5s ease;
+  }
+  .narration-card::before {
+    content: "📜 ";
+    margin-right: 4px;
+  }
+
+  /* 对话气泡 */
+  .msg {
+    margin: 14px 0;
+    animation: fadeIn .35s ease;
+    max-width: 85%;
+    clear: both;
+  }
+  .msg .name {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .msg .bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  /* AI 角色 - 左侧 */
+  .msg.ai { float: left; }
+  .msg.ai .bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-top-left-radius: 4px;
+    color: var(--ink);
+  }
+  .msg.ai .name b { color: var(--gold); }
+
+  /* 玩家 - 右侧 */
+  .msg.me { float: right; text-align: right; }
+  .msg.me .bubble {
+    background: linear-gradient(135deg, #5a3a4a, #4a2a3e);
+    border: 1px solid var(--gold-soft);
+    border-top-right-radius: 4px;
+    color: #fff;
+    text-align: left;
+    display: inline-block;
+  }
+  .msg.me .name b { color: var(--red); }
+
+  /* loading 气泡 */
+  .msg.loading .bubble::after {
+    content: "...";
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink {
+    0%, 60% { content: "···"; }
+    20% { content: "·"; }
+    40% { content: "··"; }
+  }
+
+  /* 选项区 */
+  .options-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, transparent, rgba(14,10,9,0.95) 25%);
+    padding: 20px 16px 16px;
+    z-index: 20;
+  }
+  .options-inner {
+    max-width: 720px; margin: 0 auto;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .option-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14.5px;
+    text-align: left;
+    cursor: pointer;
+    transition: all .2s;
+    line-height: 1.5;
+  }
+  .option-btn:hover {
+    border-color: var(--gold);
+    background: rgba(212,168,87,0.08);
+    transform: translateX(4px);
+  }
+  .option-btn .tag {
+    display: inline-block;
+    background: rgba(212,168,87,0.15);
+    color: var(--gold-soft);
+    font-size: 11px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    margin-right: 8px;
+    letter-spacing: 1px;
+  }
+  .option-btn.recommended { border-color: var(--gold); }
+  .option-btn.danger .tag { background: rgba(194,71,58,0.15); color: var(--red); }
+  .option-btn.gentle .tag { background: rgba(107,142,78,0.15); color: var(--green); }
+
+  /* 自由输入 */
+  .free-input {
+    display: flex; gap: 8px;
+    margin-top: 4px;
+  }
+  .free-input textarea {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14.5px;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+  }
+  .free-input textarea:focus {
+    outline: none; border-color: var(--gold);
+  }
+  .free-input button {
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    border: none;
+    color: #1a1413;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .free-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* 开场 / 标题屏 */
+  .title-screen {
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+  .title-screen h1 {
+    font-size: 36px;
+    color: var(--gold);
+    margin: 0 0 12px;
+    letter-spacing: 4px;
+    text-shadow: 0 2px 16px rgba(212,168,87,0.3);
+  }
+  .title-screen .sub {
+    color: var(--red);
+    font-style: italic;
+    letter-spacing: 3px;
+    margin-bottom: 36px;
+    font-size: 16px;
+  }
+  .title-screen .desc {
+    color: var(--ink-soft);
+    max-width: 500px;
+    margin: 0 auto 40px;
+    line-height: 2;
+    font-size: 14.5px;
+  }
+  .start-btn {
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    border: none;
+    color: #1a1413;
+    padding: 14px 50px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(212,168,87,0.4);
+    transition: transform .2s;
+  }
+  .start-btn:hover { transform: scale(1.05); }
+
+  /* QTE 全屏覆盖 */
+  .qte-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: linear-gradient(180deg, #0e0a09, #1a0e0e);
+    z-index: 100;
+    padding: 32px 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .qte-overlay.active { display: flex; }
+  .qte-overlay::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(194,71,58,0.15), transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(90,122,158,0.1), transparent 50%);
+    pointer-events: none;
+  }
+  /* 雨滴动画 */
+  .rain {
+    position: absolute; inset: 0; overflow: hidden;
+    pointer-events: none; opacity: 0.4;
+  }
+  .rain i {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(200,184,164,0.6));
+    animation: rain-fall linear infinite;
+  }
+  @keyframes rain-fall {
+    from { transform: translateY(-100vh); }
+    to { transform: translateY(100vh); }
+  }
+
+  .qte-title {
+    font-size: 28px; color: var(--red);
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 16px rgba(194,71,58,0.5);
+    z-index: 1;
+  }
+  .qte-sub {
+    color: var(--ink-soft);
+    margin-bottom: 30px;
+    font-size: 14px;
+    z-index: 1;
+  }
+  .qte-meter-wrap {
+    width: 100%; max-width: 480px;
+    z-index: 1;
+  }
+  .qte-meter {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .qte-meter .label {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--ink-mute);
+    margin-bottom: 6px;
+  }
+  .qte-meter .label b { color: var(--gold); font-size: 16px; }
+  .qte-bar {
+    height: 14px;
+    background: var(--bg-soft);
+    border-radius: 7px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .qte-bar > i {
+    display: block; height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--green), var(--gold), var(--red));
+    transition: width .1s linear;
+  }
+  .qte-time {
+    font-size: 48px;
+    color: var(--gold);
+    text-align: center;
+    margin: 18px 0;
+    letter-spacing: 2px;
+    font-weight: 700;
+    text-shadow: 0 2px 16px rgba(212,168,87,0.4);
+    z-index: 1;
+  }
+  .qte-tip {
+    color: var(--ink-mute);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+    z-index: 1;
+  }
+  .qte-start-btn {
+    background: linear-gradient(135deg, var(--red), #8b2e25);
+    border: none; color: #fff;
+    padding: 16px 50px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 30px rgba(194,71,58,0.5);
+    z-index: 1;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 30px rgba(194,71,58,0.5); }
+    50% { transform: scale(1.04); box-shadow: 0 4px 50px rgba(194,71,58,0.8); }
+  }
+
+  /* 结局屏 */
+  .ending {
+    text-align: center;
+    padding: 60px 24px;
+    animation: fadeIn .8s ease;
+  }
+  .ending .stars {
+    font-size: 32px;
+    margin-bottom: 16px;
+    letter-spacing: 8px;
+  }
+  .ending h2 {
+    font-size: 28px;
+    color: var(--gold);
+    margin: 0 0 12px;
+    letter-spacing: 3px;
+  }
+  .ending .ep-name { color: var(--red); font-size: 16px; letter-spacing: 2px; margin-bottom: 24px; }
+  .ending .ep-desc {
+    color: var(--ink-soft);
+    line-height: 2;
+    max-width: 540px;
+    margin: 0 auto 32px;
+    text-align: left;
+  }
+  .ending .ep-desc p { margin: 0 0 12px; }
+  .ending .ep-stats {
+    display: inline-flex; gap: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 24px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .ending .ep-stats b { color: var(--gold); }
+  .ending .restart-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 12px 36px;
+    border-radius: 999px;
+    font-family: inherit;
+    cursor: pointer;
+    margin: 0 6px;
+  }
+  .ending .restart-btn.primary {
+    background: linear-gradient(135deg, var(--gold), var(--gold-soft));
+    color: #1a1413;
+    font-weight: 600;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 防抖按钮 */
+  button:disabled { opacity: 0.5; pointer-events: none; }
+
+  /* clearfix */
+  main::after { content:""; display:block; clear:both; }
+</style>
+</head>
+<body>
+
+<!-- 顶部状态栏（默认隐藏） -->
+<div class="topbar" id="topbar" style="display:none;">
+  <div class="scene-info"><b id="sceneTag">第五幕</b><span id="sceneName">王府书房</span></div>
+  <div class="progress"><i id="progressBar"></i></div>
+  <div class="role">扮演：<b>庄寒雁</b></div>
+</div>
+
+<main id="app"></main>
+
+<!-- 选项区（默认隐藏） -->
+<div class="options-wrap" id="optionsWrap" style="display:none;">
+  <div class="options-inner" id="optionsInner"></div>
+</div>
+
+<!-- QTE 覆盖层 -->
+<div class="qte-overlay" id="qteOverlay">
+  <div class="rain" id="rain"></div>
+  <div class="qte-title">⚔️ 暗 巷 追 杀</div>
+  <div class="qte-sub" id="qteSub">7 个御前侍卫从墙头跃下，刀光霍霍——</div>
+
+  <div class="qte-meter-wrap" id="qteMeterWrap" style="display:none;">
+    <div class="qte-meter">
+      <div class="label">分贝 <b id="qteDB">0</b> dB</div>
+      <div class="qte-bar"><i id="qteDBBar"></i></div>
+    </div>
+    <div class="qte-meter">
+      <div class="label">持续呼救 <b id="qteHit">0.0</b> 秒</div>
+      <div class="qte-bar"><i id="qteHitBar"></i></div>
+    </div>
+    <div class="qte-time" id="qteTime">5.0</div>
+  </div>
+
+  <button class="qte-start-btn" id="qteStartBtn" onclick="startQTE()">开始呼救</button>
+  <div class="qte-tip" id="qteTip">点击按钮后请允许使用麦克风<br/>大声喊出：救命——！</div>
+</div>
+
+<script>
+/* ================================================================
+ *  第五幕 · 暗巷生死刺 · 数据
+ * ================================================================ */
+const STORY = {
+  scenes: [
+    {
+      id: 'farewell',
+      sceneTag: '第五幕 · 一年之约',
+      sceneName: '玄清王府 · 书房',
+      progress: 15,
+      narrations: [
+        '西戎犯境。傅云夕接旨那夜，独自坐在书房良久。',
+        '窗外雪意未消，他唤你过去，将你一把拥入怀中。'
+      ],
+      aiCharacter: '傅云夕',
+      aiPersona: 'fuyunxi',
+      aiOpening: '等我一年。一年内不归，你便改嫁。',
+      options: [
+        { text: '"我等你十年。"', tag: '深情', cls: 'recommended' },
+        { text: '"你必须回来——活着回来。"', tag: '坚定', cls: '' },
+        { text: '"……好。"（咬唇低头）', tag: '隐忍', cls: 'gentle' }
+      ],
+      allowFreeInput: true,
+      freeInputHint: '说一句让傅云夕记你一辈子的话…'
+    },
+    {
+      id: 'reunion',
+      sceneTag: '第五幕 · 凯旋归来',
+      sceneName: '皇宫 · 金銮殿外',
+      progress: 40,
+      narrations: [
+        '一年又两月，他凯旋。',
+        '可同行的还有西戎公主——伊琳娜，金发碧眼，国书上明明白白：愿以两国和平为聘，下嫁玄清王。',
+        '更让你措手不及的是，皇上当朝下旨："玄清王正妃庄氏，三年无所出，且出身存疑，准其和离。"'
+      ],
+      aiCharacter: '伊琳娜',
+      aiPersona: 'yilinna',
+      aiOpening: '庄王妃，伊琳娜不远千里而来，只为玄清王一人。望王妃能成全。',
+      options: [
+        { text: '"公主远道而来，本妃自然要敬一杯。"（暗藏机锋）', tag: '高冷', cls: 'recommended' },
+        { text: '"我夫妻之事，与公主何干？"', tag: '强硬', cls: 'danger' },
+        { text: '微微福身："公主请自便。"', tag: '退让', cls: 'gentle' }
+      ],
+      allowFreeInput: true,
+      freeInputHint: '当众回应这位西戎公主…'
+    },
+    {
+      id: 'divorce',
+      sceneTag: '第五幕 · 一纸休书',
+      sceneName: '玄清王府 · 书房',
+      progress: 65,
+      narrations: [
+        '那夜傅云夕回府，将一纸休书放在你面前。',
+        '他指节因用力而发白，目光不敢看你。'
+      ],
+      aiCharacter: '傅云夕',
+      aiPersona: 'fuyunxi_cold',
+      aiOpening: '寒雁，离开我。出王府，越远越好。',
+      options: [
+        { text: '"你要娶伊琳娜？"（红着眼）', tag: '质问', cls: '' },
+        { text: '安静接过休书，不发一言。', tag: '隐忍', cls: 'recommended' },
+        { text: '将休书撕得粉碎："傅云夕你做梦！"', tag: '激烈', cls: 'danger' }
+      ],
+      allowFreeInput: true,
+      freeInputHint: '你的反应，会决定他能否说出真相…'
+    }
+  ],
+
+  // QTE 配置
+  qte: {
+    duration: 5000,        // 5 秒
+    sampleInterval: 80,    // 80ms 采样
+    successDB: 78,         // 三星阈值
+    midDB: 62,             // 二星阈值
+    successHit: 25,        // 命中帧数（80ms × 25 = 2 秒持续高分贝）
+    midHit: 13             // 二星帧数 (~1 秒)
+  },
+
+  // 三种结局
+  endings: {
+    fuyunxi: {
+      stars: '⭐⭐⭐',
+      title: '鬼面救场',
+      epName: 'Ending A · 玄清王戴鬼面挡刀',
+      desc: [
+        '雨幕里一道戴着鬼面的黑影破空而至，长剑挑飞三柄刀。',
+        '鬼面下露出半截下颌——是傅云夕。',
+        '他一边格挡一边怒吼："让你走，你为何还不走！"',
+        '你哭着扑进他怀里："傅云夕，你这个混蛋——你病得这么重，还来救我！"',
+        '那夜他咳血晕倒在你怀里，你抱着他坐了一整夜，做了一个决定：去找卓七，去找唐门外公，无论如何要解他的寒毒。'
+      ]
+    },
+    zhuoqi: {
+      stars: '⭐⭐',
+      title: '卓七路过',
+      epName: 'Ending B · 西戎大皇子相救',
+      desc: [
+        '黑夜中突然射出一支袖箭，钉在为首侍卫的喉间。',
+        '一袭胡袍的青年从屋顶翻下，长刀寒光凛冽。',
+        '"庄寒雁，本皇子第三次救你了。" 卓七笑得轻佻，眼底却是认真。',
+        '"跟我去西戎。" 他伸手向你。',
+        '你犹豫了——傅云夕戴着鬼面在远处注视着你，他不能现身，因为他已经"和离"。',
+        '雨夜中，你做出了选择…'
+      ]
+    },
+    captured: {
+      stars: '⭐',
+      title: '失声被擒',
+      epName: 'Ending C · 自救之路',
+      desc: [
+        '你的呼救声被雨声盖住，黑衣侍卫一拥而上。',
+        '冰冷的剑刃抵在颈间——"东侯王余孽，受死。"',
+        '千钧一发之际，记忆深处闪过母亲临终时塞给你的玉佩。',
+        '玉佩里藏着唐门接应暗号——你拼着最后一丝力气，将玉佩抛向半空。',
+        '"叮——" 一声清越，远处传来唐门弟子的飞镖回应。',
+        '你终于明白，自救者，方能他救。这一夜，你独自踏上了寻外公之路。'
+      ]
+    }
+  }
+};
+
+/* ================================================================
+ *  角色 Prompt 模板
+ * ================================================================ */
+const PERSONAS = {
+  fuyunxi: {
+    name: '傅云夕',
+    system: `你是傅云夕，大宗皇朝玄清王，二十二岁，权倾朝野的"冰山王爷"。
+【性格】表面冷峻克制，内心对庄寒雁深情似海。说话简短，常用"嗯""无妨""本王知道了"。
+【秘密】自幼被太后下了寒毒；七年前红梅雪夜被九岁的庄寒雁救过；知道她真实身世。
+【场景】西戎犯境前夜，你刚下达一年之约，正将寒雁拥在怀中。
+【规则】
+1. 你只能说一句话或一个动作描写（< 50 字），用古风对白
+2. 不要主动透露所有秘密，根据用户反应酌情流露真情
+3. 不要使用现代词汇（手机/电脑/咖啡等）
+4. 偶尔可以用"雁儿"称呼她，每次都是情感破防的信号
+5. 用户是寒雁本人，请称"你"或"雁儿"`
+  },
+  fuyunxi_cold: {
+    name: '傅云夕',
+    system: `你是傅云夕，大宗皇朝玄清王。
+【场景】你刚把一纸休书放在庄寒雁面前。这是你的苦肉计——皇兄要杀她以绝东侯王后患，你必须让她离开是非中心才能保她性命。
+【表演要求】
+1. 表面冷酷如冰，让她相信你真的要赶走她
+2. 内心痛苦欲死，可以用动作描写流露（指节发白、别开眼、嗓音微哑）
+3. 绝不能直接告诉她"这是为了保护你"——这是底线
+4. 每次回复 < 50 字，用古风对白
+5. 当她极度激烈或极度安静时，可以用一个动作"不经意"暴露真情`
+  },
+  yilinna: {
+    name: '伊琳娜',
+    system: `你是伊琳娜，西戎公主，金发碧眼的异族美人。
+【性格】高傲、直率、对玄清王傅云夕一见钟情。
+【场景】你刚以"两国和平为聘"下嫁玄清王，正与玄清王正妃庄寒雁初次照面。
+【规则】
+1. 说话带异族口音的痕迹（不要用"哎呀""嗯嗯"等中原口语）
+2. 表面客气，骨子里是"情敌"姿态，话里带刺
+3. 每次回复 < 60 字
+4. 不要使用现代词汇`
+  }
+};
+
+/* ================================================================
+ *  状态机
+ * ================================================================ */
+const state = {
+  sceneIdx: -1,
+  history: [],         // 当前场景的对话历史
+  busy: false,
+  endingType: null,
+  qteResult: null,
+  finalScore: { db: 0, hit: 0, stars: 0 }
+};
+
+const $ = id => document.getElementById(id);
+const app = $('app');
+
+/* ================================================================
+ *  开场屏
+ * ================================================================ */
+function showTitleScreen() {
+  app.innerHTML = `
+    <div class="title-screen">
+      <h1>暗 巷 生 死 刺</h1>
+      <div class="sub">第 五 幕 · 寒 毒 与 离 散</div>
+      <p class="desc">
+        西戎犯境，玄清王征战归来却带回西戎公主。<br/>
+        皇上下旨和离，一纸休书把你赶出王府。<br/>
+        雨夜暗巷，七柄御前刀光向你斩来——<br/>
+        <br/>
+        <b style="color:#d4a857;">你能喊出多大声？</b><br/>
+        <span style="color:#8a7a68;font-size:13px;">提示：本游戏将申请麦克风权限</span>
+      </p>
+      <button class="start-btn" onclick="nextScene()">入 局</button>
+    </div>
+  `;
+  $('topbar').style.display = 'none';
+  $('optionsWrap').style.display = 'none';
+}
+
+/* ================================================================
+ *  场景调度
+ * ================================================================ */
+function nextScene() {
+  state.sceneIdx++;
+  if (state.sceneIdx >= STORY.scenes.length) {
+    enterQTE();
+    return;
+  }
+  const scene = STORY.scenes[state.sceneIdx];
+  state.history = [];
+  app.innerHTML = '';
+  $('topbar').style.display = 'flex';
+  $('sceneTag').textContent = scene.sceneTag;
+  $('sceneName').textContent = scene.sceneName;
+  $('progressBar').style.width = scene.progress + '%';
+
+  // 旁白
+  scene.narrations.forEach((n, i) => {
+    setTimeout(() => addNarration(n), i * 700);
+  });
+
+  // AI 开场白
+  setTimeout(() => {
+    addMessage('ai', scene.aiCharacter, scene.aiOpening);
+    state.history.push({ role: 'assistant', content: scene.aiOpening });
+    showOptions(scene);
+  }, scene.narrations.length * 700 + 400);
+}
+
+function addNarration(text) {
+  const div = document.createElement('div');
+  div.className = 'narration-card';
+  div.textContent = text;
+  app.appendChild(div);
+  scrollToBottom();
+}
+
+function addMessage(role, name, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="name"><b>${name}</b></div>
+    <div class="bubble">${escapeHtml(text)}</div>
+  `;
+  app.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+function addLoading(name) {
+  const div = document.createElement('div');
+  div.className = 'msg ai loading';
+  div.innerHTML = `<div class="name"><b>${name}</b></div><div class="bubble">·</div>`;
+  app.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function scrollToBottom() {
+  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+}
+
+/* ================================================================
+ *  选项 + 自由输入
+ * ================================================================ */
+function showOptions(scene) {
+  $('optionsWrap').style.display = 'block';
+  const inner = $('optionsInner');
+  inner.innerHTML = '';
+
+  scene.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn ' + (opt.cls || '');
+    btn.innerHTML = `<span class="tag">${opt.tag}</span>${opt.text}`;
+    btn.onclick = () => onUserChoose(scene, opt.text, opt.tag);
+    inner.appendChild(btn);
+  });
+
+  if (scene.allowFreeInput) {
+    const wrap = document.createElement('div');
+    wrap.className = 'free-input';
+    wrap.innerHTML = `
+      <textarea id="freeInputBox" placeholder="${scene.freeInputHint || '自由发挥…'}" rows="1"></textarea>
+      <button id="freeInputBtn">发送</button>
+    `;
+    inner.appendChild(wrap);
+    const ta = $('freeInputBox');
+    const sendBtn = $('freeInputBtn');
+    ta.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+    });
+    sendBtn.onclick = () => {
+      const v = ta.value.trim();
+      if (!v) return;
+      onUserChoose(scene, v, '自由');
+    };
+  }
+}
+
+async function onUserChoose(scene, text, tag) {
+  if (state.busy) return;
+  state.busy = true;
+  $('optionsWrap').style.display = 'none';
+
+  addMessage('me', '庄寒雁', text);
+  state.history.push({ role: 'user', content: text });
+
+  // 调用 LLM
+  const persona = PERSONAS[scene.aiPersona];
+  const loading = addLoading(scene.aiCharacter);
+
+  try {
+    const reply = await chatWithAI(persona, state.history);
+    loading.remove();
+    addMessage('ai', scene.aiCharacter, reply);
+    state.history.push({ role: 'assistant', content: reply });
+
+    // 一轮过后进入下一场景（每场景只对话 1 轮，节奏紧凑）
+    setTimeout(() => {
+      addContinueButton();
+    }, 800);
+  } catch (err) {
+    loading.remove();
+    addMessage('ai', '系统', '⚠️ ' + err.message);
+    setTimeout(() => addContinueButton(), 800);
+  } finally {
+    state.busy = false;
+  }
+}
+
+function addContinueButton() {
+  $('optionsWrap').style.display = 'block';
+  const inner = $('optionsInner');
+  inner.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'option-btn recommended';
+  btn.style.textAlign = 'center';
+  btn.innerHTML = `→ 进入下一幕`;
+  btn.onclick = () => {
+    if (state.sceneIdx === STORY.scenes.length - 1) {
+      enterQTE();
+    } else {
+      nextScene();
+    }
+  };
+  inner.appendChild(btn);
+}
+
+/* ================================================================
+ *  调用 DeepSeek
+ * ================================================================ */
+async function chatWithAI(persona, history) {
+  const messages = [
+    { role: 'system', content: persona.system },
+    ...history
+  ];
+  const resp = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, temperature: 0.9, max_tokens: 200 })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.reply || '（沉默良久，未发一言。）';
+}
+
+/* ================================================================
+ *  QTE - 暗巷追杀
+ * ================================================================ */
+function enterQTE() {
+  $('topbar').style.display = 'none';
+  $('optionsWrap').style.display = 'none';
+  app.innerHTML = '';
+  $('qteOverlay').classList.add('active');
+  generateRain();
+}
+
+function generateRain() {
+  const rain = $('rain');
+  rain.innerHTML = '';
+  for (let i = 0; i < 60; i++) {
+    const drop = document.createElement('i');
+    const left = Math.random() * 100;
+    const dur = 0.4 + Math.random() * 0.6;
+    const delay = Math.random() * 2;
+    const len = 8 + Math.random() * 14;
+    drop.style.left = left + '%';
+    drop.style.height = len + 'px';
+    drop.style.animationDuration = dur + 's';
+    drop.style.animationDelay = delay + 's';
+    rain.appendChild(drop);
+  }
+}
+
+async function startQTE() {
+  const startBtn = $('qteStartBtn');
+  const tip = $('qteTip');
+  startBtn.disabled = true;
+  startBtn.textContent = '请求权限…';
+  tip.textContent = '请允许麦克风权限';
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    tip.innerHTML = '<span style="color:#c2473a;">⚠️ 未获取麦克风权限。<br/>将进入"自救"分支结局…</span>';
+    setTimeout(() => showEnding('captured', { db: 0, hit: 0 }), 2200);
+    return;
+  }
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+
+  // 切到实时检测 UI
+  startBtn.style.display = 'none';
+  $('qteMeterWrap').style.display = 'block';
+  $('qteSub').textContent = '🎤 大声喊：救——命——！';
+  tip.textContent = '5 秒挑战中，分贝越大越久越好';
+
+  const cfg = STORY.qte;
+  const startTime = Date.now();
+  let maxDB = 0, hitFrames = 0;
+
+  const timer = setInterval(() => {
+    analyser.getByteFrequencyData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) sum += data[i];
+    const avg = sum / data.length;
+    // 估算伪分贝：avg 0~255 → 30~100 dB
+    const db = Math.min(100, Math.max(0, 30 + (avg / 255) * 80));
+
+    if (db > 50) hitFrames++;
+    if (db > maxDB) maxDB = db;
+
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remain = Math.max(0, cfg.duration / 1000 - elapsed);
+
+    $('qteDB').textContent = Math.round(db);
+    $('qteDBBar').style.width = Math.min(100, (db / 100) * 100) + '%';
+    $('qteHit').textContent = (hitFrames * cfg.sampleInterval / 1000).toFixed(1);
+    $('qteHitBar').style.width = Math.min(100, (hitFrames / cfg.successHit) * 100) + '%';
+    $('qteTime').textContent = remain.toFixed(1);
+
+    if (elapsed >= cfg.duration / 1000) {
+      clearInterval(timer);
+      stream.getTracks().forEach(t => t.stop());
+      audioCtx.close();
+      judgeResult(maxDB, hitFrames);
+    }
+  }, cfg.sampleInterval);
+}
+
+function judgeResult(maxDB, hitFrames) {
+  const cfg = STORY.qte;
+  let endingKey = 'captured';
+  let stars = 1;
+  if (maxDB >= cfg.successDB && hitFrames >= cfg.successHit) {
+    endingKey = 'fuyunxi'; stars = 3;
+  } else if (maxDB >= cfg.midDB && hitFrames >= cfg.midHit) {
+    endingKey = 'zhuoqi'; stars = 2;
+  }
+  state.finalScore = { db: Math.round(maxDB), hit: (hitFrames * cfg.sampleInterval / 1000).toFixed(1), stars };
+  setTimeout(() => showEnding(endingKey, state.finalScore), 600);
+}
+
+/* ================================================================
+ *  结局屏
+ * ================================================================ */
+function showEnding(key, score) {
+  $('qteOverlay').classList.remove('active');
+  const ending = STORY.endings[key];
+  app.innerHTML = `
+    <div class="ending">
+      <div class="stars">${ending.stars}</div>
+      <h2>${ending.title}</h2>
+      <div class="ep-name">${ending.epName}</div>
+      <div class="ep-desc">
+        ${ending.desc.map(p => `<p>${p}</p>`).join('')}
+      </div>
+      <div class="ep-stats">
+        <span>峰值分贝 <b>${score.db || 0} dB</b></span>
+        <span>持续呼救 <b>${score.hit || 0} 秒</b></span>
+        <span>评级 <b>${ending.stars}</b></span>
+      </div>
+      <div>
+        <button class="restart-btn primary" onclick="location.reload()">再玩一次</button>
+        <button class="restart-btn" onclick="window.location.href='/'">返回笔记</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ================================================================
+ *  启动
+ * ================================================================ */
+showTitleScreen();
+</script>
+
+</body>
+</html>
