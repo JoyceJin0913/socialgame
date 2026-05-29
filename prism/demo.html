@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism · 场景棱镜</title>
+<style>
+  :root {
+    --bg: #07070b;
+    --bg-1: #0e0e16;
+    --bg-2: #14141f;
+    --line: rgba(255,255,255,0.07);
+    --line-2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --text-dim: #9090a8;
+    --text-faint: #555568;
+    --iris: #8b7fff;
+    --iris-soft: rgba(139,127,255,0.12);
+    --r: #ff6b8a;
+    --o: #ffb15a;
+    --y: #ffe066;
+    --g: #6dff9e;
+    --c: #5dd5ff;
+    --b: #7a92ff;
+    --v: #c98aff;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    font-weight: 300;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% -10%, rgba(139,127,255,0.12), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 0% 100%, rgba(93,213,255,0.06), transparent 50%),
+      radial-gradient(ellipse 50% 35% at 100% 50%, rgba(201,138,255,0.05), transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+  main { position: relative; z-index: 1; }
+
+  h1, h2, h3 { font-weight: 200; letter-spacing: -0.01em; }
+  .mono { font-family: var(--mono); }
+  ::selection { background: var(--iris-soft); color: var(--iris); }
+
+  /* === Step indicator === */
+  .step-nav {
+    position: fixed;
+    left: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  @media (max-width: 980px) { .step-nav { display: none; } }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--line-2);
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .step-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 20px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: var(--mono);
+    text-transform: uppercase;
+  }
+  .step-dot:hover::after { opacity: 1; }
+  .step-dot.active {
+    background: var(--iris);
+    box-shadow: 0 0 12px var(--iris);
+    transform: scale(1.4);
+  }
+
+  /* === Section base === */
+  section {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 120px 32px 0;
+    scroll-margin-top: 40px;
+  }
+  section:last-of-type { padding-bottom: 120px; }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--iris);
+    letter-spacing: 0.3em;
+    margin-bottom: 16px;
+  }
+  .sh-h {
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.25;
+    margin-bottom: 20px;
+  }
+  .sh-sub {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 640px;
+    margin-bottom: 48px;
+    line-height: 1.75;
+  }
+  .sh-sub strong { color: var(--text); font-weight: 400; }
+  .accent { color: var(--iris); }
+
+  /* === HERO === */
+  .hero {
+    padding: 140px 32px 80px;
+    text-align: center;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .hero-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+    font-family: var(--mono);
+  }
+  .hero-mark .dot {
+    width: 6px; height: 6px;
+    background: var(--g);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--g);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .hero h1 {
+    font-size: clamp(44px, 8vw, 84px);
+    font-weight: 200;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(95deg, var(--r), var(--o) 25%, var(--g) 50%, var(--c) 75%, var(--v));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero .lede {
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    line-height: 1.75;
+  }
+  .hero .scroll-cue {
+    margin-top: 60px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    animation: scroll-hint 2s ease-in-out infinite;
+  }
+  @keyframes scroll-hint {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50% { transform: translateY(6px); opacity: 1; }
+  }
+
+  /* === Comparison card === */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+  .compare-card {
+    padding: 28px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  .compare-card.bad { border-color: rgba(255,107,138,0.25); }
+  .compare-card.good { border-color: rgba(139,127,255,0.4); }
+  .compare-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    font-family: var(--mono);
+    margin-bottom: 14px;
+  }
+  .compare-card.bad .compare-tag { background: rgba(255,107,138,0.12); color: var(--r); }
+  .compare-card.good .compare-tag { background: var(--iris-soft); color: var(--iris); }
+  .compare-card h3 {
+    font-size: 19px;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .compare-card p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .compare-card .demo-tree {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.9;
+  }
+  .compare-card .demo-tree .leaf { color: var(--text-faint); }
+  .compare-card .demo-tree .same { color: var(--r); }
+  .compare-card .demo-tree .diff { color: var(--g); }
+
+  /* === Insight visualization === */
+  .insight-frame {
+    padding: 40px;
+    background: linear-gradient(180deg, rgba(139,127,255,0.06), transparent);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    text-align: center;
+  }
+  .insight-frame .arrow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+  }
+  .insight-frame .box {
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+  }
+  .insight-frame .box.center {
+    border-color: var(--iris);
+    color: var(--iris);
+    background: var(--iris-soft);
+  }
+  .insight-frame .arrow {
+    color: var(--text-faint);
+    font-size: 18px;
+  }
+  .insight-frame .caption {
+    margin-top: 24px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .insight-frame .caption strong { color: var(--text); font-weight: 400; }
+
+  /* === Axis section (one by one) === */
+  .axis-block {
+    margin-top: 36px;
+    padding: 32px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    border-left: 3px solid;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 32px;
+  }
+  @media (max-width: 720px) {
+    .axis-block { grid-template-columns: 1fr; gap: 20px; }
+  }
+  .axis-block[data-a="S"] { border-left-color: var(--r); }
+  .axis-block[data-a="H"] { border-left-color: var(--o); }
+  .axis-block[data-a="N"] { border-left-color: var(--g); }
+  .axis-block[data-a="T"] { border-left-color: var(--c); }
+  .axis-block[data-a="A"] { border-left-color: var(--v); }
+
+  .axis-id {
+    text-align: center;
+  }
+  .axis-id .glyph {
+    font-size: 56px;
+    font-weight: 200;
+    font-family: var(--mono);
+    line-height: 1;
+    margin-bottom: 14px;
+  }
+  .axis-block[data-a="S"] .glyph { color: var(--r); }
+  .axis-block[data-a="H"] .glyph { color: var(--o); }
+  .axis-block[data-a="N"] .glyph { color: var(--g); }
+  .axis-block[data-a="T"] .glyph { color: var(--c); }
+  .axis-block[data-a="A"] .glyph { color: var(--v); }
+  .axis-id .en {
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.2em;
+    font-family: var(--mono);
+    text-transform: uppercase;
+  }
+  .axis-id .cn {
+    font-size: 16px;
+    color: var(--text);
+    margin-top: 4px;
+  }
+
+  .axis-detail h3 {
+    font-size: 22px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .axis-detail .lead {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+    line-height: 1.7;
+  }
+  .axis-detail .example-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .axis-example {
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .axis-example .e-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-right: 8px;
+  }
+  .axis-example .e-only {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--iris);
+    margin-left: 6px;
+  }
+  .axis-example.alt {
+    border-left: 2px solid currentColor;
+  }
+  .axis-block[data-a="S"] .axis-example.alt { color: var(--r); }
+  .axis-block[data-a="H"] .axis-example.alt { color: var(--o); }
+  .axis-block[data-a="N"] .axis-example.alt { color: var(--g); }
+  .axis-block[data-a="T"] .axis-example.alt { color: var(--c); }
+  .axis-block[data-a="A"] .axis-example.alt { color: var(--v); }
+  .axis-example.alt .text { color: var(--text); }
+
+  /* === Crystal explainer === */
+  .crystal-card {
+    padding: 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid var(--line-2);
+    border-radius: 18px;
+  }
+  .crystal-card .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .crystal-card h3 {
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 18px;
+  }
+  .crystal-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px 18px;
+    font-size: 13px;
+  }
+  .crystal-grid .k {
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding-top: 2px;
+  }
+  .crystal-grid .v {
+    color: var(--text);
+  }
+  .crystal-grid .v.must {
+    color: var(--g);
+  }
+  .crystal-grid .v.never {
+    color: var(--r);
+  }
+
+  /* === Combo: alpha beta gamma === */
+  .combo-intro {
+    padding: 28px;
+    background: var(--iris-soft);
+    border: 1px solid var(--iris);
+    border-radius: 16px;
+    margin-bottom: 32px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+  .combo-intro strong { color: var(--iris); font-weight: 500; }
+  .combo-intro .greek {
+    display: inline-block;
+    padding: 0 6px;
+    color: var(--iris);
+    font-weight: 600;
+  }
+
+  .slices {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 720px) { .slices { grid-template-columns: 1fr; } }
+  .slice {
+    padding: 22px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    border-top: 2px solid;
+  }
+  .slice.a { border-top-color: var(--r); }
+  .slice.b { border-top-color: var(--g); }
+  .slice.c { border-top-color: var(--v); }
+  .slice-h {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .slice-greek {
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+  }
+  .slice.a .slice-greek { color: var(--r); }
+  .slice.b .slice-greek { color: var(--g); }
+  .slice.c .slice-greek { color: var(--v); }
+  .slice-name {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .slice-axes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+  .slice-axes .pill {
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.3);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .slice-tone {
+    font-size: 13px;
+    color: var(--text);
+    font-style: italic;
+    padding: 10px 12px;
+    border-left: 2px solid currentColor;
+    background: rgba(0,0,0,0.25);
+    border-radius: 0 6px 6px 0;
+    line-height: 1.6;
+  }
+  .slice.a .slice-tone { color: var(--r); }
+  .slice.b .slice-tone { color: var(--g); }
+  .slice.c .slice-tone { color: var(--v); }
+  .slice-tone .text { color: var(--text); }
+
+  /* === Console (kept from previous, refined) === */
+  .console {
+    background: linear-gradient(180deg, rgba(20,20,31,0.6), rgba(8,8,12,0.6));
+    border: 1px solid var(--line-2);
+    border-radius: 22px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6);
+    margin-top: 36px;
+  }
+  .console-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,0.3);
+  }
+  .console-dots { display: flex; gap: 6px; }
+  .console-dots i {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.13);
+  }
+  .console-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .console-status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--g);
+    letter-spacing: 0.1em;
+  }
+  .console-status .ddot {
+    width: 6px; height: 6px;
+    background: var(--g);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--g);
+  }
+  .console-status.warn { color: var(--o); }
+  .console-status.warn .ddot { background: var(--o); box-shadow: 0 0 6px var(--o); }
+  .console-status.bad { color: var(--r); }
+  .console-status.bad .ddot { background: var(--r); box-shadow: 0 0 6px var(--r); }
+  .presets {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .presets-label {
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-right: 4px;
+  }
+  .preset {
+    padding: 7px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .preset:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .preset.active {
+    background: var(--iris-soft);
+    color: var(--iris);
+    border-color: var(--iris);
+  }
+  .preset .pg { margin-right: 6px; font-size: 14px; }
+  .console-body {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    min-height: 560px;
+  }
+  @media (max-width: 880px) { .console-body { grid-template-columns: 1fr; } }
+  .controls {
+    padding: 26px;
+    border-right: 1px solid var(--line);
+  }
+  @media (max-width: 880px) { .controls { border-right: none; border-bottom: 1px solid var(--line); } }
+  .ctrl { margin-bottom: 22px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .ctrl-badge {
+    width: 24px; height: 24px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #000;
+  }
+  .ctrl-badge.S { background: var(--r); }
+  .ctrl-badge.H { background: var(--o); }
+  .ctrl-badge.N { background: var(--g); }
+  .ctrl-badge.T { background: var(--c); }
+  .ctrl-badge.A { background: var(--v); }
+  .ctrl-name {
+    font-size: 13px; color: var(--text);
+  }
+  .ctrl-name small {
+    color: var(--text-faint);
+    font-size: 10px;
+    margin-left: 6px;
+    letter-spacing: 0.15em;
+    font-family: var(--mono);
+  }
+  .seg {
+    display: flex;
+    gap: 2px;
+    background: rgba(0,0,0,0.3);
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+  }
+  .seg button {
+    flex: 1;
+    padding: 8px 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 7px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .seg button:hover { color: var(--text); }
+  .seg button.on {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+  .ctrl-sublabel {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin: 12px 0 6px;
+  }
+  .npc-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .npc-chip {
+    padding: 7px 12px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .npc-chip:hover { color: var(--text); border-color: var(--text-faint); }
+  .npc-chip.on {
+    background: rgba(109,255,158,0.1);
+    color: var(--g);
+    border-color: rgba(109,255,158,0.4);
+  }
+  .slider-wrap input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--line-2);
+    border-radius: 2px;
+    outline: none;
+    margin: 6px 0;
+  }
+  .slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    background: var(--c);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--bg-1);
+    box-shadow: 0 0 0 1px var(--c), 0 0 10px rgba(93,213,255,0.5);
+  }
+  .slider-meta {
+    display: flex; justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+  }
+  .slider-meta b { color: var(--c); font-weight: 400; }
+  .output {
+    padding: 26px;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+  }
+  .out-tone {
+    font-size: 15px;
+    color: var(--text);
+    padding: 16px 20px;
+    background: linear-gradient(90deg, var(--iris-soft), transparent 70%);
+    border-left: 2px solid var(--iris);
+    border-radius: 0 12px 12px 0;
+    margin-bottom: 22px;
+    font-style: italic;
+    line-height: 1.6;
+    transition: all 0.4s;
+  }
+  .out-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-bottom: 14px;
+  }
+  .out-id b { color: var(--c); font-weight: 400; }
+  .out-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .out-head h5 {
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    font-weight: 400;
+  }
+  .out-head .count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--iris);
+  }
+  .choices {
+    display: flex; flex-direction: column;
+    gap: 10px; flex: 1;
+  }
+  .choice {
+    padding: 13px 15px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    transition: all 0.25s;
+    animation: appear 0.35s ease-out;
+  }
+  .choice:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--line-2);
+    transform: translateX(2px);
+  }
+  @keyframes appear {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .choice-text {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 7px;
+    line-height: 1.55;
+  }
+  .choice-meta {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+  .hook-tag {
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(93,213,255,0.1);
+    color: var(--c);
+  }
+  .req-tag {
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,177,90,0.1);
+    color: var(--o);
+  }
+  .new-tag {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--iris-soft);
+    color: var(--iris);
+    font-size: 9px;
+    margin-left: 6px;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 13px;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    font-style: italic;
+  }
+  .diff {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--line);
+  }
+  .diff h5 {
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+  .diff-list {
+    display: flex; flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+  .diff-list .item::before {
+    content: '◆';
+    color: var(--iris);
+    margin-right: 8px;
+  }
+  .diff-list .item b { color: var(--text); font-weight: 400; }
+  .diff-list .none { color: var(--text-faint); font-style: italic; }
+
+  /* === Brewed callout === */
+  .brewed {
+    margin-top: 36px;
+    padding: 28px;
+    background: rgba(255,177,90,0.05);
+    border: 1px solid rgba(255,177,90,0.25);
+    border-radius: 16px;
+  }
+  .brewed h4 {
+    font-size: 14px;
+    color: var(--o);
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .brewed p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .brewed code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: rgba(0,0,0,0.4);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--c);
+  }
+
+  footer {
+    padding: 60px 32px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 11px;
+    border-top: 1px solid var(--line);
+    margin-top: 100px;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<main>
+
+<!-- Step nav -->
+<div class="step-nav" id="stepNav">
+  <div class="step-dot active" data-target="hero" data-label="START"></div>
+  <div class="step-dot" data-target="step1" data-label="01 · 痛点"></div>
+  <div class="step-dot" data-target="step2" data-label="02 · 洞察"></div>
+  <div class="step-dot" data-target="step3" data-label="03 · 晶体"></div>
+  <div class="step-dot" data-target="step4" data-label="04 · 五轴"></div>
+  <div class="step-dot" data-target="step5" data-label="05 · 组合"></div>
+  <div class="step-dot" data-target="step6" data-label="06 · 实战"></div>
+  <div class="step-dot" data-target="step7" data-label="07 · 协作"></div>
+</div>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="hero">
+  <div class="hero-mark">
+    <span class="dot"></span>
+    PRISM · 世界切片多样性方法
+  </div>
+  <h1>把<span class="grad">一段剧情</span><br>变成<span class="grad">N 个世界</span>。</h1>
+  <p class="lede">
+    一种为互动文游设计的方法论。<br>
+    让作者不必为每个分支写一遍，让玩家在不同世界里看到不同戏。
+  </p>
+  <div class="scroll-cue">↓ SCROLL TO BEGIN</div>
+</header>
+
+<!-- ============ STEP 1 · 痛点 ============ -->
+<section id="step1">
+  <div class="step-num">STEP 01 · 问题</div>
+  <h2 class="sh-h">大多数互动文游的"分支"<br>其实<span class="accent">只是装饰</span>。</h2>
+  <p class="sh-sub">
+    你点 A，三句话之后回主线。你点 B，三句话之后也回主线。<br>
+    选项写了三个，玩家走了三遍发现都一样——这就是"假分支"。
+  </p>
+
+  <div class="compare">
+    <div class="compare-card bad">
+      <span class="compare-tag">传统分支树</span>
+      <h3>3 个选项 = 3 段不同文本</h3>
+      <p>每个选项作者写一段台词，互相之间不影响，三句话后剧情合流。</p>
+      <div class="demo-tree">
+节点："傅云夕凯旋归来"
+├─ 选项 A："我等你回来" → <span class="same">合流</span>
+├─ 选项 B："你必须回来" → <span class="same">合流</span>
+└─ 选项 C："……好"      → <span class="same">合流</span>
+                       <br>↓<br>
+        所有人都看到<span class="same">同样的下一幕</span>
+      </div>
+    </div>
+
+    <div class="compare-card good">
+      <span class="compare-tag">Prism 折射</span>
+      <h3>3 个选项 × N 个世界 = 涌现</h3>
+      <p>选项只是一份候选清单。具体哪几个出现、代价多大，由"当前世界"决定。</p>
+      <div class="demo-tree">
+节点："傅云夕凯旋归来"
+├─ 在<span class="diff">正堂当众</span> → 仅 3 项可见
+├─ 在<span class="diff">偏院私下</span> → 多 2 项浮出
+└─ 在<span class="diff">暗夜独处</span> → 不同的代价倍率
+                       <br>↓<br>
+       <span class="diff">每个玩家看到不同的戏</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STEP 2 · 洞察 ============ -->
+<section id="step2">
+  <div class="step-num">STEP 02 · 洞察</div>
+  <h2 class="sh-h">节点不是<span class="accent">写好的内容</span>，<br>是一个<span class="accent">生成器函数</span>。</h2>
+  <p class="sh-sub">
+    我们换一种思考方式。作者不再写"在 X 场景下，玩家有 3 个选项"。<br>
+    作者写：<strong>这个节点必须发生什么戏剧功能</strong>，加上 <strong>一份候选选项池</strong>。<br>
+    具体长什么样、有哪些选项、代价多少——由当前世界状态在运行时算出来。
+  </p>
+
+  <div class="insight-frame">
+    <div class="arrow-row">
+      <div class="box">作者写：晶体</div>
+      <div class="arrow">×</div>
+      <div class="box center">当前世界状态</div>
+      <div class="arrow">=</div>
+      <div class="box">玩家看到的这一幕</div>
+    </div>
+    <div class="caption">
+      <strong>晶体</strong> 是不变的（必须发生什么）；<strong>世界状态</strong> 是变化的（在哪、谁在、几点、什么舆论）。<br>
+      乘起来就是<strong>玩家此刻看到的戏</strong>。
+    </div>
+  </div>
+</section>
+
+<!-- ============ STEP 3 · 什么是晶体 ============ -->
+<section id="step3">
+  <div class="step-num">STEP 03 · 晶体</div>
+  <h2 class="sh-h">先讲<span class="accent">晶体</span>（Crystal）。<br>它是节点的"骨架"。</h2>
+  <p class="sh-sub">
+    晶体只描述<strong>戏剧功能</strong>，不描述具体场景。它是节点中不变的部分。<br>
+    我们用一个真实例子。
+  </p>
+
+  <div class="crystal-card">
+    <div class="label">CRYSTAL · 案例</div>
+    <h3>"凯旋归来 · 王妃之位被夺"</h3>
+    <div class="crystal-grid">
+      <div class="k">必须发生</div>
+      <div class="v must">· 男主当众未维护女主<br>· 西戎公主以身份压她<br>· 女主必须做出第一次表态</div>
+      <div class="k">必须不发生</div>
+      <div class="v never">· 男主当众解释真相<br>· 女主与公主动手</div>
+      <div class="k">戏剧功能</div>
+      <div class="v">让玩家亲历"被替代"的当众羞辱</div>
+    </div>
+  </div>
+
+  <p class="sh-sub" style="margin-top:32px;">
+    这个晶体可以发生在<strong>金銮殿、王府大厅、新春宴上、雪后回廊</strong>——任何场景都行，只要满足上面那几条。<br>
+    晶体不绑定场景。绑定场景的，是接下来要讲的<strong>五轴</strong>。
+  </p>
+</section>
+
+<!-- ============ STEP 4 · 五轴 ============ -->
+<section id="step4">
+  <div class="step-num">STEP 04 · 五轴</div>
+  <h2 class="sh-h">世界被分成<span class="accent">五条独立的轴</span>。<br>每个轴管一件事。</h2>
+  <p class="sh-sub">
+    五轴是<strong>正交的</strong>——你可以单独调任何一个轴，不会破坏剧情的"必须发生"。<br>
+    下面一个一个讲，每个轴都用同一个晶体演示<strong>只调这一个轴</strong>会发生什么。
+  </p>
+
+  <!-- AXIS S -->
+  <div class="axis-block" data-a="S">
+    <div class="axis-id">
+      <div class="glyph">S</div>
+      <div class="en">SCENE</div>
+      <div class="cn">场景舞台</div>
+    </div>
+    <div class="axis-detail">
+      <h3>事件发生在<strong style="color:var(--r);">哪里</strong>。</h3>
+      <p class="lead">同一段戏，在"大庭广众"和"密室单独"下，玩家能用的道具、敢说的话、付出的代价完全不同。</p>
+      <div class="example-label">同一晶体，只调 S 轴</div>
+      <div class="axis-example alt">
+        <span class="e-label">S = 金銮殿</span><span class="text">退路：无 · 旁观者：满朝文武 · 代价：每一句记入起居注</span>
+      </div>
+      <div class="axis-example alt">
+        <span class="e-label">S = 王府偏院</span><span class="text">退路：可推门走人 · 旁观者：只有丫鬟 · 代价：低，但无人作证</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AXIS H -->
+  <div class="axis-block" data-a="H">
+    <div class="axis-id">
+      <div class="glyph">H</div>
+      <div class="en">HIDDEN</div>
+      <div class="cn">隐藏信息</div>
+    </div>
+    <div class="axis-detail">
+      <h3>玩家<strong style="color:var(--o);">知道多少真相</strong>。</h3>
+      <p class="lead">同一段对峙，玩家"完全不知道男主装的"和"已经隐约察觉男主装的"，能做的选择完全不同。这是 Prism 最强的多样性引擎。</p>
+      <div class="example-label">同一晶体，只调 H 轴</div>
+      <div class="axis-example alt">
+        <span class="e-label">H · 男主装冷淡 = 未知</span><span class="text">玩家以为他变了心，会出现"撕休书"等情绪化选项</span>
+      </div>
+      <div class="axis-example alt">
+        <span class="e-label">H · 男主装冷淡 = 暗示</span><span class="text">多出"借故试探袖中药瓶"等理性选项 <span class="e-only">NEW</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AXIS N -->
+  <div class="axis-block" data-a="N">
+    <div class="axis-id">
+      <div class="glyph">N</div>
+      <div class="en">NPC</div>
+      <div class="cn">在场人物</div>
+    </div>
+    <div class="axis-detail">
+      <h3><strong style="color:var(--g);">谁在</strong>、谁缺席、谁在暗处看。</h3>
+      <p class="lead">"半在场"（戴面具、躲屏风后）尤其关键——它让同一场戏可触发的回调完全改变，却不破坏戏剧功能。</p>
+      <div class="example-label">同一晶体，只调 N 轴</div>
+      <div class="axis-example alt">
+        <span class="e-label">N = {继母, 父亲, 兄长}</span><span class="text">家族公审氛围，玩家要顾及家规体面</span>
+      </div>
+      <div class="axis-example alt">
+        <span class="e-label">N = {继母} + 暗处面具人</span><span class="text">出现"向暗处递暗号"的全新选项 <span class="e-only">NEW</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AXIS T -->
+  <div class="axis-block" data-a="T">
+    <div class="axis-id">
+      <div class="glyph">T</div>
+      <div class="en">TIME</div>
+      <div class="cn">时间压力</div>
+    </div>
+    <div class="axis-detail">
+      <h3>距离下一个<strong style="color:var(--c);">不可逆事件</strong>还有多久。</h3>
+      <p class="lead">时间不直接改变选项内容，但决定哪些选项还来得及做。当时间逼近，"找师父商量"会消失，"立刻硬刚"会浮出。</p>
+      <div class="example-label">同一晶体，只调 T 轴</div>
+      <div class="axis-example alt">
+        <span class="e-label">T = 14 小时</span><span class="text">可选项：观望、求助、布局、试探，全都来得及</span>
+      </div>
+      <div class="axis-example alt">
+        <span class="e-label">T = 3 小时</span><span class="text">长线选项消失，浮出"借更衣脱身"等紧急路径 <span class="e-only">NEW</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AXIS A -->
+  <div class="axis-block" data-a="A">
+    <div class="axis-id">
+      <div class="glyph">A</div>
+      <div class="en">AMBIENT</div>
+      <div class="cn">环境噪声</div>
+    </div>
+    <div class="axis-detail">
+      <h3>世界对玩家选择的<strong style="color:var(--v);">放大或反弹</strong>。</h3>
+      <p class="lead">流言风向、天气、市井情绪——它们不改变选项本身，但是选项<strong>代价</strong>的乘数。雪夜里硬刚的反响是平日的两倍。</p>
+      <div class="example-label">同一晶体，只调 A 轴</div>
+      <div class="axis-example alt">
+        <span class="e-label">A · 舆论 = 中立 / 天气 = 晴</span><span class="text">所有选择的代价 ×1.0，按"标价"结算</span>
+      </div>
+      <div class="axis-example alt">
+        <span class="e-label">A · 舆论 = 嘲弄 / 天气 = 雪夜</span><span class="text">所有代价 ×2.0，硬刚的收益和风险都加倍</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STEP 5 · 组合 ============ -->
+<section id="step5">
+  <div class="step-num">STEP 05 · 组合</div>
+  <h2 class="sh-h">把<span class="accent">五轴组合起来</span>，<br>就得到一个"世界切片"。</h2>
+  <p class="sh-sub">
+    五轴中的每个轴有 2–3 个选择，组合起来理论上能产生几十种切片。<br>
+    我们手动挑出 3 个最有戏剧差异的，分别命名为 <strong>α、β、γ</strong>。
+  </p>
+
+  <div class="combo-intro">
+    <strong>命名约定：</strong>
+    <span class="greek">α</span>、<span class="greek">β</span>、<span class="greek">γ</span> 只是这三个切片的代号（像变量名 a、b、c），<br>
+    它们对应的是<strong>不同的五轴配置</strong>，不是不同的剧情节点。<br>
+    同一个晶体，三种切片，三个世界。
+  </div>
+
+  <div class="slices">
+    <div class="slice a">
+      <div class="slice-h"><div class="slice-greek">α</div><div class="slice-name">王府大厅 · 凯旋之日</div></div>
+      <div class="slice-axes">
+        <span class="pill">S 大厅</span><span class="pill">H 未知</span>
+        <span class="pill">N 4 人</span><span class="pill">T 14h</span><span class="pill">A 中立</span>
+      </div>
+      <div class="slice-tone"><span class="text">众人环视，气氛骤变，每一句话都被传出去。</span></div>
+    </div>
+
+    <div class="slice b">
+      <div class="slice-h"><div class="slice-greek">β</div><div class="slice-name">王府偏院 · 当夜</div></div>
+      <div class="slice-axes">
+        <span class="pill">S 偏院</span><span class="pill">H 暗示</span>
+        <span class="pill">N 2 人</span><span class="pill">T 8h</span><span class="pill">A 嘲弄</span>
+      </div>
+      <div class="slice-tone"><span class="text">一盏灯下，没人作证，但你隐约察觉他装了什么。</span></div>
+    </div>
+
+    <div class="slice c">
+      <div class="slice-h"><div class="slice-greek">γ</div><div class="slice-name">雪夜后山 · 偶遇面具人</div></div>
+      <div class="slice-axes">
+        <span class="pill">S 后山</span><span class="pill">H 确认</span>
+        <span class="pill">N 面具人</span><span class="pill">T 3h</span><span class="pill">A 雪夜</span>
+      </div>
+      <div class="slice-tone"><span class="text">寒夜中暗影闪过，你已经知道他是谁。</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STEP 6 · 实战 ============ -->
+<section id="step6">
+  <div class="step-num">STEP 06 · 实战</div>
+  <h2 class="sh-h">现在<span class="accent">自己调一调</span>。</h2>
+  <p class="sh-sub">
+    左侧改任何一个轴，右侧的选项会即时重新涌现。<br>
+    带 <strong style="color:var(--iris);">NEW</strong> 标签的，是相对 α 基线"新长出来"的选项——这就是<strong>同一段剧情，不同世界</strong>的具体形态。
+  </p>
+
+  <div class="console">
+    <div class="console-bar">
+      <div class="console-dots"><i></i><i></i><i></i></div>
+      <div class="console-title">prism.refract( "fuyunxi_return" )</div>
+      <div class="console-status" id="status">
+        <span class="ddot"></span>
+        <span id="status-text">VALID</span>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="presets-label">预设切片</div>
+      <button class="preset active" data-preset="alpha"><span class="pg">α</span>大厅凯旋</button>
+      <button class="preset" data-preset="beta"><span class="pg">β</span>偏院夜访</button>
+      <button class="preset" data-preset="gamma"><span class="pg">γ</span>雪夜后山</button>
+    </div>
+
+    <div class="console-body">
+      <div class="controls">
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-badge S">S</span>
+            <span class="ctrl-name">场景舞台 <small>SCENE</small></span>
+          </div>
+          <div class="seg" id="seg-S">
+            <button data-val="hall" class="on">大厅</button>
+            <button data-val="courtyard">偏院</button>
+            <button data-val="mountain">后山</button>
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-badge H">H</span>
+            <span class="ctrl-name">隐藏信息 <small>HIDDEN</small></span>
+          </div>
+          <div class="ctrl-sublabel">男主在装冷淡（真相）</div>
+          <div class="seg" id="seg-H">
+            <button data-state="unknown" class="on">未知</button>
+            <button data-state="hinted">暗示</button>
+            <button data-state="confirmed">已确认</button>
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-badge N">N</span>
+            <span class="ctrl-name">在场人物 <small>NPC</small></span>
+          </div>
+          <div class="npc-chips" id="chips-N">
+            <div class="npc-chip on" data-npc="court">朝臣</div>
+            <div class="npc-chip on" data-npc="princess">伊琳娜公主</div>
+            <div class="npc-chip" data-npc="elder">族中长辈</div>
+            <div class="npc-chip" data-npc="maid">心腹丫鬟</div>
+            <div class="npc-chip" data-npc="masked">面具人（暗处）</div>
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-badge T">T</span>
+            <span class="ctrl-name">时间压力 <small>TIME</small></span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="slider-T" min="1" max="24" value="14">
+            <div class="slider-meta">
+              <span>紧迫 1h</span>
+              <span>距离皇上颁旨 <b id="t-val">14</b>h</span>
+              <span>充裕 24h</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrl-head">
+            <span class="ctrl-badge A">A</span>
+            <span class="ctrl-name">环境噪声 <small>AMBIENT</small></span>
+          </div>
+          <div class="ctrl-sublabel">京中舆论</div>
+          <div class="seg" id="seg-A1">
+            <button data-val="sympathize">同情你</button>
+            <button data-val="neutral" class="on">中立</button>
+            <button data-val="mock">嘲弄你</button>
+          </div>
+          <div class="ctrl-sublabel">天气 / 代价倍率</div>
+          <div class="seg" id="seg-A2">
+            <button data-val="low" class="on">晴 ×1.0</button>
+            <button data-val="mid">雨 ×1.3</button>
+            <button data-val="high">雪夜 ×2.0</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="output">
+        <div class="out-id"><b>slice_id:</b> <span id="out-id">α-…</span></div>
+        <div class="out-tone" id="out-tone">…</div>
+
+        <div class="out-head">
+          <h5>涌现选项</h5>
+          <div class="count" id="count">0 / 0</div>
+        </div>
+        <div class="choices" id="choices"></div>
+
+        <div class="diff">
+          <h5>与 α 基线的差异</h5>
+          <div class="diff-list" id="diff"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STEP 7 · 协作 ============ -->
+<section id="step7">
+  <div class="step-num">STEP 07 · 协作</div>
+  <h2 class="sh-h">Prism 不接管<span class="accent">数值</span>，<br>它和数值系统<span class="accent">联调</span>。</h2>
+  <p class="sh-sub">
+    Prism 只回答一个问题：<strong>"在这个世界切片下，玩家此刻能看到哪些选项？"</strong><br>
+    "每个选项加多少分、扣多少声望、累积到什么阈值"——这是<strong>数值系统</strong>的活。<br>
+    两者通过一个叫做 <strong>numerics_hook</strong> 的接口位对接。
+  </p>
+
+  <div class="brewed">
+    <h4>◆ 与数值系统（Brewed）的接口契约</h4>
+    <p>Prism 在每个选项里只声明一件事：<strong>这个选项发生时，向数值系统抛出哪个语义事件</strong>。</p>
+    <p>例如选项"撕休书"会抛出 <code>event: "trust_collapse"</code>；数值系统决定这个事件值多少 courage、扣多少 trust_fuyunxi。</p>
+    <p style="margin-top:14px;">这种分工的好处：</p>
+    <p>· 改剧情：只动 Prism（加 slice、改 require）</p>
+    <p>· 改数值平衡：只动数值系统（调 event → 数值的映射表）</p>
+    <p>· 双方互不踩脚，可独立迭代</p>
+  </div>
+</section>
+
+<footer>
+  PRISM v0.3 · SAME STORY, DIFFERENT WORLDS · 改编自《重生之贵女难求》第 111–116 章
+</footer>
+
+</main>
+
+<script>
+// ============================================================
+// DATA · 候选选项池（作者只写这一份）
+// ============================================================
+const choicePool = [
+  // 大厅
+  { id: 'public_silent', text: '当众端庄请安，把屈辱咽下去', tags: [], hook: 'public_endure',
+    require: { S: 'hall', N: ['court'] },
+    delta: { '隐忍': '+', '勇气': '-' } },
+  { id: 'public_thorny', text: '当众回敬一句锋利的话，将了她一军', tags: [], hook: 'public_pushback',
+    require: { S: 'hall', N: ['princess'] },
+    delta: { '勇气': '+', '王府势力': '-' } },
+  { id: 'public_faint', text: '佯装体力不支，请求暂退', tags: [], hook: 'tactical_retreat',
+    require: { S: 'hall' },
+    delta: { '理智': '+', '机会': '-' } },
+  { id: 'public_appeal_sympathy', text: '借舆论同情，把流言反砸回去', tags: [], hook: 'rally_public',
+    require: { S: 'hall', A1: 'sympathize' },
+    delta: { '民意': '++', '王府势力': '-' } },
+
+  // 偏院
+  { id: 'courtyard_test', text: '故意提及旧事，试探他的反应', tags: [], hook: 'subtle_probe',
+    require: { S: 'courtyard' },
+    delta: { '情报': '+' } },
+  { id: 'courtyard_check_medicine', text: '借故凑近他袖口，闻一闻那股药味', tags: [], hook: 'investigate_secret',
+    require: { S: 'courtyard', H: 'hinted' },
+    delta: { '情报': '++', '信任傅云夕': '+' } },
+  { id: 'courtyard_silent_walk', text: '什么也不说，转身离开', tags: [], hook: 'silent_exit',
+    require: { S: 'courtyard' },
+    delta: { '理智': '+', '王府势力': '-' } },
+
+  // 后山
+  { id: 'mountain_observe_masked', text: '远远观察那个面具人，判断身份', tags: [], hook: 'identify_ally',
+    require: { S: 'mountain' },
+    delta: { '情报': '++' } },
+  { id: 'mountain_signal_help', text: '向暗处面具人递出预定暗号', tags: [], hook: 'call_ally',
+    require: { S: 'mountain', N: ['masked'], H: 'hinted_or_above' },
+    delta: { '盟友信任': '++', '暴露度': '+' } },
+  { id: 'mountain_confront_directly', text: '走过去直接揭穿："傅云夕，是你"', tags: [], hook: 'truth_revealed',
+    require: { S: 'mountain', H: 'confirmed' },
+    delta: { '信任傅云夕': '+++', '隐蔽': '---' } },
+
+  // 跨场景（紧急）
+  { id: 'urgent_change_clothes', text: '借更衣脱身，赶在颁旨前布局', tags: [], hook: 'emergency_setup',
+    require: { Tmax: 4 },
+    delta: { '理智': '+', '王府势力': '-' } },
+  { id: 'urgent_send_letter', text: '让心腹连夜送信给杨琦', tags: [], hook: 'reach_ally',
+    require: { N: ['maid'], Tmax: 6 },
+    delta: { '盟友信任': '+' } }
+];
+
+const tones = {
+  hall: {
+    sympathize: '众人环视，但你能感觉到风向已经在转。',
+    neutral:    '众人环视，气氛骤变，每一句话都被传出去。',
+    mock:       '冷眼如刀。连呼吸都成了把柄。'
+  },
+  courtyard: {
+    sympathize: '一盏灯下，对手的耐心其实比你想的更短。',
+    neutral:    '一对一，没人作证。你看着他，他没看你。',
+    mock:       '一盏灯下，没人作证，但你隐约察觉他装了什么。'
+  },
+  mountain: {
+    sympathize: '寒风里有暖意——你知道那个人没真的离开你。',
+    neutral:    '寒夜深处，香火比刀更冷。',
+    mock:       '寒夜中暗影闪过，京中的笑声还在你耳边。'
+  }
+};
+
+const presets = {
+  alpha: {
+    S: 'hall',
+    H: 'unknown',
+    N: ['court', 'princess'],
+    T: 14,
+    A: { rumor: 'neutral', reverb: 'low' }
+  },
+  beta: {
+    S: 'courtyard',
+    H: 'hinted',
+    N: ['princess', 'maid'],
+    T: 8,
+    A: { rumor: 'mock', reverb: 'mid' }
+  },
+  gamma: {
+    S: 'mountain',
+    H: 'confirmed',
+    N: ['masked'],
+    T: 3,
+    A: { rumor: 'mock', reverb: 'high' }
+  }
+};
+
+const baseline = JSON.parse(JSON.stringify(presets.alpha));
+let axes = JSON.parse(JSON.stringify(presets.alpha));
+
+const hRank = { unknown: 0, hinted: 1, confirmed: 2 };
+const reverbLabel = { low: 'x1.0', mid: 'x1.3', high: 'x2.0' };
+
+function matchChoice(c) {
+  const r = c.require;
+  if (r.S && r.S !== axes.S) return false;
+  if (r.N) {
+    if (!r.N.every(n => axes.N.includes(n))) return false;
+  }
+  if (r.H) {
+    if (r.H === 'hinted_or_above' && hRank[axes.H] < 1) return false;
+    else if (r.H !== 'hinted_or_above' && axes.H !== r.H) return false;
+  }
+  if (r.A1 && axes.A.rumor !== r.A1) return false;
+  if (r.Tmax !== undefined && axes.T > r.Tmax) return false;
+  return true;
+}
+
+function isNew(c) {
+  const saved = axes;
+  axes = baseline;
+  const inBaseline = matchChoice(c);
+  axes = saved;
+  return !inBaseline;
+}
+
+function render() {
+  const tone = (tones[axes.S] || {})[axes.A.rumor] || '…';
+  document.getElementById('out-tone').textContent = '"' + tone + '"';
+
+  const id = `${axes.S[0]}-${axes.H[0]}-n${axes.N.length}-t${axes.T}-${axes.A.rumor[0]}${axes.A.reverb[0]}`;
+  document.getElementById('out-id').textContent = id;
+
+  const visible = choicePool.filter(matchChoice);
+
+  const status = document.getElementById('status');
+  const statusText = document.getElementById('status-text');
+  status.className = 'console-status';
+  if (visible.length === 0) { status.classList.add('bad'); statusText.textContent = 'NO CHOICES'; }
+  else if (visible.length === 1) { status.classList.add('warn'); statusText.textContent = 'DEGRADED'; }
+  else { statusText.textContent = 'VALID'; }
+
+  document.getElementById('count').textContent = `${visible.length} / ${choicePool.length}`;
+
+  const choicesEl = document.getElementById('choices');
+  if (visible.length === 0) {
+    choicesEl.innerHTML = '<div class="empty">没有任何选项匹配当前世界状态。<br>玩家会被路由到 dead-end 或自动转场节点。</div>';
+  } else {
+    choicesEl.innerHTML = visible.map(c => {
+      const hookHtml = `<span class="hook-tag">→ ${c.hook}</span>`;
+      const deltaHtml = Object.entries(c.delta || {}).map(([k,v]) =>
+        `<span class="hook-tag" style="color:var(--text-dim);background:rgba(255,255,255,0.04);">${k} ${v}</span>`
+      ).join('');
+      const req = [];
+      if (c.require.H === 'hinted_or_above') req.push('需 H ≥ 暗示');
+      else if (c.require.H) req.push(`需 H = ${c.require.H}`);
+      if (c.require.Tmax !== undefined) req.push(`需 T ≤ ${c.require.Tmax}h`);
+      if (c.require.A1) req.push(`需 A·舆论 = ${c.require.A1}`);
+      const reqTags = req.map(r => `<span class="req-tag">${r}</span>`).join('');
+      const newTag = isNew(c) ? '<span class="new-tag">NEW</span>' : '';
+      return `
+        <div class="choice">
+          <div class="choice-text">${c.text}${newTag}</div>
+          <div class="choice-meta">${hookHtml}${deltaHtml}${reqTags}</div>
+        </div>`;
+    }).join('');
+  }
+
+  const diffs = [];
+  const sceneMap = { hall: '大厅', courtyard: '偏院', mountain: '后山' };
+  const hMap = { unknown: '未知', hinted: '暗示', confirmed: '已确认' };
+  if (axes.S !== baseline.S) diffs.push(`<span class="item">S 舞台：<b>${sceneMap[baseline.S]}</b> → <b>${sceneMap[axes.S]}</b></span>`);
+  if (axes.H !== baseline.H) diffs.push(`<span class="item">H 男主装冷：<b>${hMap[baseline.H]}</b> → <b>${hMap[axes.H]}</b></span>`);
+  const bn = baseline.N.slice().sort().join(','); const cn = axes.N.slice().sort().join(',');
+  if (bn !== cn) diffs.push(`<span class="item">N 在场：<b>${baseline.N.length}</b> 人 → <b>${axes.N.length}</b> 人</span>`);
+  if (axes.T !== baseline.T) diffs.push(`<span class="item">T 时间：<b>${baseline.T}h</b> → <b>${axes.T}h</b></span>`);
+  if (axes.A.rumor !== baseline.A.rumor || axes.A.reverb !== baseline.A.reverb) {
+    diffs.push(`<span class="item">A 噪声：代价倍率 <b>${reverbLabel[axes.A.reverb]}</b></span>`);
+  }
+  const diffEl = document.getElementById('diff');
+  diffEl.innerHTML = diffs.length === 0
+    ? '<span class="none">与 α 基线完全一致</span>'
+    : diffs.join('');
+}
+
+function bindSeg(id, onChange) {
+  const root = document.getElementById(id);
+  if (!root) return;
+  root.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      root.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      onChange(b);
+      clearPresets();
+      render();
+    });
+  });
+}
+function setSeg(id, val, attr = 'data-val') {
+  const root = document.getElementById(id);
+  if (!root) return;
+  root.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('on', b.getAttribute(attr) === val);
+  });
+}
+function clearPresets() {
+  document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+}
+
+bindSeg('seg-S', b => { axes.S = b.dataset.val; });
+bindSeg('seg-H', b => { axes.H = b.dataset.state; });
+bindSeg('seg-A1', b => { axes.A.rumor = b.dataset.val; });
+bindSeg('seg-A2', b => { axes.A.reverb = b.dataset.val; });
+
+document.querySelectorAll('#chips-N .npc-chip').forEach(c => {
+  c.addEventListener('click', () => {
+    const npc = c.dataset.npc;
+    const i = axes.N.indexOf(npc);
+    if (i >= 0) { axes.N.splice(i, 1); c.classList.remove('on'); }
+    else { axes.N.push(npc); c.classList.add('on'); }
+    clearPresets();
+    render();
+  });
+});
+
+const tSlider = document.getElementById('slider-T');
+tSlider.addEventListener('input', () => {
+  axes.T = parseInt(tSlider.value, 10);
+  document.getElementById('t-val').textContent = axes.T;
+  clearPresets();
+  render();
+});
+
+document.querySelectorAll('.preset').forEach(p => {
+  p.addEventListener('click', () => {
+    const key = p.dataset.preset;
+    axes = JSON.parse(JSON.stringify(presets[key]));
+    syncControls();
+    document.querySelectorAll('.preset').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    render();
+  });
+});
+
+function syncControls() {
+  setSeg('seg-S', axes.S, 'data-val');
+  setSeg('seg-H', axes.H, 'data-state');
+  setSeg('seg-A1', axes.A.rumor, 'data-val');
+  setSeg('seg-A2', axes.A.reverb, 'data-val');
+  document.querySelectorAll('#chips-N .npc-chip').forEach(c => {
+    c.classList.toggle('on', axes.N.includes(c.dataset.npc));
+  });
+  tSlider.value = axes.T;
+  document.getElementById('t-val').textContent = axes.T;
+}
+
+syncControls();
+render();
+
+// Step nav scrolling
+document.querySelectorAll('.step-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    const target = document.getElementById(dot.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+const sections = document.querySelectorAll('section, header.hero');
+const dots = document.querySelectorAll('.step-dot');
+const sectionMap = ['hero', 'step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7'];
+window.addEventListener('scroll', () => {
+  const scrollPos = window.scrollY + window.innerHeight * 0.4;
+  let active = 0;
+  sectionMap.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop <= scrollPos) active = i;
+  });
+  dots.forEach((d, i) => d.classList.toggle('active', i === active));
+});
+</script>
+</body>
+</html>
