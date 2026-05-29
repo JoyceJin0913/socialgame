@@ -1,366 +1,324 @@
-# 《重生之贵女难求》互动文 Demo 设计文档
+# 第五幕 · 双视角 Prism 剧本 Demo
 
-> 改编范围：原著第 111–128 章「寒毒前夜」
-> 设计框架：LivingBench seed → world × noise 人物生成法 × Story to Quadrant 四象限结局
-> 状态：**设计稿待确认**，确认后产出 JSON
+> 案例：把 socialgame 现有第五幕三场对话节点，用 Prism 五轴方法重写一遍。
+> 同一段戏，两个视角，演示"信息差即剧情"。
 
 ---
 
-## 一、Demo 范围与立意
+## 总述
 
-### 选段：111–128 章「寒毒前夜」
+socialgame repo 现有的第五幕三场：
 
-| 起点 | 终点 | 容量 |
+| 场次 | 现有实现 | Prism 重构后 |
 | --- | --- | --- |
-| 第 111 章 傅云夕凯旋归来、伊琳娜逼迫寒雁让出王妃之位 | 第 128 章 吴太医吐露傅云夕寒毒真相 | 约 18 章、30–40 节点足够 |
+| 一年之约 | 一个 scene，3 个固定选项 | 一个 Crystal，可在 3 个 Slice 下折射 |
+| 凯旋归来 | 一个 scene，3 个固定选项 | 一个 Crystal，可在 3 个 Slice 下折射 |
+| 一纸休书 | 一个 scene，3 个固定选项 | 一个 Crystal，可在 3 个 Slice 下折射 |
 
-### 为什么是这段
-- 信息差强：傅云夕的"冷淡"全是计中计，玩家以为是渣男转折，实则是男主在保护女主
-- 真正稀缺：时间（寒毒恶化）、信任（卓七）、信息（身世）、命（御前侍卫追杀）
-- 四象限天然成立：救男主成功/失败 × 寒雁信不信他，自然组合出四种结局
-- 自带 QTE：暗巷遇刺（125–126）、御前侍卫围杀、卓七湖中失踪
+**重构后获得什么**：
+1. 同一场戏在不同 H 轴下出现新选项（信息差驱动）
+2. 同一段对白可以让玩家切换视角再玩一遍——傅云夕视角的选项完全不同
+3. 选项不再写死代价，通过 `numerics_hook` 抛给数值系统决定
 
 ---
 
-## 二、人物 Seed 卡（六个核心角色）
+## 视角 A · 寒雁视角
 
-> 借鉴 LivingBench 的"种子→花"思路：每个角色不是固定的台词机器，而是 **persona（动机/压力/隐藏事实/披露策略）× world（当前场景）× noise（玩家行为/突发事件）** 三者共同生成行为。
+### 场 A1 · 一年之约
 
-### Seed 1：庄寒雁（玩家视角主角）
+#### Crystal
 
 ```yaml
-core_drive:        从"复仇者"过渡到"敢于托付的爱人"
-external_goal:    救傅云夕 / 自保 / 查清身世
-internal_task:    放下前世背叛阴影，敢信任、敢承认爱
-hidden_facts:
-  - 上一世死于洞房毒酒
-  - 上一世记得"傅云夕战场归来后病重，西戎公主冲喜"
-  - 怀疑自己非庄仕洋亲生
-stress_sources:
-  - 王府下人见风使舵
-  - 流言"下堂妇"扩散
-  - 御前侍卫追杀 → 矛头指向皇上
-disclosure_strategy:
-  - 对汲蓝姝红：坦白
-  - 对傅云夕：客气时自称"妾身"，亲近时自称"我"  ← 用词本身就是状态指示器
-  - 对卓七：警觉、刻意疏远
-  - 对杨琦：谨慎试探
-numeric_tendency:
-  ration: 80    # 理智
-  courage: 65   # 勇气
-  trust: 25     # 信任值（重生后默认低）
-  identity: 30  # 身份认同
+crystal_id: act5_one_year_vow
+dramatic_function: 让玩家亲历"明明在乎，却必须放手"
+must_happen:
+  - 男主主动制造距离（出征命令）
+  - 女主必须做出第一次回应
+  - 男主真实意图（隐疾）此刻不能直接说出
+must_not_happen:
+  - 男主当面坦白寒毒
+  - 女主与男主当夜决裂
 ```
 
-### Seed 2：傅云夕（男主，关键 NPC）
+#### Slice α · 雪夜书房 · 一年之约（默认）
 
 ```yaml
-core_drive:        把寒毒病情作为饵，引太后/七皇子提前出手
-external_goal:    扳倒太后阵营 + 保住寒雁
-internal_task:    在生命所剩无多时，放下"保护她而冷漠"的执念
-hidden_facts:
-  - 真正寒毒病情（仅吴太医知道）
-  - 与伊琳娜的婚约是假，意在伪装
-  - 御前侍卫追杀是皇上自保，与他无关
-disclosure_strategy:
-  - 表层：当众冷漠寒雁、欲娶伊琳娜
-  - 中层：戴面具暗中救她
-  - 深层：把蓝玉鱼簪当成两人唯一的暗号
-runtime_state:
-  remaining_time: hidden_resource  # 隐藏倒计时
-  cold_signal: 0-100              # 寒毒发作度
+axes:
+  S: study              # 王府书房
+  H: { illness: unknown }  # 寒雁不知道男主有寒毒
+  N: [fyx, maid]
+  T: 20                 # 出征还有一夜，时间足
+  A: { rumor: private, weather: snow }
+tone_hint: 雪意未消，他唤你过去，灯只点了一盏。
 ```
 
-### Seed 3：卓七（西戎皇子，半敌半友）
+#### Choice Pool（按 require 涌现）
 
-```yaml
-core_drive:        在西戎国主追杀下保命 + 借大宗势力夺回王位
-external_goal:    暂时藏身 + 寻找盟友
-internal_task:    第一次想"为一个人停下来"
-hidden_facts:
-  - 身上有未愈毒伤
-  - 妹妹伊琳娜是国主派来的"和亲眼线"
-  - 真正讨厌他的不是大宗而是自己国家
-disclosure_strategy:
-  - 默认：嚣张邪气，调戏寒雁
-  - 触发点："你担心我"——一旦感知到寒雁的关心，会卸防
-  - 关键反转：会主动暴露身份（"对你，我是第一次主动暴露身份"）
-behavior_rule:
-  - 寒雁对他每升 1 点信任，他对寒雁让步 2 点
-  - 寒雁若把他当工具利用，他会反向暴露给七皇子
-```
-
-### Seed 4：伊琳娜（西戎公主，明面反派）
-
-```yaml
-core_drive:        完成国主任务 + 真心爱慕傅云夕
-external_goal:    成为玄清王妃
-internal_task:    （无成长，是 catalyst 而非主角）
-hidden_facts:
-  - 是西戎国主派来监视卓七的眼线
-  - 真以为傅云夕被她打动了
-disclosure_strategy:
-  - 高姿态、用"公主"身份压人
-  - 但傅云夕越冷淡，她越觉得是"还没攻略到"
-trigger_rule:
-  - 寒雁若主动示弱 → 她更嚣张 → 流言更猛
-  - 寒雁若硬刚 → 民众同情寒雁
-```
-
-### Seed 5：汲蓝 + 姝红（贴身丫鬟，玩家的"内心声音外化"）
-
-```yaml
-function:    把玩家的两种倾向具象成两个 NPC
-  汲蓝: 直觉派 / 行动派 / 替主子吵架
-  姝红: 冷静派 / 谋略派 / 提"远走高飞"
-
-mechanism:
-  - 当玩家选"软"路线，汲蓝会反对，姝红支持
-  - 当玩家选"硬"路线，汲蓝兴奋，姝红劝谨慎
-  - 关键节点两人意见分歧 → 玩家被迫做仲裁
-```
-
-### Seed 6：吴太医（信息守门人）
-
-```yaml
-core_drive:        守住傅云夕的秘密
-internal_task:    在"职业忠诚"与"心疼少年"之间选边
-hidden_facts:
-  - 傅云夕中寒毒已多年
-  - 寒雁中"烟花碎"那次是傅云夕以血救她
-disclosure_strategy:
-  - 默认：守口如瓶
-  - 触发条件：被寒雁的"洞察 + 镇定"震到，认为"她知道也许能救"
-  - 关键句："和一个小丫头较劲，犯不着"
-key_choice:
-  - 玩家若以"威胁"姿态去问 → 闭口
-  - 玩家若以"装作早就知道一切"试探 → 吴太医自动倾倒（原著真实玩法）
-```
-
----
-
-## 三、变量系统设计
-
-### 双轴主变量（决定四象限）
-
-```json
-{
-  "external": 50,   // 外在成败：救男主进度、政斗胜负
-  "internal": 50    // 内在成长：从依赖到独立、敢爱敢托付
-}
-```
-
-### 辅助变量（四条线）
-
-| 变量名 | 范围 | 上调时机 | 下调时机 |
-| --- | --- | --- | --- |
-| `trust_fuyunxi` 信任傅云夕 | 0–100 | 选择"相信他有苦衷"、留王府、戴蓝玉簪 | 选择"他变心了"、撕掉信物、离开王府 |
-| `power_palace` 王府势力 | 0–100 | 拉拢吴太医、保住下人忠心、戴蓝玉簪示众 | 与伊琳娜正面冲突过烈、被流言压制、卓七夜宿 |
-| `identity_exposure` 身世暴露度 | 0–100 | 追查阿碧线索、回庄府调查、唐门蜀锦 | 主动隐藏、伪造证据 |
-| `xirong_line` 西戎线 | -50 至 +50 | 救卓七、共度一宿、利用卓七 | 与卓七结仇、暴露他给七皇子 |
-
-### 关键 flag（决定结局路由）
-
-```
-saved_fuyunxi          - 是否在 128 章前拿到救命线索
-identity_known         - 唐门是否找上门
-xirong_alliance        - 与卓七的合作是否成型
-empress_dowager_proof  - 是否拿到太后通敌证据
-courage_to_love        - 是否在终章主动对傅云夕表白
-```
-
----
-
-## 四、节点结构图（关键抉择骨架）
-
-```
-[start_111] 凯旋归来 / 伊琳娜逼迫
-    │
-    ├─ A. 软姿态退让 → +民众同情, -courage
-    └─ B. 硬刚怼回 → +courage, -power_palace
-    │
-[112] 留王府 or 远走高飞？
-    │
-    ├─ A. 留下查真相 → 主线
-    └─ B. 远走 → 早期 BRANCH ENDING「江湖远遁」
-    │
-[113-114] 后山遇卓七 + 蓝玉簪落水
-    │
-    ├─ A. 不让他帮 → -xirong_line
-    ├─ B. 接受他下水捞簪 → +xirong_line, 触发受伤事件
-    └─ C. 自己下水 → +courage, -power_palace (被人撞见)
-    │
-[115-116] 卓七腰伤 / 共度一宿
-    │
-    ├─ A. 送回客栈陪一夜 → +xirong_line, -power_palace
-    ├─ B. 找西戎暗线接手 → 暴露卓七身份, 风险++
-    └─ C. 撒手不管 → +ration, xirong 永久敌对
-    │
-[117-118] 杨琦三日暴雨之约 / 暗中反击伊琳娜
-    │
-[119-121] 离开王府独自布局
-    │
-    ├─ A. 真离开 → -trust_fuyunxi, +internal
-    └─ B. 留下假离开 → +trust_fuyunxi, 风险升高
-    │
-[122-123] 唐门蜀锦 / 调查身世
-    │
-    ├─ A. 深挖到底 → +identity_exposure
-    └─ B. 暂缓 → +ration
-    │
-[125-126] 暗巷御前侍卫追杀 (QTE 节点)
-    │
-    ├─ QTE 1: 被劈下时反应
-    │    ├─ 拔梅花刺反击 → 重伤
-    │    ├─ 信任面具人 → +trust_fuyunxi (面具人是傅云夕)
-    │    └─ 逃跑 → 一名丫鬟受伤
-    │
-    └─ 搜身环节
-         ├─ 发现御前令牌 → +identity_exposure, 知晓皇上下手
-         └─ 直接撤离 → 永远不知幕后
-    │
-[127] 截轿吴太医 (策略节点)
-    │
-    ├─ A. 以"我已知道一切"诈他 → 吴太医和盘托出 (原著选择)
-    ├─ B. 以情动之 → 50% 成功
-    └─ C. 强硬威胁 → 失败, 错过关键信息
-    │
-[128] 晴天霹雳 - 寒毒真相
-    │
-    ▼
-[路由判定] 根据 saved_fuyunxi / courage_to_love / identity_known / xirong_alliance 组合
-    │
-    ├─ TRUE  → 圆满结局
-    ├─ NORMAL → 苦涩胜利
-    ├─ BRANCH → 空洞胜利
-    └─ BAD   → 彻底悲剧
-```
-
----
-
-## 五、关键抉择表（带 trade-off）
-
-| 节点 | 选项 A | 选项 B | 选项 C |
-| --- | --- | --- | --- |
-| 伊琳娜逼迫 | 软姿态博同情（+民意 -勇气） | 当众讥讽（+勇气 -王府势力） | 沉默退场（+理智 -内在） |
-| 是否远走 | 远走高飞（早期 BRANCH 结局） | 留下查真相 | 假装远走真留下 |
-| 卓七落水 | 接住他（+西戎线 -王府势力） | 见死不救（+理智，永久敌对） | 自己下水（+勇气 -名声） |
-| 共度一宿 | 留下照顾（+xirong, -power） | 离开（+ration, -xirong） | 通知傅云夕（高风险） |
-| 离开王府 | 真离开（-trust +internal） | 假离开（+trust 风险高） | 不走（-internal +power） |
-| 暗巷面具人 | 信任他（+trust_fuyunxi） | 反击他（-trust，永久误会） | 逃跑（一人受伤） |
-| 问吴太医 | 诈他（高收益 高风险） | 求他（中收益） | 威胁他（失败） |
-
----
-
-## 六、四象限结局轮廓
-
-### TRUE ENDING ｜ 潮声归来
-
-**触发**：`saved_fuyunxi=true ∧ courage_to_love=true ∧ identity_known=true ∧ trust_fuyunxi≥70`
-
-**剧情**：
-- 寒雁从吴太医口中得到寒毒真相，没有崩溃，反而冷静策划"假死局"反将太后一军
-- 接到唐生外公找上门，唐门毒经合吴太医医术，压住寒毒
-- 寒雁在病榻前主动对傅云夕说："你娶我吧，再不嫁给你就没机会了。"
-- 江南春日，乌发夹白的傅云夕牵她的手走过柳堤
-
-**ambient**: tide
-**closing 基调**: 重生不是为了把上一世重过一遍，是为了能站着活
-
-### NORMAL ENDING ｜ 雁去湖空
-
-**触发**：`saved_fuyunxi=false ∧ courage_to_love=true ∧ internal≥70`
-
-**剧情**：
-- 寒毒已深入五脏，无力回天
-- 寒雁陪傅云夕走完最后一程，他在她怀里阖眼
-- 寒雁独自返回唐门，成为唐门首位女性堡主，继承外公衣钵
-- 多年后，她仍在每个雨夜将蓝玉鱼簪握在掌心
-
-**ambient**: cold
-**closing 基调**: 输了那个人，但赢回了自己
-
-### BRANCH ENDING ｜ 借刀登天
-
-**触发**：`xirong_alliance=true ∧ empress_dowager_proof=true ∧ trust_fuyunxi<40`
-
-**剧情**：
-- 寒雁选择与卓七深度合作，借西戎之力扳倒太后
-- 救下了傅云夕的命，但他活下来后看着她的眼睛说："你已经不是我认识的庄寒雁了。"
-- 寒雁成为大宗最有权势的女子之一，玄清王府却再没她的位置
-- 她坐在唐门堡主的高位上，独自看了一夜江月
-
-**ambient**: static
-**closing 基调**: 你赢了世界，世界却拿走了那个人
-
-### BAD ENDING ｜ 雪满楼台
-
-**触发**：`saved_fuyunxi=false ∧ identity_exposure≥80 ∧ trust_fuyunxi<30`
-
-**剧情**：
-- 寒雁追查身世太深，被皇上视为东侯王遗孤清算
-- 傅云夕寒毒发作之夜，她还在为自保奔逃
-- 御前侍卫的刀没能追上她，但消息追上了她——傅云夕在病榻上等了她最后一句话，没等到
-- 雪夜，蓝玉鱼簪从她颤抖的手中滑落
-
-**ambient**: blackout
-**closing 基调**: 重生一次，连同最重要的人一起再失去一次
-
----
-
-## 七、互动节奏与特效设计
-
-| 章节区间 | ambient | 关键 effect | 互动密度 |
-| --- | --- | --- | --- |
-| 111–112 王府冷宫 | cold | heartbeat（伊琳娜逼迫）| 中 |
-| 113–116 后山遇卓七 | wind | flash（卓七浮出水面）| 高 |
-| 117–121 暗中布局 | none → static | shake（流言中伤）| 中 |
-| 122–124 调查身世 | static | glitch（拼出真相一刻）| 低 |
-| 125–126 暗巷追杀 | red | blackout + heartbeat | QTE 高密度 |
-| 127–128 截吴太医 | rain | breath → silence（真相说出口）| 慢节奏 |
-| 结局节点 | 各 ending 独立 | drown / tide / cold / blackout | — |
-
----
-
-## 八、Demo 成就清单（多于结局数量）
-
-| ID | 触发条件 | 说明 |
+| 选项 | hook (抛给 Brewed) | require |
 | --- | --- | --- |
-| `first_thorn` | 当众怼回伊琳娜 | 庶女不再低眉 |
-| `keep_the_hairpin` | 蓝玉鱼簪从未离身 | 信物即承诺 |
-| `wet_pearl` | 自己下水捞簪 | 不假手于人 |
-| `night_in_inn` | 选择陪卓七过夜 | 谁先认出谁的孤独 |
-| `three_day_rain` | 杨琦暴雨之赌应验 | 直觉是一种武器 |
-| `mask_in_rain` | 暗巷信任面具人 | 哪怕看不清，你也敢扑过去 |
-| `bluff_the_doctor` | 吴太医被诈出真相 | 镇定也是一种谎 |
-| `the_long_kneel` | 与外公唐生相认（隐藏） | 你不是一个人 |
-| `true_tide` | TRUE 结局达成 | 潮声归来 |
-| `wild_swan` | NORMAL 结局达成 | 雁去湖空 |
-| `iron_throne` | BRANCH 结局达成 | 借刀登天 |
-| `snow_pavilion` | BAD 结局达成 | 雪满楼台 |
+| 说一句让他记你一辈子的承诺 | `vow_loyalty` | S=study, N=[fyx] |
+| 追问"你究竟要去多久" | `probe_intent` | S=study, N=[fyx] |
+| 咬唇低头不语，收下他的话 | `silent_consent` | S=study |
+| 借更衣靠近，闻一闻他袖中的药味 | `investigate_illness` | S=study, N=[fyx], **H.illness ≥ hinted** |
+| 不顾礼仪，直接拦下他不让他走 | `block_departure` | N=[fyx], **T ≤ 4** |
+
+> **演示点**：默认 H=unknown 时，玩家只能看到前 3 个；如果二周目带着"已知男主有寒毒"的认知（H 升为 hinted），第 4 个选项浮出来——**同一个对话场景，重玩有新东西**。
 
 ---
 
-## 九、需要你确认的设计点
+### 场 A2 · 凯旋归来
 
-1. **范围确认**：111–128 章作为 demo 范围，是否就此定下？
-2. **变量命名**：四个辅助变量名（trust_fuyunxi / power_palace / identity_exposure / xirong_line）是否需要更亲切的中文 label？
-3. **QTE 强度**：暗巷追杀这段是否要做"5 秒倒计时 + 选项消失"的硬 QTE，还是用普通选择即可？
-4. **节点粒度**：30–40 节点是否合适？还是希望做得更细（60+）/更精（20）？
-5. **早期 BRANCH 出口**：111–112 设的"远走高飞" early branch 要不要保留？保留可以测试玩家是否被诱导提前结束。
-6. **男主视角节点**：要不要插入 2–3 个"傅云夕视角"的旁观节点（玩家短暂看到男主内心）？这样可以让 trust_fuyunxi 的拉扯更可感，但会破坏寒雁主视角的悬念。
+#### Crystal
+
+```yaml
+crystal_id: act5_triumph_return
+dramatic_function: 让玩家亲历"被替代"的当众羞辱
+must_happen:
+  - 西戎公主以身份压她
+  - 男主当众未维护女主
+  - 皇上下旨准其和离
+must_not_happen:
+  - 男主当殿解释
+  - 女主与公主动手
+```
+
+#### Slice β · 金銮殿外 · 公主当庭（默认）
+
+```yaml
+axes:
+  S: palace
+  H: { illness: hinted }   # 第二场，玩家应有一些怀疑
+  N: [fyx, princess, emperor, court]
+  T: 6
+  A: { rumor: court, reverb: ×1.3 }
+tone_hint: 殿外只剩你们两人，但下一刻就会有人出现。
+```
+
+#### Choice Pool
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 当众落落大方，向公主举杯 | `public_grace` | S=palace, N=[princess] |
+| 当朝反问公主"我夫妻之事与你何干" | `public_pushback` | S=palace, N=[princess] |
+| 微微福身，礼让一步 | `tactical_yield` | S=palace |
+| 当殿向皇上一句话，引向另一条路 | `appeal_throne` | S=palace, N=[emperor], **A.rumor=court** |
+| 让心腹连夜送信给杨琦寻援 | `reach_ally` | N=[maid], **T ≤ 8** |
+
+> **演示点**：选项 4「向皇上申诉」**仅在朝堂传遍状态下可见**，因为只有传开了才有可能借势翻案。这是 A 轴（环境噪声）决定选项存在与否的例子。
 
 ---
 
-## 十、确认后下一步产出
+### 场 A3 · 一纸休书
 
-一旦你拍板：
-1. 我会按 Skill 文档的 JSON 格式规范输出完整剧本 JSON
-2. 包含 `meta / variables / achievements / nodes` 完整结构
-3. 节点数控制在 35±5 个，覆盖四个结局
-4. 配套 ambient / effect / scene 全部填好
-5. 路由用 `routes` + flag 组合，避免单一数值决定结局
+#### Crystal
+
+```yaml
+crystal_id: act5_divorce_letter
+dramatic_function: 让玩家在"信他 / 不信他"之间做出最后选择
+must_happen:
+  - 男主放下休书
+  - 女主必须做出最终回应（接 / 拒 / 揭穿）
+must_not_happen:
+  - 男主当场说出真相
+  - 第三方介入
+```
+
+#### Slice γ · 深夜独对 · 雪夜书房（默认）
+
+```yaml
+axes:
+  S: courtyard
+  H: { illness: confirmed }  # 此时玩家应该已知
+  N: [fyx]
+  T: 3                       # 半炷香
+  A: { rumor: all, weather: heavy_snow }
+tone_hint: 更深露重，他把休书放在你面前，不敢看你。
+```
+
+#### Choice Pool
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 红着眼问他"你要娶西戎公主？" | `confront_betrayal` | S=courtyard, N=[fyx] |
+| 安静接过休书，不发一言 | `accept_silently` | S=courtyard, N=[fyx] |
+| 将休书撕得粉碎 | `reject_violently` | S=courtyard, N=[fyx] |
+| 看着他的眼睛说"我知道你在装" | `truth_revealed` | S=courtyard, N=[fyx], **H.illness=confirmed** |
+
+> **演示点**：第 4 个选项「我知道你在装」**只有 H 升到 confirmed 才出现**——这就是 socialgame 当前实现做不到的事：现有版本不论你前面对话怎么选，这一幕的 3 个选项永远固定。
 
 ---
 
-*本文档基于原著千山茶客《重生之贵女难求》第 111–128 章衍生改编设计，原书版权归原作者所有。*
+## 视角 B · 傅云夕视角
+
+> **核心思想**：同一个 Crystal，玩家切到男主视角时，**戏剧功能反转，H 轴起点不同**。
+> 寒雁视角是"被冷待 / 被休"，男主视角是"必须演冷淡 / 必须写休书"。
+
+### 场 B1 · 一年之约
+
+#### Crystal（视角反转）
+
+```yaml
+crystal_id: act5_one_year_vow_male
+dramatic_function: 让玩家亲历"明知自己活不长，还要她等"
+must_happen:
+  - 必须向她下达"一年之约"
+  - 必须不让她察觉寒毒
+  - 必须留下"若不归你便改嫁"的退路
+must_not_happen:
+  - 当面坦白
+  - 让她跟随出征
+```
+
+#### Slice α-male
+
+```yaml
+axes:
+  S: study
+  H: { illness: confirmed }   # 男主自己当然知道
+  N: [fyx, hanyan]            # 注意：现在 hanyan 是 NPC
+  T: 20
+  A: { rumor: private }
+tone_hint: 你看着她的眼睛，把那句你练习了一夜的话说出口。
+```
+
+#### Choice Pool（男主视角的选项）
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 把"一年之约"说得轻描淡写 | `mask_with_lightness` | S=study, N=[hanyan] |
+| 把承诺说得很重，让她不舍 | `bind_with_weight` | S=study, N=[hanyan] |
+| 暗示她"若我不归，去找卓七" | `pre_arrange_safety` | S=study, N=[hanyan] |
+| 借故避开她递来的杯酒（怕被发现药味） | `hide_symptom` | S=study, N=[hanyan], **H.illness=confirmed** |
+
+> **同一个 Crystal，男主视角的选项关心的是另一件事**：怎么把这句话说出口才能既骗过她，又让她有退路。
+
+---
+
+### 场 B2 · 凯旋归来
+
+#### Slice β-male
+
+```yaml
+axes:
+  S: palace
+  H: { illness: confirmed, court_plot: hinted }   # 男主比寒雁多一条隐藏轴
+  N: [hanyan, princess, emperor, court]
+  T: 6
+  A: { rumor: court, reverb: ×1.3 }
+tone_hint: 你必须在所有人面前转身离开她，哪怕她正看着你。
+```
+
+#### Choice Pool
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 当众完全不看她，演到底 | `cold_act_complete` | S=palace, N=[hanyan, court] |
+| 用眼神留一丝余地（赌她看得懂） | `cold_act_with_hint` | S=palace, N=[hanyan] |
+| 借故离场，避开当庭对峙 | `escape_confrontation` | S=palace |
+| 暗中向皇上递眼色（仅当皇上知情时） | `signal_throne` | N=[emperor], **H.court_plot=hinted** |
+
+> **演示点**：男主视角多了一条**寒雁不知道的隐藏信息** `court_plot`——朝堂博弈本身。Prism 的 H 轴对不同视角可以挂载不同的隐藏事实集合。
+
+---
+
+### 场 B3 · 一纸休书
+
+#### Slice γ-male
+
+```yaml
+axes:
+  S: courtyard
+  H: { illness: confirmed, plan_failed: unknown }
+  N: [hanyan]
+  T: 3
+  A: { rumor: all, weather: heavy_snow }
+tone_hint: 你的手在抖。她要么明白你，要么恨你一辈子——你选哪个？
+```
+
+#### Choice Pool
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 把休书写得冷酷无情，断她念想 | `divorce_cruel` | S=courtyard, N=[hanyan] |
+| 把休书写得留有破绽，赌她看懂 | `divorce_with_clue` | S=courtyard, N=[hanyan] |
+| 在递出去之前撕掉，重写 | `cant_let_go` | S=courtyard, N=[hanyan] |
+| 提笔前忽然咳血，让她看见 | `accidental_reveal` | S=courtyard, N=[hanyan], **H.illness=confirmed** |
+
+---
+
+## 双视角差异说明
+
+### 1. 戏剧功能反转
+同一场戏，寒雁视角的功能是"被给予 → 接受 / 拒绝"，男主视角是"必须给予 → 选择如何给"。这不是换皮，是**主语换了，整个 Crystal 的内核也换了**。
+
+### 2. H 轴默认值反转
+| 场次 | 寒雁视角 H | 男主视角 H |
+| --- | --- | --- |
+| 一年之约 | illness=unknown | illness=confirmed |
+| 凯旋归来 | illness=hinted | illness=confirmed + court_plot=hinted |
+| 一纸休书 | illness=confirmed | illness=confirmed + plan_failed=unknown |
+
+男主视角的 H 轴**永远比寒雁视角多知道一些，少不知道一些**——这是信息差驱动多样性的最直观示例。
+
+### 3. 选项集完全不同
+寒雁视角的选项是"对他说什么"，男主视角的选项是"怎么演给她看"。
+**同一个 hook 词不会同时出现在两个视角的 Choice Pool 里**——这保证两个视角的戏不会重复。
+
+### 4. 结局可以汇流
+两个视角各自跑完三场后，可以汇到同一个结局判定节点。
+但因为路径上发生的 hook 不同，最终的数值组合也不同——
+**两人合作通关 = 数值互相填补，单视角通关 = 数值自洽但残缺**。
+
+---
+
+## 给数值系统的语义事件清单
+
+> 以下是这 6 个 Slice 一共会抛出的 hook 列表。Brewed（或其他数值系统）只需要决定每个 hook 对应哪些数值变化。
+
+### 寒雁视角
+- `vow_loyalty` · 信任傅云夕↑↑ 内在成长↑
+- `probe_intent` · 情报↑ 信任↑
+- `silent_consent` · 隐忍↑ 勇气↓
+- `investigate_illness` · 情报↑↑ 信任↑（需 H 已开）
+- `public_grace` · 民意↑ 隐忍↑
+- `public_pushback` · 勇气↑↑ 王府势力↓
+- `tactical_yield` · 理智↑
+- `appeal_throne` · 民意↑↑ 风险↑
+- `confront_betrayal` · 勇气↑ 王府势力↓
+- `accept_silently` · 隐忍↑↑ 理智↑
+- `reject_violently` · 勇气↑↑ 理智↓
+- `truth_revealed` · 信任↑↑↑ 隐蔽↓↓↓
+- `block_departure` · 勇气↑↑ 体面↓
+- `reach_ally` · 盟友信任↑
+
+### 傅云夕视角
+- `mask_with_lightness` · 寒雁信任↓ 自身负担↑
+- `bind_with_weight` · 寒雁信任↑↑ 自身负担↑↑
+- `pre_arrange_safety` · 备份↑ 寒雁不解↑
+- `hide_symptom` · 隐蔽↑ 信任↓
+- `cold_act_complete` · 计划完成↑↑ 关系↓↓
+- `cold_act_with_hint` · 计划完成↑ 关系↑
+- `escape_confrontation` · 风险规避↑ 关系↓
+- `signal_throne` · 朝堂势力↑↑ 暴露风险↑
+- `divorce_cruel` · 计划完成↑↑ 关系→0
+- `divorce_with_clue` · 计划完成↑ 关系↑ 风险↑
+- `cant_let_go` · 关系↑↑↑ 计划崩盘↓↓↓
+- `accidental_reveal` · 真相暴露↑↑↑ 计划崩盘↓↓↓
+
+---
+
+## 给写手的下一步
+
+如果要把这份设计真正变成可玩的 demo：
+
+1. 把每个选项的具体台词写出来（目前只有动作描述）
+2. 给每个 hook 在数值系统侧定义具体 delta
+3. 把场 A1/A2/A3 串联起来，处理跨场景的状态传递
+4. 决定视角切换的入口（章节开头让玩家选 / 通关后解锁第二视角）
+
+这些超出了 Prism 的职责范围，由写手 + 数值工程师协作完成。
+Prism 只负责**这份骨架本身的多样性正确性**。
+
+---
+
+*Prism Sample Script v1 · 基于《重生之贵女难求》第五幕三场*
