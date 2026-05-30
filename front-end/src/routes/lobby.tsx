@@ -73,9 +73,11 @@ function Lobby() {
   const handleStart = () => {
     if (!charId) return;
     if (mode === "solo") {
-      navigate({ to: "/play", search: { role: charId, mode: "solo" } });
+      // 单人沉浸：直接进游戏
+      navigate({ to: "/scene" });
     } else {
-      navigate({ to: "/play", search: { role: charId, mode: "duo", partner: charId === "wentang" ? "peirong" : "wentang" } });
+      // 站内匹配：先去匹配页（matching → 承接页 → /scene）
+      navigate({ to: "/matching", search: { role: charId } });
     }
   };
 
