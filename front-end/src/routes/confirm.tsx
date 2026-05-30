@@ -99,7 +99,7 @@ function Confirm() {
           上一步
         </button>
         <button
-          onClick={() => navigate({ to: "/matching" })}
+          onClick={() => navigate({ to: "/matching", search: { role: "hanyan" } })}
           className="h-12 flex-1 rounded-full text-white shadow-[var(--shadow-card)] transition active:scale-[0.98]"
           style={{ background: "var(--gradient-rouge)" }}
         >
