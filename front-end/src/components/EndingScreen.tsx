@@ -343,14 +343,14 @@ export function EndingScreen({
           )}
 
           {/* 数值终局（暂时隐藏，内容保留） */}
-          {false && numerics && (
+          {false && numerics ? (
             <div className="mt-5 rounded-xl border border-[#7a2a2a]/15 bg-white/60 p-3">
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#7a2a2a]">
                 <ScrollText size={12} /> 数值终局
               </div>
               <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2 text-[11px]">
-                {(Object.keys(numerics) as (keyof NumericsState)[]).map((k) => {
-                  const v = numerics[k];
+                {(Object.keys(numerics!) as (keyof NumericsState)[]).map((k) => {
+                  const v = numerics![k];
                   const tone =
                     v >= 70
                       ? "text-[#3f7a4a]"
@@ -366,10 +366,10 @@ export function EndingScreen({
                 })}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* 结局依据（暂时隐藏，内容保留） */}
-          {false && decision && (
+          {false && decision ? (
             <div className="mt-3 rounded-xl border border-[#7a2a2a]/15 bg-white/60 p-3">
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#7a2a2a]">
                 <Target size={12} /> 结局依据 · 你的选择
@@ -377,11 +377,11 @@ export function EndingScreen({
 
               {/* 三条心意线的票数 */}
               <div className="mt-3 flex gap-2">
-                {(Object.keys(decision.lines) as LineKey[]).map((k) => {
+                {(Object.keys(decision!.lines) as LineKey[]).map((k) => {
                   const top =
-                    decision.lines[k] ===
-                    Math.max(...Object.values(decision.lines));
-                  const hasVote = decision.lines[k] > 0;
+                    decision!.lines[k] ===
+                    Math.max(...Object.values(decision!.lines));
+                  const hasVote = decision!.lines[k] > 0;
                   return (
                     <div
                       key={k}
@@ -393,7 +393,7 @@ export function EndingScreen({
                     >
                       <div className="text-[#3a2a22]/55">{LINE_NAME[k]}</div>
                       <b className="font-mono text-[#7a2a2a]">
-                        {decision.lines[k]} 票
+                        {decision!.lines[k]} 票
                       </b>
                     </div>
                   );
@@ -401,9 +401,9 @@ export function EndingScreen({
               </div>
 
               {/* 逐幕选择回顾 */}
-              {decision.picks.length > 0 && (
+              {decision!.picks.length > 0 && (
                 <div className="mt-3 space-y-1 text-[11px]">
-                  {decision.picks.map((p, i) => (
+                  {decision!.picks.map((p, i) => (
                     <div key={i} className="flex justify-between">
                       <span className="text-[#3a2a22]/60">第 {i + 1} 次抉择</span>
                       <span className="text-[#2b1a14]">
@@ -418,13 +418,13 @@ export function EndingScreen({
               )}
 
               <div className="mt-3 border-t border-[#7a2a2a]/10 pt-2 text-[11px] italic leading-relaxed text-[#3a2a22]/85">
-                {decision.reason}
+                {decision!.reason}
               </div>
               <div className="mt-2 flex items-center gap-1 text-[10px] text-[#3a2a22]/45">
                 <Search size={10} /> 累积 hook 次数：{hookCount}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* 王府御敌 · 战斗小游戏入口（写死） */}
           <div className="mt-4 rounded-xl border border-[#7a2a2a]/20 bg-gradient-to-b from-[#d4a373]/20 to-[#7a2a2a]/[0.06] p-4 text-center">
