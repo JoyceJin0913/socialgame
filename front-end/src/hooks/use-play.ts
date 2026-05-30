@@ -16,7 +16,7 @@ import {
   type PrismMeta,
 } from "@/lib/prism";
 import {
-  chatWithAI,
+  chatWithAIStream,
   translateIntent,
   type ChatMessage,
 } from "@/lib/chat";
@@ -33,7 +33,7 @@ import {
 
 export type PlayMessage =
   | { id: string; kind: "narration"; text: string }
-  | { id: string; kind: "ai"; name: string; text: string }
+  | { id: string; kind: "ai"; name: string; text: string; streaming?: boolean }
   | { id: string; kind: "me"; text: string }
   | { id: string; kind: "loading"; name: string }
   | { id: string; kind: "system"; text: string };
@@ -223,9 +223,9 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         console.log("[Prism hook]", prismMeta.hook, prismMeta.delta || {}, "→", change);
       }
 
-      // 玩家消息 + loading
+      // 玩家消息 + 立刻 push 一条空的 streaming AI 气泡
       const meId = newId();
-      const loadId = newId();
+      const aiId = newId();
       setState((s) => ({
         ...s,
         busy: true,
@@ -233,7 +233,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         messages: [
           ...s.messages,
           { id: meId, kind: "me", text },
-          { id: loadId, kind: "loading", name: scene.aiCharacter },
+          { id: aiId, kind: "ai", name: scene.aiCharacter, text: "", streaming: true },
         ],
       }));
 
@@ -241,12 +241,29 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
 
       try {
         const persona = PERSONAS[scene.aiPersona];
-        const reply = await chatWithAI(persona, historyRef.current);
+
+        // 流式：每收到一段就更新 aiId 那条消息的 text
+        const reply = await chatWithAIStream(persona, historyRef.current, {
+          onChunk: (_delta, accumulated) => {
+            setState((s) => ({
+              ...s,
+              messages: s.messages.map((m) =>
+                m.id === aiId && m.kind === "ai"
+                  ? { ...m, text: accumulated, streaming: true }
+                  : m
+              ),
+            }));
+          },
+        });
+
         historyRef.current.push({ role: "assistant", content: reply });
 
         setState((s) => {
-          const messages = s.messages.filter((m) => m.id !== loadId);
-          messages.push({ id: newId(), kind: "ai", name: scene.aiCharacter, text: reply });
+          const messages = s.messages.map((m) =>
+            m.id === aiId && m.kind === "ai"
+              ? { ...m, text: reply, streaming: false }
+              : m
+          );
           const newRound = s.roundInScene + 1;
           return {
             ...s,
@@ -262,7 +279,6 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         setTimeout(() => {
           setState((s) => {
             if (s.roundInScene < s.maxRoundsPerScene) {
-              // 触发重新折射
               loadOptions(scene);
             }
             return s;
@@ -270,8 +286,10 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         }, 600);
       } catch (err: any) {
         setState((s) => {
-          const messages = s.messages.filter((m) => m.id !== loadId);
-          messages.push({ id: newId(), kind: "system", text: `⚠️ ${err.message || err}` });
+          // 失败时把流式气泡换成系统错误
+          const messages = s.messages
+            .filter((m) => m.id !== aiId)
+            .concat([{ id: newId(), kind: "system", text: `⚠️ ${err.message || err}` }]);
           return { ...s, messages, busy: false, showContinue: true };
         });
       }

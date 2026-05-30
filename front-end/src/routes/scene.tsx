@@ -158,7 +158,8 @@ function Scene() {
                   </span>
                 </div>
                 <div className="rounded-2xl rounded-tl-md bg-amber-50/95 px-4 py-2.5 text-[14px] leading-relaxed text-stone-800 shadow-md">
-                  {m.text}
+                  {m.text || (m.streaming ? " " : "")}
+                  {m.streaming && <StreamCursor />}
                 </div>
               </div>
             );
@@ -310,5 +311,21 @@ function Dot({ delay }: { delay: number }) {
       className="mx-[2px] inline-block h-[6px] w-[6px] animate-bounce rounded-full bg-amber-100"
       style={{ animationDelay: `${delay}ms` }}
     />
+  );
+}
+
+function StreamCursor() {
+  return (
+    <>
+      <span
+        className="ml-[2px] inline-block h-[14px] w-[2px] -mb-[2px] bg-stone-700/85 align-middle"
+        style={{ animation: "blink 1s steps(2, start) infinite" }}
+      />
+      <style>{`
+        @keyframes blink {
+          to { visibility: hidden; }
+        }
+      `}</style>
+    </>
   );
 }
