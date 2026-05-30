@@ -25,6 +25,7 @@ import {
 } from "@/lib/numerics";
 import sceneBg from "@/assets/ending-bg.jpg";
 import playerAvatar from "@/assets/player-tingyu.png";
+import { BGMPlayer } from "@/components/BGMPlayer";
 import { getCharacter } from "@/lib/characters";
 
 interface Props {
@@ -151,7 +152,7 @@ const REPORTS: Record<string, IntimacyReport> = {
   },
 };
 
-const OTHERS = ["moshen", "zhouyi", "zhuangsy", "yushan"];
+const OTHERS = ["moshen"];
 
 export function EndingScreen({
   ending,
@@ -178,6 +179,7 @@ export function EndingScreen({
         className="absolute inset-0 h-full w-full scale-110 object-cover blur-md"
       />
       <div className="absolute inset-0 bg-black/25" />
+      <BGMPlayer />
 
       {/* main scroll */}
       <div className="relative z-10 h-full overflow-y-auto px-4 pt-16 pb-8">

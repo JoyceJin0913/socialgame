@@ -15,10 +15,21 @@ import { ChevronLeft, Send, Sparkles } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { PrismHUD } from "@/components/PrismHUD";
 import { EndingScreen } from "@/components/EndingScreen";
+import { BGMPlayer } from "@/components/BGMPlayer";
 import { usePlay } from "@/hooks/use-play";
 import sceneBg from "@/assets/scene-cijitang.png";
+import type { ViewKey } from "@/lib/story";
+
+type SceneSearch = { role?: string };
+
+function roleToView(role?: string): ViewKey {
+  return role === "moshen" ? "fyx" : "hanyan";
+}
 
 export const Route = createFileRoute("/scene")({
+  validateSearch: (s: Record<string, unknown>): SceneSearch => ({
+    role: typeof s.role === "string" ? s.role : undefined,
+  }),
   component: ScenePage,
   head: () => ({
     meta: [
@@ -38,6 +49,8 @@ function ScenePage() {
 
 function Scene() {
   const navigate = useNavigate();
+  const { role } = Route.useSearch();
+  const initialView = roleToView(role);
   const {
     state,
     view,
@@ -49,7 +62,7 @@ function Scene() {
     restart,
     switchView,
     ending,
-  } = usePlay();
+  } = usePlay(initialView);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const latestMessageRef = useRef<HTMLDivElement>(null);
@@ -110,6 +123,7 @@ function Scene() {
             "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.04) 0%, transparent 50%)",
         }}
       />
+      <BGMPlayer />
 
       <div className="relative z-10 flex items-center justify-between px-4 pt-12 pb-3">
         <button

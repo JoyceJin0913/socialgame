@@ -13,6 +13,7 @@ import {
   Swords,
 } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
+import { BGMPlayer } from "@/components/BGMPlayer";
 import sceneBg from "@/assets/ending-bg.jpg";
 import playerAvatar from "@/assets/player-tingyu.png";
 import { getCharacter } from "@/lib/characters";
@@ -134,7 +135,7 @@ const REPORTS: Record<string, IntimacyReport> = {
   },
 };
 
-const OTHERS = ["moshen", "zhouyi", "zhuangsy", "yushan"];
+const OTHERS = ["moshen"];
 
 function Ending() {
   const navigate = useNavigate();
@@ -154,6 +155,7 @@ function Ending() {
         alt=""
         className="absolute inset-0 h-full w-full scale-110 object-cover blur-md"
       />
+      <BGMPlayer />
 
       {/* back */}
       <button
