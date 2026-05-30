@@ -15,16 +15,10 @@ export default defineConfig({
   vite: {
     server: {
       allowedHosts: ["meter-folder-assets-trackback.trycloudflare.com"],
-      proxy: {
-        "/api": {
-          target: "http://localhost:8000",
-          changeOrigin: true,
-        },
-        "/ws": {
-          target: "ws://localhost:8000",
-          ws: true,
-        },
-      },
+      // 不再需要 proxy 到外部后端：/api/chat 已经在 server.ts 中由
+      // routeAPI() 接管，本地 dev 时 Cloudflare/Vite 的 SSR worker 直接
+      // 处理。读 DEEPSEEK_API_KEY 来自 .dev.vars（Cloudflare 约定）
+      // 或 process.env（普通 Node）。
     },
   },
 });
