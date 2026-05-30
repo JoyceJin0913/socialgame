@@ -52,13 +52,27 @@ function Scene() {
   } = usePlay();
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const latestMessageRef = useRef<HTMLDivElement>(null);
   const [freeInput, setFreeInput] = useState("");
+  const latestMessageId = state.messages.at(-1)?.id;
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
+    const frame = requestAnimationFrame(() => {
+      const scroller = scrollRef.current;
+      const latest = latestMessageRef.current;
+      if (!scroller || !latest) return;
+
+      const scrollerRect = scroller.getBoundingClientRect();
+      const latestRect = latest.getBoundingClientRect();
+      const latestTop = latestRect.top - scrollerRect.top + scroller.scrollTop;
+      const targetTop = latestTop - scroller.clientHeight * 0.36;
+
+      scroller.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: "smooth",
+      });
     });
+    return () => cancelAnimationFrame(frame);
   }, [state.messages, state.options]);
 
   useEffect(() => {
@@ -135,13 +149,15 @@ function Scene() {
 
       <div
         ref={scrollRef}
-        className="relative z-10 h-[calc(100%-260px)] overflow-y-auto px-4 pb-4"
+        className="absolute inset-x-0 bottom-[260px] top-[108px] z-10 overflow-y-auto px-4 pb-4"
       >
         {state.messages.map((m) => {
+          const isLatestMessage = m.id === latestMessageId;
           if (m.kind === "narration") {
             return (
               <div
                 key={m.id}
+                ref={isLatestMessage ? latestMessageRef : undefined}
                 className="my-3 rounded-lg border border-amber-200/15 bg-black/35 px-4 py-3 text-[13px] leading-[1.85] tracking-wide text-amber-50/80 backdrop-blur"
               >
                 {m.text}
@@ -150,7 +166,11 @@ function Scene() {
           }
           if (m.kind === "ai") {
             return (
-              <div key={m.id} className="my-3 max-w-[85%]">
+              <div
+                key={m.id}
+                ref={isLatestMessage ? latestMessageRef : undefined}
+                className="my-3 max-w-[85%]"
+              >
                 <div className="mb-1 text-[11px] tracking-wider text-amber-200/80">
                   {m.name}
                   <span className="ml-2 inline-flex items-center rounded-full border border-sky-300/40 bg-sky-500/15 px-1.5 py-[1px] text-[8px] leading-none tracking-wider text-sky-100">
@@ -166,7 +186,11 @@ function Scene() {
           }
           if (m.kind === "me") {
             return (
-              <div key={m.id} className="my-3 flex justify-end">
+              <div
+                key={m.id}
+                ref={isLatestMessage ? latestMessageRef : undefined}
+                className="my-3 flex justify-end"
+              >
                 <div className="max-w-[85%]">
                   <div className="mb-1 text-right text-[11px] tracking-wider text-amber-100/80">
                     庄寒雁
@@ -180,7 +204,11 @@ function Scene() {
           }
           if (m.kind === "loading") {
             return (
-              <div key={m.id} className="my-3 max-w-[60%]">
+              <div
+                key={m.id}
+                ref={isLatestMessage ? latestMessageRef : undefined}
+                className="my-3 max-w-[60%]"
+              >
                 <div className="mb-1 text-[11px] tracking-wider text-amber-200/60">{m.name}</div>
                 <div className="inline-flex rounded-2xl rounded-tl-md bg-amber-50/30 px-4 py-3 text-[14px] text-amber-50">
                   <Dot delay={0} />
@@ -193,12 +221,14 @@ function Scene() {
           return (
             <div
               key={m.id}
+              ref={isLatestMessage ? latestMessageRef : undefined}
               className="my-3 rounded-lg border border-rose-400/30 bg-rose-900/30 px-4 py-2 text-center text-[12px] text-rose-100"
             >
               {m.text}
             </div>
           );
         })}
+        <div className="h-[55%] min-h-[180px]" aria-hidden="true" />
       </div>
 
       <div className="absolute inset-x-0 bottom-0 z-20 max-h-[260px] overflow-y-auto border-t border-white/10 bg-black/60 px-4 py-3 backdrop-blur-md">
@@ -223,6 +253,21 @@ function Scene() {
           state.options &&
           state.options.length > 0 && (
             <>
+              <div className="mb-2 flex items-center justify-between gap-2 text-[11px] text-amber-50/60">
+                <span>
+                  💬 第 <b className="text-amber-200">{state.roundInScene + 1}</b> /{" "}
+                  {state.maxRoundsPerScene} 组
+                  {state.currentBeatLabel && (
+                    <span className="ml-1 text-amber-200/80">· {state.currentBeatLabel}</span>
+                  )}
+                </span>
+                {state.roundInScene >= 1 && (
+                  <button onClick={skipScene} className="shrink-0 text-amber-300 hover:text-amber-200">
+                    够了，进入下一幕 →
+                  </button>
+                )}
+              </div>
+
               {state.translating && (
                 <div className="mb-2 rounded-lg bg-amber-500/15 px-3 py-2 text-center text-[11px] text-amber-200">
                   正在化作寒雁此刻会说的话…
@@ -283,18 +328,6 @@ function Scene() {
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/30 text-amber-100 disabled:opacity-30"
                   >
                     <Send size={14} />
-                  </button>
-                </div>
-              )}
-
-              {state.roundInScene >= 1 && (
-                <div className="mt-2 flex justify-between text-[11px] text-amber-50/55">
-                  <span>
-                    💬 第 <b className="text-amber-200">{state.roundInScene + 1}</b> /{" "}
-                    {state.maxRoundsPerScene} 轮
-                  </span>
-                  <button onClick={skipScene} className="text-amber-300 hover:text-amber-200">
-                    够了，进入下一幕 →
                   </button>
                 </div>
               )}
