@@ -10,6 +10,7 @@ import {
   Trophy,
   Quote,
   X,
+  Swords,
 } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import sceneBg from "@/assets/ending-bg.jpg";
@@ -316,6 +317,23 @@ function Ending() {
               </div>
             </div>
           )}
+
+          {/* 王府御敌 · 战斗小游戏入口 */}
+          <div className="mt-4 rounded-xl border border-[#7a2a2a]/20 bg-gradient-to-b from-[#d4a373]/20 to-[#7a2a2a]/[0.06] p-4 text-center">
+            <div className="text-[10px] tracking-[0.3em] text-[#7a2a2a]/70">
+              番外 · 王府御敌
+            </div>
+            <p className="mt-2 text-[12.5px] leading-[1.85] text-[#3a2a22]/80">
+              贼寇夜袭玄清王府，狼烟四起。你与傅云夕并肩持刃，<br />
+              一波又一波来敌压境——这一战，护得住这十里红妆吗？
+            </p>
+            <button
+              onClick={() => navigate({ to: "/minigame2" })}
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#7a2a2a] py-2.5 text-[13px] font-medium tracking-[0.15em] text-white shadow-[0_6px_16px_-6px_rgba(122,42,42,0.6)] transition active:scale-[0.99]"
+            >
+              <Swords size={14} /> 携手御敌
+            </button>
+          </div>
 
           {/* buttons */}
           <div className="mt-5 flex items-center gap-2">
