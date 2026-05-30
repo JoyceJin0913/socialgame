@@ -321,4 +321,350 @@ Prism 只负责**这份骨架本身的多样性正确性**。
 
 ---
 
-*Prism Sample Script v1 · 基于《重生之贵女难求》第五幕三场*
+# 扩展案例 1 · 身世真相 / "验亲"晶体
+
+> 原著触发点：第 67 章身世之谜（阿碧吐露内情） + 第 100 章姨娘小产（庄仕洋对嫡庶问题的暴怒） + 第 58 章周氏小产连带的家族秩序震荡。
+> 这是一组"出身被质疑 / 被验证"的剧情节点的抽象化。
+
+## Crystal · "嫡庶真相被翻起"
+
+```yaml
+crystal_id: heritage_truth_surfacing
+dramatic_function: 让玩家亲历"我究竟是谁"的瞬间动摇与重建
+must_happen:
+  - 某个关键人物（生母旧仆 / 父亲 / 道长 / 老嬷嬷）抛出对玩家身世的暗示
+  - 玩家必须做出回应（追问 / 否认 / 装聋 / 反将一军）
+  - 至少一条信息差被推进（hinted → confirmed，或反向）
+must_not_happen:
+  - 当场公开告知所有人
+  - 玩家直接放弃当前身份逃出府
+```
+
+## 视角 A · 寒雁视角
+
+### Slice α · 私室低语 · 老嬷嬷夜来
+
+```yaml
+axes:
+  S: chamber           # 自己的闺房，只一盏灯
+  H: { lineage: hinted, mother_alive: unknown }
+  N: [chen_mama]       # 旧仆陈嬷嬷或同等心腹
+  T: 8                 # 半夜，天明前都还有时间
+  A: { rumor: private, reverb: low }
+tone_hint: 老人推门进来，关门时反复确认了三遍。
+```
+
+### Slice β · 祠堂祭祖 · 当众试探
+
+```yaml
+axes:
+  S: shrine
+  H: { lineage: hinted, mother_alive: unknown }
+  N: [father, stepmother, elder, brother]
+  T: 4                 # 仪式时长有限
+  A: { rumor: court, reverb: mid }
+tone_hint: 列祖牌位前，对方在所有人面前"无意"提起一件你不该知道的事。
+```
+
+### Slice γ · 道观清晨 · 道长批命
+
+```yaml
+axes:
+  S: temple
+  H: { lineage: confirmed, mother_alive: hinted }
+  N: [jingxu_daoist]
+  T: 12
+  A: { rumor: all, reverb: high }
+tone_hint: 道长说出一句话，你才意识到京中已经有人传开了。
+```
+
+### Choice Pool（共 11 个）
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 不动声色追问"这话从何而来" | `probe_source` | N=[chen_mama \| jingxu_daoist] |
+| 当场矢口否认，把对方堵回去 | `flat_deny` | （任意 Slice） |
+| 假装不解，转移话题 | `feign_oblivion` | （任意 Slice） |
+| 反问对方"你是谁派来的" | `counter_probe` | S=chamber \| temple |
+| 留下信物试探对方反应（如玉佩半块） | `bait_with_token` | S=chamber, N=[chen_mama] |
+| 当众一笑置之，事后再清算 | `public_dismiss` | S=shrine, N=[elder] |
+| 借祖宗牌位起誓"我是 X 家女" | `swear_on_ancestors` | S=shrine |
+| 当场直问父亲"我究竟是谁的女儿" | `confront_father` | S=shrine, N=[father], H.lineage=confirmed |
+| 借故离场，立刻回房翻母亲遗物 | `urgent_search_relics` | Tmax≤6 |
+| 让心腹连夜送信给某位远亲求证 | `reach_relative` | N=[chen_mama], Tmax≤8 |
+| 跪下当众认承"是我血脉有疑" | `public_confess` | S=shrine, H.lineage=confirmed |
+
+> **演示点**：默认 H=hinted 时，玩家有 7 个选项；H 升为 confirmed 时多出 2 个"激烈"选项（`confront_father` / `public_confess`）——**信息差直接决定"是否敢摊牌"**。
+
+---
+
+## 视角 B · 父亲（庄仕洋同位角色）视角
+
+### Slice α-male · 私室独酌 · 旧仆来访
+
+```yaml
+axes:
+  S: chamber
+  H: { lineage: confirmed, daughter_knows: unknown }
+  N: [chen_mama]
+  T: 8
+  A: { rumor: private, reverb: low }
+tone_hint: 老人一开口，你十几年前那个夜晚立刻回到眼前。
+```
+
+### Slice β-male · 祠堂祭祖 · 女儿当众
+
+```yaml
+axes:
+  S: shrine
+  H: { lineage: confirmed, daughter_knows: hinted, wife_complicit: confirmed }
+  N: [daughter, stepmother, elder, brother]
+  T: 4
+  A: { rumor: court, reverb: mid }
+tone_hint: 她抬眼看你的一瞬，你知道她已经在怀疑。
+```
+
+### Slice γ-male · 书房深夜 · 一封举报信
+
+```yaml
+axes:
+  S: study
+  H: { lineage: confirmed, court_aware: hinted }
+  N: [steward]
+  T: 6
+  A: { rumor: all, reverb: high }
+tone_hint: 桌上那封无名信，言辞客气，却把十几年前的事说得一清二楚。
+```
+
+### Choice Pool（共 10 个）
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 当场拍案，命人把旧仆轰出去 | `silence_witness` | S=chamber, N=[chen_mama] |
+| 重金封口，留她一命换沉默 | `bribe_for_silence` | S=chamber, N=[chen_mama] |
+| 反过来威胁"你说出去你也活不了" | `mutual_assured_destruction` | S=chamber, N=[chen_mama] |
+| 当众斥责女儿"不知规矩" | `public_scold_daughter` | S=shrine, N=[daughter] |
+| 当众替女儿打圆场，保住体面 | `cover_with_grace` | S=shrine, N=[daughter, elder] |
+| 私下喊女儿到偏房，问她知道多少 | `private_inquiry` | S=shrine, N=[daughter] |
+| 把举报信压下来，假装没看见 | `suppress_letter` | S=study |
+| 把举报信交给妻子，让她处理 | `delegate_to_wife` | S=study, H.wife_complicit=confirmed |
+| 提笔上奏，主动澄清家世（赌一把） | `preemptive_disclosure` | S=study, H.court_aware=hinted |
+| 当夜召旧仆灭口 | `eliminate_threat` | Tmax≤6 |
+
+> **演示点**：男主视角的 H 轴**永远是 confirmed**——他自己当然知道。但他多了**两条新的隐藏轴**：`daughter_knows`（女儿察觉了多少）和 `court_aware`（朝中是否听到风声）。这是 Prism 处理多视角时"信息差结构"差异的关键。
+
+---
+
+# 扩展案例 2 · 夜袭抵御 / "暗夜围杀"晶体
+
+> 原著触发点：第 56–57 章望江楼刺客 + 第 69 章闺中刺客 + 第 125–126 章暗巷御前侍卫追杀（socialgame 现有 QTE 的素材）。
+> 这是一组"突发武装威胁，玩家必须在有限时间内做出抵御 / 求援 / 周旋决定"的剧情节点的抽象化。
+> **价值**：演示 Prism 不仅能管对话节点，也能管动作节点——QTE 与五轴可共存。
+
+## Crystal · "夜袭围困"
+
+```yaml
+crystal_id: night_assault_survival
+dramatic_function: 让玩家在视野有限 + 时间逼近 + 武力悬殊下做出"信谁、护谁、舍谁"的判断
+must_happen:
+  - 至少 3 名敌人已经在场或即将到达
+  - 玩家与至少 1 名同伴或 NPC 处于威胁范围
+  - 必须在 T 倒计时内做出第一个生死判断
+must_not_happen:
+  - 玩家被无伤无代价地救走
+  - 敌人无故撤退
+```
+
+## 视角 A · 寒雁视角
+
+### Slice α · 望江楼花瓶后 · 屠楼之夜
+
+```yaml
+axes:
+  S: tower_alcove
+  H: { assassin_target: hinted, savior_identity: unknown }
+  N: [enemies_many, shuhong_separated]
+  T: 2                 # 脚步声逼近
+  A: { rumor: private, weather: rain }
+tone_hint: 你蹲在花瓶后，听见对方的脚步越过你身侧，又突然停下。
+```
+
+### Slice β · 闺房惊梦 · 黑衣人入府
+
+```yaml
+axes:
+  S: chamber
+  H: { assassin_target: confirmed, savior_identity: unknown }
+  N: [enemies_few, jilan_outside]
+  T: 5
+  A: { rumor: private, weather: still }
+tone_hint: 你被一只冰凉的手覆住口鼻，刀已经抵在你的咽喉。
+```
+
+### Slice γ · 暗巷御前侍卫 · 君要臣死
+
+```yaml
+axes:
+  S: alley
+  H: { assassin_target: confirmed, savior_identity: hinted, royal_decree: confirmed }
+  N: [enemies_squad, masked_savior, jilan, shuhong]
+  T: 3
+  A: { rumor: all, weather: storm }
+tone_hint: 御前侍卫的令牌反着光。你身后突然多出一道挡在你身前的黑影。
+```
+
+### Choice Pool（共 12 个）
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 屏息不动，赌对方走过去 | `hold_breath` | S=tower_alcove, T≤3 |
+| 拔出袖中梅花刺反击 | `melee_resist` | （任意 Slice） |
+| 朝最近的同伴方向冲，背靠背 | `regroup_with_ally` | N includes any ally |
+| 大声呼救（启动 QTE：分贝 + 持续时间） | `qte_shout_for_help` | T≤3, A.weather ≠ silent_required |
+| 把贵重信物（玉佩）抛向半空求接应 | `signal_with_token` | N=[masked_savior \| jilan] |
+| 假装受伤倒下，伺机偷袭 | `feign_injury` | （任意 Slice） |
+| 信任面具人，背对他迎敌 | `trust_masked` | N=[masked_savior], H.savior_identity≥hinted |
+| 让丫鬟先走，自己断后 | `sacrifice_for_maid` | N includes maid |
+| 翻窗 / 翻墙脱身 | `evasive_flee` | S ≠ alley |
+| 朝御前侍卫亮明身份（赌他们不敢杀王妃） | `invoke_status` | N includes royal_squad, H.royal_decree≠confirmed |
+| 直接朝最近的黑衣人扑过去同归于尽 | `desperate_charge` | T≤2 |
+| 搜身：摸最近一具尸体的腰牌（确认幕后） | `loot_evidence` | 在 hold_breath 或 melee_resist 之后 |
+
+> **演示点 1**：T 轴在这个 Crystal 里**真正决定生死**——T≤3 时 hold_breath / shout / desperate_charge 三个紧急选项才会浮出。
+> **演示点 2**：H.royal_decree 是个有趣的反向锁——若玩家知道是皇上要她死，"亮明身份"反而**消失**（因为没用）。这演示了"已知信息会让某些选项不可选"，是 Prism 中 H 轴的反向用法。
+> **演示点 3**：`qte_shout_for_help` 直接绑定 socialgame 现有的麦克风 QTE 子系统——证明 Prism 五轴 + 物理 QTE 可以共存。
+
+---
+
+## 视角 B · 面具人（傅云夕同位角色）视角
+
+### Slice α-male · 屋顶俯瞰 · 屠楼之夜
+
+```yaml
+axes:
+  S: roof_above_tower
+  H: { her_location: hinted, her_awareness_of_you: unknown }
+  N: [enemies_many, hanyan_below, your_subordinates]
+  T: 2
+  A: { weather: rain, reverb: mid }
+tone_hint: 你看见她在花瓶后蹲着的影子，刀光正擦着她肩头过去。
+```
+
+### Slice β-male · 王府墙外 · 闺房刺客
+
+```yaml
+axes:
+  S: outside_chamber
+  H: { her_location: confirmed, her_awareness_of_you: unknown, illness: confirmed }
+  N: [enemies_few, hanyan_inside]
+  T: 5
+  A: { weather: still, reverb: low }
+tone_hint: 你刚咳了一口血，就听见她屋里传出一声闷响。
+```
+
+### Slice γ-male · 暗巷尽头 · 御前侍卫
+
+```yaml
+axes:
+  S: alley_end
+  H: { her_location: confirmed, royal_decree: confirmed, illness: confirmed }
+  N: [enemies_squad, hanyan]
+  T: 3
+  A: { weather: storm, reverb: high }
+tone_hint: 你戴上鬼面那一刻，胸口的寒毒又泛上来一次。
+```
+
+### Choice Pool（共 11 个）
+
+| 选项 | hook | require |
+| --- | --- | --- |
+| 不出手，让她自救（保留身份） | `withhold_to_protect_cover` | （任意 Slice） |
+| 出手但不现身（远程射杀 / 屋顶飞剑） | `intervene_anonymously` | S=roof_above_tower \| outside_chamber |
+| 戴鬼面亲自下场 | `appear_masked` | T≤3 |
+| 卸下鬼面，让她看见是你（暴露身份） | `reveal_identity` | T≤2, H.her_awareness_of_you=unknown |
+| 替她挡下致命一击 | `take_the_blow` | T≤2, N includes hanyan |
+| 调动暗卫围杀对方主帅 | `dispatch_subordinates` | N includes subordinates |
+| 故意伤一个对方士兵当活口 | `capture_alive` | （任意 Slice） |
+| 制造一场更大的混乱（点火 / 砸瓦）转移敌人 | `create_distraction` | S=roof_above_tower |
+| 把她背走，强行带离 | `evacuate_by_force` | T≤2, N includes hanyan, H.illness 允许 |
+| 假装自己被击杀，让她以为你不在了 | `fake_death_to_save` | T≤3 |
+| 撤退，回头清算幕后（放她自己脱险） | `tactical_withdrawal` | T>2 |
+
+> **演示点**：男主视角下"不出手"和"出手"两条线**代价向量完全相反**——"不出手"保住伪装但赌她活下来，"出手"救她但暴露行踪。这就是 Prism 反复强调的"代价拓扑差异"。
+
+---
+
+## 两个新晶体的 hook 新增清单
+
+> 这些 hook 加入 design-doc 中"给数值系统的语义事件清单"。Brewed 决定每个事件的具体数值映射。
+
+### 验亲 / 身世真相 · 寒雁
+- `probe_source` · 情报↑ 风险↑
+- `flat_deny` · 隐蔽↑ 真相进度↓
+- `feign_oblivion` · 隐蔽↑↑ 关系→0
+- `counter_probe` · 情报↑ 对方戒心↑
+- `bait_with_token` · 情报↑↑ 暴露↑↑
+- `public_dismiss` · 体面↑ 真相进度↓
+- `swear_on_ancestors` · 体面↑↑ 后续反噬↑↑（若是假誓）
+- `confront_father` · 真相进度↑↑↑ 父女关系↓↓↓
+- `urgent_search_relics` · 情报↑ 心力↓
+- `reach_relative` · 盟友信任↑ 暴露↑
+- `public_confess` · 计划崩盘↑↑↑
+
+### 验亲 / 身世真相 · 父亲
+- `silence_witness` · 隐蔽↑ 旧仆怨念↑
+- `bribe_for_silence` · 隐蔽↑↑ 资金↓
+- `mutual_assured_destruction` · 隐蔽↑↑↑ 风险↑↑↑
+- `public_scold_daughter` · 体面↑ 父女关系↓
+- `cover_with_grace` · 体面↑↑ 父女关系↑
+- `private_inquiry` · 情报↑ 女儿戒心↑
+- `suppress_letter` · 隐蔽↑ 朝堂风险↑
+- `delegate_to_wife` · 妻子掌控↑↑ 自身风险↓
+- `preemptive_disclosure` · 朝堂主动权↑ 家族体面↓↓
+- `eliminate_threat` · 隐蔽↑↑↑ 黑化↑↑
+
+### 夜袭抵御 · 寒雁
+- `hold_breath` · 生存率↑↑（若未被发现）/ 致命（若被发现）
+- `melee_resist` · 受伤↑ 自信↑
+- `regroup_with_ally` · 生存率↑ 同伴受伤风险↑
+- `qte_shout_for_help` · 由 QTE 子系统判定
+- `signal_with_token` · 盟友赶到概率↑↑ 暴露↑
+- `feign_injury` · 反杀机会↑ 受伤↑
+- `trust_masked` · 信任傅云夕↑↑ 生存率↑↑
+- `sacrifice_for_maid` · 内在成长↑↑ 自身风险↑↑↑
+- `evasive_flee` · 生存率↑ 体面↓
+- `invoke_status` · 生存率↑↑（普通敌人）/ 0（御前侍卫）
+- `desperate_charge` · 同归于尽风险↑↑↑
+- `loot_evidence` · 情报↑↑↑（揭出幕后）
+
+### 夜袭抵御 · 男主
+- `withhold_to_protect_cover` · 计划完成↑ 她活下来概率↓
+- `intervene_anonymously` · 她生存率↑ 暴露↑
+- `appear_masked` · 她生存率↑↑ 暴露↑↑
+- `reveal_identity` · 关系↑↑↑ 计划崩盘↑↑↑
+- `take_the_blow` · 她生存率↑↑↑ 自身重伤↑↑↑
+- `dispatch_subordinates` · 整体生存率↑ 暗卫损失↑
+- `capture_alive` · 情报↑↑↑ 时间消耗↑
+- `create_distraction` · 转移敌人↑↑ 旁观伤亡↑
+- `evacuate_by_force` · 她生存率↑↑↑ 她信任↓
+- `fake_death_to_save` · 她绝望↑↑↑ 计划保密↑↑
+- `tactical_withdrawal` · 计划保密↑ 她当晚风险↑↑
+
+---
+
+## 三组晶体的对比表
+
+| | 第五幕「离心」 | 「验亲」 | 「夜袭」 |
+| --- | --- | --- | --- |
+| 节点类型 | 对话 / 情感 | 对话 / 揭秘 | 动作 / 生死 |
+| 主要驱动轴 | H（信息差） | H（信息差） | T（时间） + H |
+| QTE 集成 | 无 | 无 | 有（`qte_shout_for_help`）|
+| 视角双方 | 寒雁 ↔ 男主 | 寒雁 ↔ 父亲 | 寒雁 ↔ 面具人男主 |
+| Slice 数 | 6 | 6 | 6 |
+| hook 数 | 26 | 21 | 23 |
+
+**共 18 个 Slice、70 个 hook**——这就是 Prism 应用在一段完整剧情里能产出的多样性体量。
+
+---
+
+*Prism Sample Script v1.1 · 第五幕 + 身世真相 + 夜袭抵御 三组晶体 · 双视角*
