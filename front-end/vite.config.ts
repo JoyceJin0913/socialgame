@@ -16,10 +16,13 @@ export default defineConfig({
     server: {
       allowedHosts: ["meter-folder-assets-trackback.trycloudflare.com"],
       proxy: {
+        // /api/chat → dist 的 Vercel dev (vercel dev 默认 3000)
+        // 如果端口冲突走 3001/3002，改下面的 target 即可
         "/api": {
-          target: "http://localhost:8000",
+          target: "http://localhost:3000",
           changeOrigin: true,
         },
+        // /ws 保留给将来的 multiplayer（目前 scene.tsx 不用）
         "/ws": {
           target: "ws://localhost:8000",
           ws: true,

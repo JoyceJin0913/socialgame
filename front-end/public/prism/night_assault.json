@@ -1,0 +1,157 @@
+{
+  "meta": {
+    "id": "night_assault_survival",
+    "title": "夜袭抵御 · 暗夜围杀",
+    "version": "1.0.0",
+    "author": "Prism × socialgame"
+  },
+  "crystal": {
+    "dramaticFunction": "让玩家在视野有限、时间逼近、武力悬殊下做出\"信谁、护谁、舍谁\"的判断",
+    "mustHappen": [
+      "至少 3 名敌人在场或即将到达",
+      "玩家与至少 1 名同伴或 NPC 处于威胁范围",
+      "必须在 T 倒计时内做出第一个生死判断"
+    ],
+    "mustNotHappen": [
+      "玩家被无伤无代价地救走",
+      "敌人无故撤退"
+    ]
+  },
+  "axisDefs": {
+    "S": {
+      "tower_alcove":      { "label": "望江楼花瓶后", "exitCost": "high" },
+      "chamber":           { "label": "闺房惊梦",     "exitCost": "mid" },
+      "alley":             { "label": "暗巷御前侍卫", "exitCost": "high" },
+      "roof_above_tower":  { "label": "屋顶俯瞰",     "exitCost": "low" },
+      "outside_chamber":   { "label": "王府墙外",     "exitCost": "low" },
+      "alley_end":         { "label": "暗巷尽头",     "exitCost": "mid" }
+    },
+    "H": {
+      "assassin_target":         { "label": "玩家是否为目标" },
+      "savior_identity":         { "label": "救援者身份" },
+      "royal_decree":            { "label": "皇命是否已下" },
+      "her_location":            { "label": "她的位置（仅男主视角）" },
+      "her_awareness_of_you":    { "label": "她是否知道你在场（仅男主视角）" },
+      "illness":                 { "label": "你自身寒毒状态（仅男主视角）" }
+    },
+    "A": {
+      "rumor": {
+        "private": "无人传讯",
+        "court":   "宫中已知",
+        "all":     "全城戒严"
+      },
+      "reverb": {
+        "low":  { "label": "晴 ×1.0",   "multiplier": 1.0 },
+        "mid":  { "label": "雨 ×1.3",   "multiplier": 1.3 },
+        "high": { "label": "暴雨 ×2.0", "multiplier": 2.0 }
+      }
+    }
+  },
+  "views": {
+    "hanyan": {
+      "name": "寒雁视角",
+      "consoleTitle": "prism.refract( \"night_assault\", view=\"hanyan\" )",
+      "hSubLabel": "你掌握的信息",
+      "npcRoster": [
+        { "id": "enemies_many",     "label": "数十名黑衣人" },
+        { "id": "enemies_few",      "label": "三两个刺客" },
+        { "id": "enemies_squad",    "label": "御前侍卫队" },
+        { "id": "shuhong",          "label": "姝红" },
+        { "id": "jilan",            "label": "汲蓝" },
+        { "id": "masked_savior",    "label": "面具人" }
+      ],
+      "presetLabels": {
+        "alpha": "望江楼花瓶后",
+        "beta":  "闺房惊梦",
+        "gamma": "暗巷追杀"
+      },
+      "presets": {
+        "alpha": { "S": "tower_alcove", "H": "hinted",    "N": ["enemies_many", "shuhong"],                            "T": 2, "A": { "rumor": "private", "reverb": "mid" } },
+        "beta":  { "S": "chamber",      "H": "confirmed", "N": ["enemies_few", "jilan"],                               "T": 5, "A": { "rumor": "private", "reverb": "low" } },
+        "gamma": { "S": "alley",        "H": "confirmed", "N": ["enemies_squad", "masked_savior", "jilan", "shuhong"], "T": 3, "A": { "rumor": "all",     "reverb": "high" } }
+      },
+      "tones": {
+        "tower_alcove": {
+          "private": "你蹲在花瓶后，听见对方的脚步越过你身侧，又突然停下。",
+          "court":   "楼里已经在传你的名字，对方知道找谁。",
+          "all":     "整座楼都在响，没人会注意到你的呼救。"
+        },
+        "chamber": {
+          "private": "你被一只冰凉的手覆住口鼻，刀已经抵在你的咽喉。",
+          "court":   "他们没戴面具——这说明他们不打算让你活着出去。",
+          "all":     "府里的更夫不见踪影。"
+        },
+        "alley": {
+          "private": "雨幕里只有刀光。",
+          "court":   "御前侍卫的令牌反着光。",
+          "all":     "你身后突然多出一道挡在你身前的黑影。"
+        }
+      },
+      "pool": [
+        { "id": "hold_breath",          "text": "屏息不动，赌对方走过去",                "hook": "hold_breath",          "require": { "S": "tower_alcove", "Tmax": 3 },                                   "delta": { "生存率": "++" } },
+        { "id": "melee_resist",         "text": "拔出袖中梅花刺反击",                    "hook": "melee_resist",         "require": {},                                                                  "delta": { "受伤": "+", "自信": "+" } },
+        { "id": "regroup_with_ally",    "text": "朝最近的同伴方向冲，背靠背",            "hook": "regroup_with_ally",    "require": {},                                                                  "delta": { "生存率": "+", "同伴受伤风险": "+" } },
+        { "id": "qte_shout_for_help",   "text": "大声呼救（启动 QTE：分贝 + 持续时间）", "hook": "qte_shout_for_help",   "require": { "Tmax": 3 },                                                       "delta": { "由QTE判定": "+" } },
+        { "id": "signal_with_token",    "text": "把贵重信物（玉佩）抛向半空求接应",      "hook": "signal_with_token",    "require": { "N": ["masked_savior"] },                                          "delta": { "盟友赶到概率": "++", "暴露": "+" } },
+        { "id": "feign_injury",         "text": "假装受伤倒下，伺机偷袭",                "hook": "feign_injury",         "require": {},                                                                  "delta": { "反杀机会": "+", "受伤": "+" } },
+        { "id": "trust_masked",         "text": "信任面具人，背对他迎敌",                "hook": "trust_masked",         "require": { "N": ["masked_savior"], "H": "hinted_or_above" },                  "delta": { "信任傅云夕": "++", "生存率": "++" } },
+        { "id": "sacrifice_for_maid",   "text": "让丫鬟先走，自己断后",                  "hook": "sacrifice_for_maid",   "require": { "N": ["jilan"] },                                                  "delta": { "内在成长": "++", "自身风险": "+++" } },
+        { "id": "evasive_flee",         "text": "翻窗 / 翻墙脱身",                       "hook": "evasive_flee",         "require": {},                                                                  "delta": { "生存率": "+", "体面": "-" } },
+        { "id": "desperate_charge",     "text": "直接朝最近的黑衣人扑过去同归于尽",      "hook": "desperate_charge",     "require": { "Tmax": 2 },                                                       "delta": { "同归于尽风险": "+++" } },
+        { "id": "loot_evidence",        "text": "搜身：摸最近一具尸体的腰牌（确认幕后）", "hook": "loot_evidence",        "require": {},                                                                  "delta": { "情报": "+++" } }
+      ]
+    },
+    "fyx": {
+      "name": "面具人视角（傅云夕）",
+      "consoleTitle": "prism.refract( \"night_assault\", view=\"fyx\" )",
+      "hSubLabel": "你身上隐藏的事",
+      "npcRoster": [
+        { "id": "enemies_many",    "label": "数十名黑衣人" },
+        { "id": "enemies_few",     "label": "三两个刺客" },
+        { "id": "enemies_squad",   "label": "御前侍卫队" },
+        { "id": "hanyan",          "label": "寒雁" },
+        { "id": "subordinates",    "label": "你的暗卫" }
+      ],
+      "presetLabels": {
+        "alpha": "屋顶俯瞰",
+        "beta":  "王府墙外",
+        "gamma": "暗巷尽头"
+      },
+      "presets": {
+        "alpha": { "S": "roof_above_tower", "H": "hinted",    "N": ["enemies_many", "hanyan", "subordinates"], "T": 2, "A": { "rumor": "private", "reverb": "mid" } },
+        "beta":  { "S": "outside_chamber",  "H": "confirmed", "N": ["enemies_few", "hanyan"],                  "T": 5, "A": { "rumor": "private", "reverb": "low" } },
+        "gamma": { "S": "alley_end",        "H": "confirmed", "N": ["enemies_squad", "hanyan"],                "T": 3, "A": { "rumor": "all",     "reverb": "high" } }
+      },
+      "tones": {
+        "roof_above_tower": {
+          "private": "你看见她在花瓶后蹲着的影子，刀光正擦着她肩头过去。",
+          "court":   "下面的人不是寻常刺客——是七皇子的人。",
+          "all":     "整座楼里所有的人都成了诱饵。"
+        },
+        "outside_chamber": {
+          "private": "你刚咳了一口血，就听见她屋里传出一声闷响。",
+          "court":   "今夜本不该有人来这里——除非有人知道你不在。",
+          "all":     "府里的更夫和侍卫都已经被支开。"
+        },
+        "alley_end": {
+          "private": "你戴上鬼面那一刻，胸口的寒毒又泛上来一次。",
+          "court":   "御前侍卫——这是皇上要她死。",
+          "all":     "你只有一次机会，要么救她要么保身份。"
+        }
+      },
+      "pool": [
+        { "id": "withhold_to_protect_cover", "text": "不出手，让她自救（保留身份）",          "hook": "withhold_to_protect_cover", "require": {},                                                                              "delta": { "计划完成": "+", "她活下来概率": "-" } },
+        { "id": "intervene_anonymously",     "text": "出手但不现身（远程射杀 / 屋顶飞剑）",   "hook": "intervene_anonymously",     "require": { "S": "roof_above_tower" },                                                     "delta": { "她生存率": "+", "暴露": "+" } },
+        { "id": "appear_masked",             "text": "戴鬼面亲自下场",                        "hook": "appear_masked",             "require": { "Tmax": 3 },                                                                   "delta": { "她生存率": "++", "暴露": "++" } },
+        { "id": "reveal_identity",           "text": "卸下鬼面，让她看见是你（暴露身份）",    "hook": "reveal_identity",           "require": { "Tmax": 2, "H": "hinted_or_above" },                                           "delta": { "关系": "+++", "计划崩盘": "+++" } },
+        { "id": "take_the_blow",             "text": "替她挡下致命一击",                      "hook": "take_the_blow",             "require": { "Tmax": 2, "N": ["hanyan"] },                                                  "delta": { "她生存率": "+++", "自身重伤": "+++" } },
+        { "id": "dispatch_subordinates",     "text": "调动暗卫围杀对方主帅",                  "hook": "dispatch_subordinates",     "require": { "N": ["subordinates"] },                                                       "delta": { "整体生存率": "+", "暗卫损失": "+" } },
+        { "id": "capture_alive",             "text": "故意伤一个对方士兵当活口",              "hook": "capture_alive",             "require": {},                                                                              "delta": { "情报": "+++", "时间消耗": "+" } },
+        { "id": "create_distraction",        "text": "制造一场更大的混乱（点火 / 砸瓦）",     "hook": "create_distraction",        "require": { "S": "roof_above_tower" },                                                     "delta": { "转移敌人": "++", "旁观伤亡": "+" } },
+        { "id": "evacuate_by_force",         "text": "把她背走，强行带离",                    "hook": "evacuate_by_force",         "require": { "Tmax": 2, "N": ["hanyan"] },                                                  "delta": { "她生存率": "+++", "她信任": "-" } },
+        { "id": "fake_death_to_save",        "text": "假装自己被击杀，让她以为你不在了",      "hook": "fake_death_to_save",        "require": { "Tmax": 3 },                                                                   "delta": { "她绝望": "+++", "计划保密": "++" } },
+        { "id": "tactical_withdrawal",       "text": "撤退，回头清算幕后（放她自己脱险）",    "hook": "tactical_withdrawal",       "require": {},                                                                              "delta": { "计划保密": "+", "她当晚风险": "++" } }
+      ]
+    }
+  }
+}
