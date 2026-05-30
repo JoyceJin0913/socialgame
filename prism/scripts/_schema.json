@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prism Script Schema",
+  "description": "A single playable crystal — what Prism produces and what the engine consumes.",
+  "type": "object",
+  "required": ["meta", "crystal", "axisDefs", "views"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["id", "title", "version"],
+      "properties": {
+        "id": { "type": "string", "description": "Stable crystal id, snake_case" },
+        "title": { "type": "string", "description": "Human-readable name shown in UI" },
+        "version": { "type": "string" },
+        "author": { "type": "string" },
+        "source": { "type": "string", "description": "Original material reference, optional" }
+      }
+    },
+    "crystal": {
+      "type": "object",
+      "description": "The invariant dramatic skeleton",
+      "required": ["dramaticFunction", "mustHappen", "mustNotHappen"],
+      "properties": {
+        "dramaticFunction": { "type": "string" },
+        "mustHappen": { "type": "array", "items": { "type": "string" } },
+        "mustNotHappen": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "axisDefs": {
+      "type": "object",
+      "description": "Per-axis option enumerations and labels. Shared across all views by default.",
+      "required": ["S", "H", "A"],
+      "properties": {
+        "S": {
+          "type": "object",
+          "description": "Scene stage options. Keys are stage ids.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {
+              "label": { "type": "string" },
+              "exitCost": { "type": "string", "enum": ["low", "mid", "high"] }
+            }
+          }
+        },
+        "H": {
+          "type": "object",
+          "description": "Hidden knowledge facts. Keys are fact ids; states are always unknown/hinted/confirmed.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["label"],
+            "properties": { "label": { "type": "string" } }
+          }
+        },
+        "A": {
+          "type": "object",
+          "required": ["rumor", "reverb"],
+          "properties": {
+            "rumor": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "reverb": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["label", "multiplier"],
+                "properties": {
+                  "label": { "type": "string" },
+                  "multiplier": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "views": {
+      "type": "object",
+      "description": "Each view (perspective) defines its own NPC roster, presets, choice pool, and tone matrix.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name", "consoleTitle", "hSubLabel", "npcRoster", "presets", "tones", "pool"],
+        "properties": {
+          "name": { "type": "string" },
+          "consoleTitle": { "type": "string" },
+          "hSubLabel": { "type": "string" },
+          "npcRoster": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label"],
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" }
+              }
+            }
+          },
+          "presetLabels": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "presets": {
+            "type": "object",
+            "description": "Named slices, conventionally alpha/beta/gamma.",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["S", "H", "N", "T", "A"],
+              "properties": {
+                "S": { "type": "string" },
+                "H": { "type": "string", "enum": ["unknown", "hinted", "confirmed"] },
+                "N": { "type": "array", "items": { "type": "string" } },
+                "T": { "type": "integer", "minimum": 1, "maximum": 24 },
+                "A": {
+                  "type": "object",
+                  "required": ["rumor", "reverb"],
+                  "properties": {
+                    "rumor": { "type": "string" },
+                    "reverb": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "tones": {
+            "type": "object",
+            "description": "Two-level map: S id -> rumor id -> tone string.",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          },
+          "pool": {
+            "type": "array",
+            "description": "Candidate choice pool. Engine filters by require at runtime.",
+            "items": {
+              "type": "object",
+              "required": ["id", "text", "hook", "require"],
+              "properties": {
+                "id": { "type": "string" },
+                "text": { "type": "string" },
+                "hook": { "type": "string", "description": "Semantic event emitted to the numerical layer" },
+                "require": {
+                  "type": "object",
+                  "description": "Conditions over current axes",
+                  "properties": {
+                    "S": { "type": "string" },
+                    "N": { "type": "array", "items": { "type": "string" } },
+                    "H": {
+                      "type": "string",
+                      "enum": ["unknown", "hinted", "confirmed", "hinted_or_above"]
+                    },
+                    "A1": { "type": "string", "description": "rumor value" },
+                    "Tmax": { "type": "integer" }
+                  }
+                },
+                "delta": {
+                  "type": "object",
+                  "description": "Semantic cost vector. Direction-of-change, not raw numbers.",
+                  "additionalProperties": {
+                    "type": "string",
+                    "enum": ["+", "++", "+++", "-", "--", "---", "0"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
