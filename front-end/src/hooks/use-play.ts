@@ -23,7 +23,7 @@ import {
 import {
   INITIAL_STATE,
   applyHook,
-  decideEnding,
+  decideEndingByChoices,
   summarizeChange,
   type NumericsState,
   type EndingDecision,
@@ -157,7 +157,16 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
       const scenes = scenesRef.current;
       const nextIdx = s.sceneIdx + 1;
       if (nextIdx >= scenes.length) {
-        return { ...s, phase: "qte", showContinue: false };
+        // 剧情走完：按玩家在三幕中的"选择"投票决定结局（无选择时回退数值兜底）
+        const decision = decideEndingByChoices(s.hookLog, s.numerics);
+        console.log("[Ending decision · by-choices]", decision);
+        return {
+          ...s,
+          phase: "ending",
+          endingKey: decision.ending,
+          endingDecision: decision,
+          showContinue: false,
+        };
       }
       const scene = scenes[nextIdx];
       historyRef.current = [];
@@ -324,20 +333,6 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     nextScene();
   }, [nextScene]);
 
-  // ── QTE 完成后路由结局（数值系统可能升级/降级 QTE 原始结果）─────
-  const finishQTE = useCallback((qteResult: string) => {
-    setState((s) => {
-      const decision = decideEnding(qteResult as any, s.numerics);
-      console.log("[Ending decision]", decision);
-      return {
-        ...s,
-        phase: "ending",
-        endingKey: decision.ending,
-        endingDecision: decision,
-      };
-    });
-  }, []);
-
   // ── 重玩 ────────────────────────────────────────────────
   const restart = useCallback((newView?: ViewKey) => {
     historyRef.current = [];
@@ -384,7 +379,6 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     submitFreeInput,
     skipScene,
     goNext,
-    finishQTE,
     restart,
     switchView,
     ending: state.endingKey ? ENDINGS[state.endingKey] : null,

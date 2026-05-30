@@ -401,6 +401,86 @@ curl -X POST https://你的域名.vercel.app/api/chat \
 
 ---
 
+## ☁️ 部署到 CloudBase（CloudRun · 推荐用于 front-end 全栈版）
+
+> `dist/` 是旧的纯静态 + Vercel 版本；`front-end/` 是 **TanStack Start + Cloudflare Workers 的 SSR 全栈版**（含服务端 `/api/chat`）。
+> 这一版用 **腾讯云开发 CloudBase 的云托管（CloudRun）容器**部署，可同时承载 SSR 页面与 `/api/chat` 服务端逻辑。
+
+### 线上地址
+
+👉 **https://social-game-264115-8-1305035004.sh.run.tcloudbase.com**
+（首页自动跳转到 `/huatangchun` 剧情页）
+
+- 环境 ID：`immersed-d7g3oj41x1eb54ce2`（上海）
+- 控制台：https://tcb.cloud.tencent.com/dev?envId=immersed-d7g3oj41x1eb54ce2#/platform-run
+
+### 为什么用 CloudRun 而不是静态托管
+
+`front-end` 的构建产物是面向 **Cloudflare Workers 运行时**（`@cloudflare/vite-plugin` + `wrangler.jsonc`，入口 `src/server.ts`），并带有服务端路由 `/api/chat`（代理 DeepSeek）。
+
+| 方案 | 能否跑通 | 说明 |
+|---|---|---|
+| 静态托管 Static Hosting | ⚠️ 只能跑前端页面 | `/api/chat` 等服务端逻辑跑不了，AI 对话失效 |
+| **云托管 CloudRun（容器）** | ✅ 推荐 | 同时承载 SSR + `/api/chat`，最贴合现有架构 |
+
+### 部署用到的两个关键文件（已就绪，在 `front-end/`）
+
+| 文件 | 作用 |
+|---|---|
+| `server-node.mjs` | **Node 适配器**：把 Cloudflare Worker 的 `fetch(request, env, ctx)` 处理器包装成监听 `PORT` 的 Node HTTP 服务；先查 `dist/client` 静态文件，命中则返回，否则交给 worker 做 SSR。worker 产物完全自包含（仅依赖 `node:*` 内建模块，无 npm 依赖）。 |
+| `Dockerfile` | 多阶段构建：构建阶段 `npm ci` + `npm run build`，运行阶段只保留 `dist/` + 适配器 + 生产依赖，监听 `8080`。 |
+
+### 前置条件（一次性）
+
+1. 开通云开发并创建环境，拿到 `envId`。
+2. 在该环境**开通云托管 / CloudRun**：
+   `https://tcb.cloud.tencent.com/dev?envId=<你的envId>#/platform-run`
+
+### 部署流程
+
+通过 CodeBuddy 的 CloudBase 集成（或 CloudBase CLI / 控制台）以**容器模式**部署 `front-end/`：
+
+```
+形态：CloudRun 容器（container）
+目录：front-end/
+Dockerfile：Dockerfile
+端口：8080
+规格：0.5 核 / 1G 内存，最小 1 实例（避免冷启动）/ 最多 2 实例
+访问：PUBLIC（公网）
+环境变量：DEEPSEEK_API_KEY=<你的key>   NODE_ENV=production
+```
+
+> 🔐 `DEEPSEEK_API_KEY` 只注入**云端环境变量**，不写进镜像、不进 Git。
+> 部署后云端会构建容器镜像（约几分钟），版本上线后 `OnlineVersionInfos` 才会出现，此前访问会返回 `SERVICE_VERSION_NOT_FOUND`，属正常现象，稍等即可。
+
+### 本地用容器同款方式自测（部署前验证）
+
+```bash
+cd front-end
+npm run build
+DEEPSEEK_API_KEY=<你的key> PORT=8090 node server-node.mjs
+# 首页 SSR：  curl -sL -o /dev/null -w "%{http_code}\n" http://localhost:8090/
+# AI 对话：   curl -X POST http://localhost:8090/api/chat \
+#               -H "Content-Type: application/json" \
+#               -d '{"messages":[{"role":"user","content":"你好"}]}'
+```
+
+### 线上验证
+
+```bash
+BASE=https://social-game-264115-8-1305035004.sh.run.tcloudbase.com
+curl -sL -o /dev/null -w "GET / => %{http_code}\n" "$BASE/"
+curl -X POST "$BASE/api/chat" -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"你好"}]}'
+# 预期：首页 200；/api/chat 返回 {"reply":"你好", "usage":{...}}
+```
+
+### 更新重新部署
+
+改完 `front-end/` 代码后，重新跑一次容器部署即可（镜像会重建、几分钟后新版本上线）。如需更换 `DEEPSEEK_API_KEY`，更新云端环境变量后重新部署生效。
+
+---
+
 ## 🎯 扩展方向
 
 ### 玩法变体（基于同一套 QTE 引擎）

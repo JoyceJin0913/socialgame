@@ -14,7 +14,6 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send, Sparkles } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { PrismHUD } from "@/components/PrismHUD";
-import { QTEOverlay } from "@/components/QTEOverlay";
 import { EndingScreen } from "@/components/EndingScreen";
 import { usePlay } from "@/hooks/use-play";
 import sceneBg from "@/assets/scene-cijitang.png";
@@ -47,7 +46,6 @@ function Scene() {
     submitFreeInput,
     skipScene,
     goNext,
-    finishQTE,
     restart,
     switchView,
     ending,
@@ -80,12 +78,9 @@ function Scene() {
           restart();
           setFreeInput("");
         }}
+        onEnterMinigame={() => navigate({ to: "/minigame" })}
       />
     );
-  }
-
-  if (state.phase === "qte") {
-    return <QTEOverlay onComplete={finishQTE} />;
   }
 
   const scene = state.scene;
