@@ -560,6 +560,45 @@
     font-family: var(--mono);
     margin-right: 4px;
   }
+  /* === Script selector === */
+  .script-bar {
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(93,213,255,0.04);
+    flex-wrap: wrap;
+  }
+  .script-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-family: var(--mono);
+  }
+  .script-select {
+    flex: 1;
+    min-width: 240px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .script-select:focus {
+    outline: none;
+    border-color: var(--c);
+  }
+  .script-meta {
+    font-size: 11px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+  }
+  .script-meta b { color: var(--c); font-weight: 400; }
   /* === Perspective toggle === */
   .perspective-bar {
     padding: 14px 22px;
@@ -930,6 +969,7 @@
 </style>
 </head>
 <body>
+<script src="scripts/bundle.js"></script>
 <main>
 
 <!-- Step nav -->
@@ -1226,6 +1266,12 @@
       </div>
     </div>
 
+    <div class="script-bar">
+      <span class="script-label">剧本</span>
+      <select id="script-select" class="script-select"></select>
+      <span class="script-meta" id="script-meta">—</span>
+    </div>
+
     <div class="perspective-bar">
       <span class="perspective-label">视角</span>
       <div class="perspective-toggle">
@@ -1249,11 +1295,7 @@
             <span class="ctrl-badge S">S</span>
             <span class="ctrl-name">场景舞台 <small>SCENE</small></span>
           </div>
-          <div class="seg" id="seg-S">
-            <button data-val="study" class="on">雪夜书房</button>
-            <button data-val="palace">金銮殿外</button>
-            <button data-val="courtyard">深夜独对</button>
-          </div>
+          <div class="seg" id="seg-S"></div>
         </div>
 
         <div class="ctrl">
@@ -1298,17 +1340,9 @@
             <span class="ctrl-name">环境噪声 <small>AMBIENT</small></span>
           </div>
           <div class="ctrl-sublabel">舆论传播</div>
-          <div class="seg" id="seg-A1">
-            <button data-val="private" class="on">私密</button>
-            <button data-val="court">朝堂传遍</button>
-            <button data-val="all">京中沸腾</button>
-          </div>
+          <div class="seg" id="seg-A1"></div>
           <div class="ctrl-sublabel">天气 / 代价倍率</div>
-          <div class="seg" id="seg-A2">
-            <button data-val="low" class="on">清夜 ×1.0</button>
-            <button data-val="mid">细雪 ×1.3</button>
-            <button data-val="high">大雪 ×2.0</button>
-          </div>
+          <div class="seg" id="seg-A2"></div>
         </div>
       </div>
 
@@ -1365,192 +1399,18 @@
 // 两个视角对同一晶体的折射
 // ============================================================
 
-const VIEWS = {
-  hanyan: {
-    name: '寒雁视角',
-    consoleTitle: 'prism.refract( "act5_separation", view="hanyan" )',
-    hSubLabel: '男主隐疾（寒毒）',
-    npcRoster: [
-      { id: 'fyx', label: '傅云夕' },
-      { id: 'princess', label: '西戎公主' },
-      { id: 'emperor', label: '皇上' },
-      { id: 'court', label: '满朝文武' },
-      { id: 'maid', label: '心腹丫鬟' }
-    ],
-    presetLabels: {
-      alpha: '一年之约',
-      beta: '凯旋归来',
-      gamma: '一纸休书'
-    },
-    presets: {
-      alpha: { S: 'study', H: 'unknown', N: ['fyx', 'maid'],
-               T: 20, A: { rumor: 'private', reverb: 'low' } },
-      beta:  { S: 'palace', H: 'hinted', N: ['fyx', 'princess', 'emperor', 'court'],
-               T: 6, A: { rumor: 'court', reverb: 'mid' } },
-      gamma: { S: 'courtyard', H: 'confirmed', N: ['fyx'],
-               T: 3, A: { rumor: 'all', reverb: 'high' } }
-    },
-    tones: {
-      study: {
-        private: '雪意未消，他唤你过去，灯只点了一盏。',
-        court:   '雪夜里，外头的脚步声还在远处徘徊。',
-        all:     '宫中的传言已经传到了王府门外。'
-      },
-      palace: {
-        private: '殿门外只剩你们两人，但下一刻就会有人出现。',
-        court:   '满朝文武看着，每一句话都在被记。',
-        all:     '京中已经在传你和公主的事了。'
-      },
-      courtyard: {
-        private: '更深露重，他把休书放在你面前，不敢看你。',
-        court:   '宫里的旨意还未冷，他就动了笔。',
-        all:     '今夜过后，整个京城都会知道这张纸。'
-      }
-    },
-    pool: [
-      // 雪夜书房
-      { id: 'vow_loyalty', text: '说一句让他记你一辈子的承诺', hook: 'vow_loyalty',
-        require: { S: 'study', N: ['fyx'] },
-        delta: { '信任傅云夕': '+++', '内在成长': '+' } },
-      { id: 'probe_intent', text: '追问"你究竟要去多久"，盯住他的眼神', hook: 'probe_intent',
-        require: { S: 'study', N: ['fyx'] },
-        delta: { '情报': '+', '信任傅云夕': '+' } },
-      { id: 'silent_consent', text: '什么也不说，咬唇低头收下他的话', hook: 'silent_consent',
-        require: { S: 'study' },
-        delta: { '隐忍': '+', '勇气': '-' } },
-      { id: 'investigate_illness', text: '借更衣靠近，试探他的脉象与药味', hook: 'investigate_illness',
-        require: { S: 'study', N: ['fyx'], H: 'hinted_or_above' },
-        delta: { '情报': '++', '信任傅云夕': '+' } },
+// ============================================================
+// DATA · 从外部 bundle.js 加载（每个剧本一个 JSON 等价对象）
+// ============================================================
+const PRISM = window.PRISM_BUNDLE;
+if (!PRISM) {
+  console.error('PRISM_BUNDLE 未加载，请确保 scripts/bundle.js 在主脚本前引入。');
+}
 
-      // 金銮殿
-      { id: 'public_grace', text: '当众落落大方，向公主举杯敬一杯', hook: 'public_grace',
-        require: { S: 'palace', N: ['princess'] },
-        delta: { '民意': '+', '隐忍': '+' } },
-      { id: 'public_pushback', text: '当朝反问公主"我夫妻之事与你何干"', hook: 'public_pushback',
-        require: { S: 'palace', N: ['princess'] },
-        delta: { '勇气': '++', '王府势力': '-' } },
-      { id: 'tactical_yield', text: '微微福身，礼让一步退到一旁', hook: 'tactical_yield',
-        require: { S: 'palace' },
-        delta: { '理智': '+', '机会': '-' } },
-      { id: 'appeal_throne', text: '当殿向皇上一句话，把局面引向另一条路', hook: 'appeal_throne',
-        require: { S: 'palace', N: ['emperor'], A1: 'court' },
-        delta: { '民意': '++', '风险': '+' } },
+let currentScriptId = PRISM.index[0].id;     // 默认第一个剧本
+let SCRIPT = PRISM.scripts[currentScriptId]; // 当前剧本完整对象
+let VIEWS = SCRIPT.views;                    // 兼容下方代码引用名
 
-      // 深夜独对
-      { id: 'confront_betrayal', text: '红着眼问他"你要娶西戎公主？"', hook: 'confront_betrayal',
-        require: { S: 'courtyard', N: ['fyx'] },
-        delta: { '勇气': '+', '王府势力': '-' } },
-      { id: 'accept_silently', text: '安静接过休书，不发一言', hook: 'accept_silently',
-        require: { S: 'courtyard', N: ['fyx'] },
-        delta: { '隐忍': '++', '理智': '+' } },
-      { id: 'reject_violently', text: '将休书撕得粉碎，告诉他"做梦"', hook: 'reject_violently',
-        require: { S: 'courtyard', N: ['fyx'] },
-        delta: { '勇气': '++', '理智': '-' } },
-      { id: 'truth_revealed', text: '看着他的眼睛说"我知道你在装"', hook: 'truth_revealed',
-        require: { S: 'courtyard', N: ['fyx'], H: 'confirmed' },
-        delta: { '信任傅云夕': '+++', '隐蔽': '---' } },
-
-      // 紧急
-      { id: 'block_departure', text: '不顾礼仪，直接拦下他不让他走', hook: 'block_departure',
-        require: { N: ['fyx'], Tmax: 4 },
-        delta: { '勇气': '++', '体面': '-' } },
-      { id: 'reach_ally', text: '让心腹连夜送信给杨琦寻援', hook: 'reach_ally',
-        require: { N: ['maid'], Tmax: 8 },
-        delta: { '盟友信任': '+' } }
-    ]
-  },
-
-  fyx: {
-    name: '傅云夕视角',
-    consoleTitle: 'prism.refract( "act5_separation", view="fyx" )',
-    hSubLabel: '女主对你病情的察觉',
-    npcRoster: [
-      { id: 'hanyan', label: '寒雁' },
-      { id: 'princess', label: '西戎公主' },
-      { id: 'emperor', label: '皇上' },
-      { id: 'court', label: '满朝文武' },
-      { id: 'wuyitai', label: '吴太医' }
-    ],
-    presetLabels: {
-      alpha: '出征前夜',
-      beta: '凯旋当朝',
-      gamma: '执笔休书'
-    },
-    presets: {
-      alpha: { S: 'study', H: 'unknown', N: ['hanyan'],
-               T: 20, A: { rumor: 'private', reverb: 'low' } },
-      beta:  { S: 'palace', H: 'hinted', N: ['hanyan', 'princess', 'emperor', 'court'],
-               T: 6, A: { rumor: 'court', reverb: 'mid' } },
-      gamma: { S: 'courtyard', H: 'confirmed', N: ['hanyan'],
-               T: 3, A: { rumor: 'all', reverb: 'high' } }
-    },
-    tones: {
-      study: {
-        private: '你看着她的眼睛，把那句你练习了一夜的话说出口。',
-        court:   '一夜之间，你要让她相信你是真心要她"改嫁"的。',
-        all:     '这话一旦说出口，全京城都会知道你不要她。'
-      },
-      palace: {
-        private: '她在那里看着你，你必须当作没看见。',
-        court:   '满朝文武在看，公主在你身侧，你的妻子在不远处——你必须演到底。',
-        all:     '京中已经把你和公主放在了一起。她现在听到的，全是流言。'
-      },
-      courtyard: {
-        private: '你的手在抖。她要么明白你，要么恨你一辈子——你选哪个？',
-        court:   '皇命已下，今夜过后这张休书会被宫里的人记入档。',
-        all:     '明早全京城都会议论这张休书，但你只在乎其中一个人会怎么读它。'
-      }
-    },
-    pool: [
-      // 出征前夜
-      { id: 'mask_with_lightness', text: '把"一年之约"说得轻描淡写', hook: 'mask_with_lightness',
-        require: { S: 'study', N: ['hanyan'] },
-        delta: { '她的信任': '-', '自身负担': '+' } },
-      { id: 'bind_with_weight', text: '把承诺说得很重，让她不舍', hook: 'bind_with_weight',
-        require: { S: 'study', N: ['hanyan'] },
-        delta: { '她的信任': '++', '自身负担': '++' } },
-      { id: 'pre_arrange_safety', text: '暗示她"若我不归，去找卓七"', hook: 'pre_arrange_safety',
-        require: { S: 'study', N: ['hanyan'] },
-        delta: { '备份': '+', '她的不解': '+' } },
-      { id: 'hide_symptom', text: '借故避开她递来的杯酒（怕被发现药味）', hook: 'hide_symptom',
-        require: { S: 'study', N: ['hanyan'], H: 'confirmed' },
-        delta: { '隐蔽': '+', '她的信任': '-' } },
-
-      // 凯旋当朝
-      { id: 'cold_act_complete', text: '当众完全不看她，演到底', hook: 'cold_act_complete',
-        require: { S: 'palace', N: ['hanyan', 'court'] },
-        delta: { '计划完成': '++', '关系': '--' } },
-      { id: 'cold_act_with_hint', text: '用眼神留一丝余地（赌她看得懂）', hook: 'cold_act_with_hint',
-        require: { S: 'palace', N: ['hanyan'] },
-        delta: { '计划完成': '+', '关系': '+' } },
-      { id: 'escape_confrontation', text: '借故离场，避开当庭对峙', hook: 'escape_confrontation',
-        require: { S: 'palace' },
-        delta: { '风险规避': '+', '关系': '-' } },
-      { id: 'signal_throne', text: '暗中向皇上递眼色（仅当皇上知情时）', hook: 'signal_throne',
-        require: { S: 'palace', N: ['emperor'], H: 'hinted_or_above' },
-        delta: { '朝堂势力': '++', '暴露风险': '+' } },
-
-      // 执笔休书
-      { id: 'divorce_cruel', text: '把休书写得冷酷无情，断她念想', hook: 'divorce_cruel',
-        require: { S: 'courtyard', N: ['hanyan'] },
-        delta: { '计划完成': '++', '关系': '---' } },
-      { id: 'divorce_with_clue', text: '把休书写得留有破绽，赌她看懂', hook: 'divorce_with_clue',
-        require: { S: 'courtyard', N: ['hanyan'] },
-        delta: { '计划完成': '+', '关系': '+', '风险': '+' } },
-      { id: 'cant_let_go', text: '在递出去之前撕掉，重写', hook: 'cant_let_go',
-        require: { S: 'courtyard', N: ['hanyan'] },
-        delta: { '关系': '+++', '计划崩盘': '---' } },
-      { id: 'accidental_reveal', text: '提笔前忽然咳血，让她看见', hook: 'accidental_reveal',
-        require: { S: 'courtyard', N: ['hanyan'], H: 'confirmed' },
-        delta: { '真相暴露': '+++', '计划崩盘': '---' } },
-
-      // 跨场景
-      { id: 'consult_wuyitai', text: '让吴太医立刻准备最后一剂寒毒压制药', hook: 'consult_wuyitai',
-        require: { N: ['wuyitai'], Tmax: 8 },
-        delta: { '苟活时间': '+', '隐蔽': '-' } }
-    ]
-  }
-};
 
 // 当前激活视角
 let currentView = 'hanyan';
@@ -1564,6 +1424,38 @@ let baseline = JSON.parse(JSON.stringify(presets.alpha));
 let axes = JSON.parse(JSON.stringify(presets.alpha));
 
 const hRank = { unknown: 0, hinted: 1, confirmed: 2 };
+
+// 渲染 S / A1 / A2 三个动态 segment（每次切换剧本时调用）
+function renderDynamicSegments() {
+  // S 段
+  const segS = document.getElementById('seg-S');
+  const sDefs = SCRIPT.axisDefs.S;
+  segS.innerHTML = Object.entries(sDefs).map(([id, def], i) =>
+    `<button data-val="${id}"${id === axes.S ? ' class="on"' : ''}>${def.label}</button>`
+  ).join('');
+  rebindSeg('seg-S', b => { axes.S = b.dataset.val; });
+
+  // A1 段（舆论）
+  const segA1 = document.getElementById('seg-A1');
+  const rumorDefs = SCRIPT.axisDefs.A.rumor;
+  segA1.innerHTML = Object.entries(rumorDefs).map(([id, label]) =>
+    `<button data-val="${id}"${id === axes.A.rumor ? ' class="on"' : ''}>${label}</button>`
+  ).join('');
+  rebindSeg('seg-A1', b => { axes.A.rumor = b.dataset.val; });
+
+  // A2 段（反响倍率）
+  const segA2 = document.getElementById('seg-A2');
+  const reverbDefs = SCRIPT.axisDefs.A.reverb;
+  segA2.innerHTML = Object.entries(reverbDefs).map(([id, def]) =>
+    `<button data-val="${id}"${id === axes.A.reverb ? ' class="on"' : ''}>${def.label}</button>`
+  ).join('');
+  rebindSeg('seg-A2', b => { axes.A.reverb = b.dataset.val; });
+}
+
+// 获取当前反响倍率（动态查询，不再用写死的 reverbLabel）
+function getReverbLabel(key) {
+  return SCRIPT.axisDefs.A.reverb[key]?.label || key;
+}
 const reverbLabel = { low: 'x1.0', mid: 'x1.3', high: 'x2.0' };
 
 function matchChoice(c) {
@@ -1632,15 +1524,16 @@ function render() {
   }
 
   const diffs = [];
-  const sceneMap = { study: '雪夜书房', palace: '金銮殿外', courtyard: '深夜独对' };
+  const sceneMap = {};
+  Object.entries(SCRIPT.axisDefs.S).forEach(([id, def]) => sceneMap[id] = def.label);
   const hMap = { unknown: '未知', hinted: '暗示', confirmed: '已确认' };
   if (axes.S !== baseline.S) diffs.push(`<span class="item">S 舞台：<b>${sceneMap[baseline.S]}</b> → <b>${sceneMap[axes.S]}</b></span>`);
-  if (axes.H !== baseline.H) diffs.push(`<span class="item">H 男主隐疾：<b>${hMap[baseline.H]}</b> → <b>${hMap[axes.H]}</b></span>`);
+  if (axes.H !== baseline.H) diffs.push(`<span class="item">H 隐藏信息：<b>${hMap[baseline.H]}</b> → <b>${hMap[axes.H]}</b></span>`);
   const bn = baseline.N.slice().sort().join(','); const cn = axes.N.slice().sort().join(',');
   if (bn !== cn) diffs.push(`<span class="item">N 在场：<b>${baseline.N.length}</b> 人 → <b>${axes.N.length}</b> 人</span>`);
   if (axes.T !== baseline.T) diffs.push(`<span class="item">T 时间：<b>${baseline.T}h</b> → <b>${axes.T}h</b></span>`);
   if (axes.A.rumor !== baseline.A.rumor || axes.A.reverb !== baseline.A.reverb) {
-    diffs.push(`<span class="item">A 噪声：代价倍率 <b>${reverbLabel[axes.A.reverb]}</b></span>`);
+    diffs.push(`<span class="item">A 噪声：代价倍率 <b>${getReverbLabel(axes.A.reverb)}</b></span>`);
   }
   const diffEl = document.getElementById('diff');
   diffEl.innerHTML = diffs.length === 0
@@ -1661,6 +1554,12 @@ function bindSeg(id, onChange) {
     });
   });
 }
+// 用于动态 segment：先清除旧 listeners（用 cloneNode 重建按钮），再绑定
+function rebindSeg(id, onChange) {
+  const root = document.getElementById(id);
+  if (!root) return;
+  bindSeg(id, onChange);
+}
 function setSeg(id, val, attr = 'data-val') {
   const root = document.getElementById(id);
   if (!root) return;
@@ -1672,10 +1571,8 @@ function clearPresets() {
   document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
 }
 
-bindSeg('seg-S', b => { axes.S = b.dataset.val; });
+// 只绑定静态控件（H 段是固定的 unknown/hinted/confirmed）
 bindSeg('seg-H', b => { axes.H = b.dataset.state; });
-bindSeg('seg-A1', b => { axes.A.rumor = b.dataset.val; });
-bindSeg('seg-A2', b => { axes.A.reverb = b.dataset.val; });
 
 document.querySelectorAll('#chips-N .npc-chip').forEach(c => {
   c.addEventListener('click', () => {
@@ -1761,6 +1658,7 @@ function switchView(viewKey) {
 
   renderPresetLabels();
   renderNpcChips();
+  renderDynamicSegments();  // S / A1 / A2 重建
 
   document.querySelectorAll('.perspective-toggle button').forEach(b => {
     b.classList.toggle('on', b.dataset.persp === viewKey);
@@ -1776,6 +1674,60 @@ document.querySelectorAll('.perspective-toggle button').forEach(b => {
   b.addEventListener('click', () => switchView(b.dataset.persp));
 });
 
+// ============================================================
+// Script switching (Level 2: 引擎读 JSON / bundle)
+// ============================================================
+function populateScriptSelect() {
+  const sel = document.getElementById('script-select');
+  sel.innerHTML = PRISM.index.map(s =>
+    `<option value="${s.id}">${s.title}　·　${s.genre}${s.qteIntegration ? '　·　QTE' : ''}</option>`
+  ).join('');
+  sel.value = currentScriptId;
+  updateScriptMeta();
+}
+
+function updateScriptMeta() {
+  const info = PRISM.index.find(s => s.id === currentScriptId);
+  if (!info) return;
+  const dfn = SCRIPT.crystal.dramaticFunction;
+  document.getElementById('script-meta').innerHTML =
+    `<b>${info.viewCount}</b> 视角 · <b>${Object.keys(SCRIPT.views).map(k => SCRIPT.views[k].pool.length).reduce((a,b)=>a+b,0)}</b> 选项 · 主驱动 <b>${info.primaryAxis}</b>`;
+}
+
+function switchScript(scriptId) {
+  if (!PRISM.scripts[scriptId]) return;
+  currentScriptId = scriptId;
+  SCRIPT = PRISM.scripts[scriptId];
+  VIEWS = SCRIPT.views;
+  // 切到该剧本的第一个视角
+  const firstView = Object.keys(VIEWS)[0];
+  // 重建视角 toggle 按钮（不同剧本视角名可能不同）
+  rebuildPerspectiveToggle();
+  switchView(firstView);
+  updateScriptMeta();
+}
+
+function rebuildPerspectiveToggle() {
+  const root = document.querySelector('.perspective-toggle');
+  if (!root) return;
+  const viewKeys = Object.keys(VIEWS);
+  const glyphMap = { hanyan: '👁', fyx: '❄', father: '🎴', princess: '👑' };
+  root.innerHTML = viewKeys.map((k, i) =>
+    `<button class="${i===0?'on':''}" data-persp="${k}"><span class="pglyph">${glyphMap[k] || '◇'}</span>${VIEWS[k].name}</button>`
+  ).join('');
+  root.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => switchView(b.dataset.persp));
+  });
+}
+
+document.getElementById('script-select').addEventListener('change', e => {
+  switchScript(e.target.value);
+});
+
+// Initial setup
+populateScriptSelect();
+rebuildPerspectiveToggle();
+renderDynamicSegments();  // 初始化 S / A1 / A2 按钮
 // Initial render
 renderPresetLabels();
 renderNpcChips();

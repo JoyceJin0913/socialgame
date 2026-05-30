@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "description": "Prism playable crystals registry. Engine reads this to populate the script selector.",
+  "scripts": [
+    {
+      "id": "act5_separation",
+      "file": "act5_separation.json",
+      "title": "第五幕 · 离心时刻",
+      "genre": "对话 / 情感",
+      "viewCount": 2,
+      "primaryAxis": "H",
+      "qteIntegration": false
+    },
+    {
+      "id": "heritage_truth_surfacing",
+      "file": "heritage_truth.json",
+      "title": "身世真相 · 嫡庶被翻起",
+      "genre": "对话 / 揭秘",
+      "viewCount": 2,
+      "primaryAxis": "H",
+      "qteIntegration": false
+    },
+    {
+      "id": "night_assault_survival",
+      "file": "night_assault.json",
+      "title": "夜袭抵御 · 暗夜围杀",
+      "genre": "动作 / 生死",
+      "viewCount": 2,
+      "primaryAxis": "T + H",
+      "qteIntegration": true
+    }
+  ]
+}

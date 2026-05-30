@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism Editor · 剧本编辑器</title>
+<style>
+  :root {
+    --bg: #07070b;
+    --bg-1: #0e0e16;
+    --bg-2: #14141f;
+    --panel: #121220;
+    --line: rgba(255,255,255,0.07);
+    --line-2: rgba(255,255,255,0.14);
+    --text: #f0f0f5;
+    --text-dim: #9090a8;
+    --text-faint: #555568;
+    --iris: #8b7fff;
+    --iris-soft: rgba(139,127,255,0.12);
+    --r: #ff6b8a;
+    --o: #ffb15a;
+    --g: #6dff9e;
+    --c: #5dd5ff;
+    --v: #c98aff;
+    --mono: ui-monospace, "SF Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    overflow: hidden;
+    height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 70% 45% at 50% -10%, rgba(139,127,255,0.08), transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .topbar {
+    height: 56px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 20px;
+    position: relative;
+    z-index: 10;
+    backdrop-filter: blur(20px);
+  }
+  .topbar h1 {
+    font-size: 16px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+  .topbar h1 .accent { color: var(--iris); }
+  .topbar .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.2em;
+    padding: 3px 8px;
+    border: 1px solid var(--line-2);
+    border-radius: 100px;
+  }
+  .topbar .spacer { flex: 1; }
+  .topbar button {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .topbar button:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: var(--line-2);
+  }
+  .topbar button.primary {
+    background: var(--iris-soft);
+    color: var(--iris);
+    border-color: var(--iris);
+  }
+  .topbar button.primary:hover {
+    background: rgba(139,127,255,0.2);
+  }
+  .topbar input[type="file"] { display: none; }
+
+  .main {
+    display: grid;
+    grid-template-columns: 280px 1fr 420px;
+    height: calc(100vh - 56px);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === Sidebar === */
+  .sidebar {
+    background: var(--bg-1);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .sidebar h3 {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    margin: 18px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sidebar h3:first-child { margin-top: 0; }
+  .tree-item {
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+  }
+  .tree-item:hover {
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+  }
+  .tree-item.active {
+    background: var(--iris-soft);
+    color: var(--iris);
+  }
+  .tree-item.nested {
+    padding-left: 28px;
+    font-size: 12px;
+  }
+  .tree-item .icon {
+    font-size: 12px;
+    width: 16px;
+    opacity: 0.7;
+  }
+  .add-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px dashed var(--line-2);
+    color: var(--text-faint);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .add-btn:hover {
+    color: var(--iris);
+    border-color: var(--iris);
+  }
+
+  /* === Editor === */
+  .editor {
+    overflow-y: auto;
+    padding: 32px;
+  }
+  .editor-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-faint);
+    font-size: 14px;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .editor-empty .big {
+    font-size: 60px;
+    opacity: 0.3;
+  }
+  .editor-section {
+    margin-bottom: 32px;
+  }
+  .editor-section h2 {
+    font-size: 14px;
+    color: var(--iris);
+    font-family: var(--mono);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+  .field label .req { color: var(--r); margin-left: 4px; }
+  .field input[type="text"], .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    transition: border 0.15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none;
+    border-color: var(--iris);
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .list-item {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .list-item .item-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .list-item .item-head .id-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--iris);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  .list-item .item-head .id-input:hover {
+    background: rgba(255,255,255,0.04);
+  }
+  .list-item .del-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 14px;
+    border-radius: 4px;
+  }
+  .list-item .del-btn:hover { color: var(--r); background: rgba(255,107,138,0.1); }
+
+  /* === Preview === */
+  .preview {
+    background: #050508;
+    border-left: 1px solid var(--line);
+    overflow-y: auto;
+    position: relative;
+  }
+  .preview-head {
+    position: sticky;
+    top: 0;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 5;
+  }
+  .preview-head .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .preview-head .spacer { flex: 1; }
+  .preview-head button {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--mono);
+  }
+  .preview-head button:hover {
+    color: var(--text);
+    border-color: var(--line-2);
+  }
+  .preview pre {
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .preview pre .k { color: var(--c); }
+  .preview pre .s { color: var(--g); }
+  .preview pre .n { color: var(--o); }
+
+  /* === Toast === */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    background: var(--iris);
+    color: #000;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+  }
+
+  /* === scrollbar === */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+  .help {
+    margin-top: 20px;
+    padding: 14px;
+    background: rgba(255,177,90,0.04);
+    border: 1px solid rgba(255,177,90,0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .help b { color: var(--o); font-weight: 400; }
+  .help code {
+    font-family: var(--mono);
+    background: rgba(0,0,0,0.4);
+    color: var(--c);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Prism <span class="accent">Editor</span></h1>
+  <span class="badge">v0.1 · 实验</span>
+  <div class="spacer"></div>
+  <button onclick="newScript()">+ 新建剧本</button>
+  <label class="topbar-btn">
+    <input type="file" id="loadFile" accept=".json" onchange="loadFile(event)">
+    <button onclick="document.getElementById('loadFile').click()">📂 导入 JSON</button>
+  </label>
+  <button class="primary" onclick="exportScript()">⤓ 导出 JSON</button>
+</div>
+
+<div class="main">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h3>剧本元信息</h3>
+    <div class="tree-item active" id="nav-meta" onclick="navigate('meta')">
+      <span class="icon">◆</span><span>Meta / Crystal</span>
+    </div>
+
+    <h3>视角</h3>
+    <div id="view-list"></div>
+    <button class="add-btn" onclick="addView()">+ 添加视角</button>
+
+    <h3>当前视角 — 编辑</h3>
+    <div id="view-nav"></div>
+
+    <div class="help">
+      <b>提示</b><br>
+      左侧选择要编辑的部分，中间编辑，右侧是<code>JSON</code>实时预览。<br>
+      点击右上角"导出 JSON"下载文件，可直接放入 <code>prism/scripts/</code>。
+    </div>
+  </aside>
+
+  <!-- Editor -->
+  <main class="editor" id="editor">
+    <!-- 由 JS 渲染 -->
+  </main>
+
+  <!-- Preview -->
+  <aside class="preview">
+    <div class="preview-head">
+      <span class="label">JSON Preview</span>
+      <div class="spacer"></div>
+      <button onclick="copyJson()">复制</button>
+    </div>
+    <pre id="preview"></pre>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  模型 · 一份剧本的内存表示
+// ============================================================
+let script = makeEmptyScript();
+
+function makeEmptyScript() {
+  return {
+    meta: {
+      id: 'new_crystal_' + Date.now().toString(36),
+      title: '未命名剧本',
+      version: '1.0.0'
+    },
+    crystal: {
+      dramaticFunction: '',
+      mustHappen: [],
+      mustNotHappen: []
+    },
+    axisDefs: {
+      S: {},
+      H: {},
+      A: {
+        rumor:  { private: '私密', court: '公开', all: '全城' },
+        reverb: {
+          low:  { label: '清夜 ×1.0', multiplier: 1.0 },
+          mid:  { label: '细雪 ×1.3', multiplier: 1.3 },
+          high: { label: '大雪 ×2.0', multiplier: 2.0 }
+        }
+      }
+    },
+    views: {}
+  };
+}
+
+let currentNav = 'meta';   // 'meta' | { view: 'viewKey', section: 'meta'|'presets'|'pool'|... }
+
+// ============================================================
+//  渲染
+// ============================================================
+function render() {
+  renderSidebar();
+  renderEditor();
+  renderPreview();
+}
+
+function renderSidebar() {
+  // 视角列表
+  const viewList = document.getElementById('view-list');
+  const views = Object.entries(script.views);
+  if (views.length === 0) {
+    viewList.innerHTML = '<div style="font-size:11px;color:var(--text-faint);font-style:italic;padding:6px 12px;">尚无视角</div>';
+  } else {
+    viewList.innerHTML = views.map(([k, v]) => {
+      const active = (currentNav.view === k) ? ' active' : '';
+      return `<div class="tree-item${active}" onclick="navigate({view:'${k}',section:'meta'})">
+        <span class="icon">◇</span><span>${v.name || k}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // 当前视角的子导航
+  const viewNav = document.getElementById('view-nav');
+  if (typeof currentNav === 'object' && currentNav.view) {
+    const k = currentNav.view;
+    const sub = (s, label) => {
+      const active = currentNav.section === s ? ' active' : '';
+      return `<div class="tree-item nested${active}" onclick="navigate({view:'${k}',section:'${s}'})">${label}</div>`;
+    };
+    viewNav.innerHTML = sub('meta', '基本信息')
+      + sub('npc', 'NPC 角色')
+      + sub('axes_S', '场景定义')
+      + sub('presets', '预设切片')
+      + sub('tones', 'tone 文本')
+      + sub('pool', '候选选项池');
+  } else {
+    viewNav.innerHTML = '<div style="font-size:11px;color:var(--text-faint);font-style:italic;padding:6px 12px;">选择一个视角进入</div>';
+  }
+
+  // Meta 高亮
+  document.getElementById('nav-meta').classList.toggle('active', currentNav === 'meta');
+}
+
+function renderEditor() {
+  const root = document.getElementById('editor');
+  if (currentNav === 'meta') {
+    root.innerHTML = renderMetaEditor();
+    bindMetaEditor();
+    return;
+  }
+  if (currentNav.view) {
+    const key = currentNav.view;
+    if (!script.views[key]) { currentNav = 'meta'; renderEditor(); return; }
+    switch (currentNav.section) {
+      case 'meta':     root.innerHTML = renderViewMetaEditor(key); bindViewMetaEditor(key); break;
+      case 'npc':      root.innerHTML = renderNpcEditor(key);     bindNpcEditor(key);     break;
+      case 'axes_S':   root.innerHTML = renderSceneEditor();      bindSceneEditor();      break;
+      case 'presets':  root.innerHTML = renderPresetsEditor(key); bindPresetsEditor(key); break;
+      case 'tones':    root.innerHTML = renderTonesEditor(key);   bindTonesEditor(key);   break;
+      case 'pool':     root.innerHTML = renderPoolEditor(key);    bindPoolEditor(key);    break;
+    }
+  }
+}
+
+// === Meta / Crystal ===
+function renderMetaEditor() {
+  return `
+    <div class="editor-section">
+      <h2>Meta</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>ID <span class="req">*</span></label>
+          <input type="text" id="m-id" value="${esc(script.meta.id)}" placeholder="snake_case id" />
+        </div>
+        <div class="field">
+          <label>版本</label>
+          <input type="text" id="m-version" value="${esc(script.meta.version)}" />
+        </div>
+      </div>
+      <div class="field">
+        <label>标题 <span class="req">*</span></label>
+        <input type="text" id="m-title" value="${esc(script.meta.title)}" />
+      </div>
+      <div class="field">
+        <label>作者</label>
+        <input type="text" id="m-author" value="${esc(script.meta.author || '')}" />
+      </div>
+      <div class="field">
+        <label>来源</label>
+        <input type="text" id="m-source" value="${esc(script.meta.source || '')}" placeholder="原作 / 章节范围" />
+      </div>
+    </div>
+
+    <div class="editor-section">
+      <h2>Crystal · 戏剧骨架</h2>
+      <div class="field">
+        <label>戏剧功能 <span class="req">*</span></label>
+        <textarea id="c-fn" placeholder="一句话说明这个节点存在的意义">${esc(script.crystal.dramaticFunction)}</textarea>
+      </div>
+      <div class="field">
+        <label>必须发生（每行一条）</label>
+        <textarea id="c-must" rows="4">${(script.crystal.mustHappen || []).join('\n')}</textarea>
+      </div>
+      <div class="field">
+        <label>必须不发生（每行一条）</label>
+        <textarea id="c-mustnot" rows="4">${(script.crystal.mustNotHappen || []).join('\n')}</textarea>
+      </div>
+    </div>
+  `;
+}
+function bindMetaEditor() {
+  const updateMeta = () => {
+    script.meta.id = val('m-id');
+    script.meta.version = val('m-version');
+    script.meta.title = val('m-title');
+    script.meta.author = val('m-author');
+    script.meta.source = val('m-source');
+    script.crystal.dramaticFunction = val('c-fn');
+    script.crystal.mustHappen = lines('c-must');
+    script.crystal.mustNotHappen = lines('c-mustnot');
+    renderPreview();
+  };
+  ['m-id','m-version','m-title','m-author','m-source','c-fn','c-must','c-mustnot']
+    .forEach(id => document.getElementById(id).addEventListener('input', updateMeta));
+}
+
+// === View meta ===
+function renderViewMetaEditor(key) {
+  const v = script.views[key];
+  return `
+    <div class="editor-section">
+      <h2>视角：${esc(key)}</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>视角 Key</label>
+          <input type="text" id="v-key" value="${esc(key)}" />
+        </div>
+        <div class="field">
+          <label>显示名 <span class="req">*</span></label>
+          <input type="text" id="v-name" value="${esc(v.name || '')}" placeholder="如：寒雁视角" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Console 标题</label>
+        <input type="text" id="v-console" value="${esc(v.consoleTitle || '')}" placeholder="prism.refract( ... )" />
+      </div>
+      <div class="field">
+        <label>H 轴标签（这个视角下"隐藏的是什么"）</label>
+        <input type="text" id="v-hlabel" value="${esc(v.hSubLabel || '')}" />
+      </div>
+      <button class="add-btn" style="border-color:var(--r);color:var(--r);" onclick="deleteView('${key}')">× 删除此视角</button>
+    </div>
+  `;
+}
+function bindViewMetaEditor(key) {
+  const update = () => {
+    const v = script.views[key];
+    v.name = val('v-name');
+    v.consoleTitle = val('v-console');
+    v.hSubLabel = val('v-hlabel');
+    const newKey = val('v-key');
+    if (newKey && newKey !== key) {
+      script.views[newKey] = v;
+      delete script.views[key];
+      currentNav = { view: newKey, section: 'meta' };
+      render();
+      return;
+    }
+    renderPreview();
+    renderSidebar();
+  };
+  ['v-name','v-console','v-hlabel','v-key'].forEach(id => document.getElementById(id).addEventListener('change', update));
+  ['v-name','v-console','v-hlabel'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+    const v = script.views[key];
+    v.name = val('v-name');
+    v.consoleTitle = val('v-console');
+    v.hSubLabel = val('v-hlabel');
+    renderPreview();
+  }));
+}
+
+// === NPC editor ===
+function renderNpcEditor(key) {
+  const v = script.views[key];
+  if (!v.npcRoster) v.npcRoster = [];
+  const items = v.npcRoster.map((n, i) => `
+    <div class="list-item">
+      <div class="item-head">
+        <input class="id-input" type="text" value="${esc(n.id)}" data-i="${i}" data-f="id" />
+        <button class="del-btn" onclick="delNpc('${key}', ${i})">×</button>
+      </div>
+      <div class="field">
+        <label>显示名</label>
+        <input type="text" value="${esc(n.label)}" data-i="${i}" data-f="label" />
+      </div>
+    </div>
+  `).join('');
+  return `
+    <div class="editor-section">
+      <h2>NPC 角色名单</h2>
+      <div id="npc-list">${items}</div>
+      <button class="add-btn" onclick="addNpc('${key}')">+ 添加 NPC</button>
+    </div>
+  `;
+}
+function bindNpcEditor(key) {
+  document.querySelectorAll('#npc-list input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const i = +e.target.dataset.i;
+      const f = e.target.dataset.f;
+      script.views[key].npcRoster[i][f] = e.target.value;
+      renderPreview();
+    });
+  });
+}
+
+// === Scene (S axis) editor — 全局共享 ===
+function renderSceneEditor() {
+  const ss = script.axisDefs.S;
+  const items = Object.entries(ss).map(([id, def]) => `
+    <div class="list-item">
+      <div class="item-head">
+        <input class="id-input" type="text" value="${esc(id)}" data-old="${esc(id)}" data-f="id" />
+        <button class="del-btn" onclick="delScene('${esc(id)}')">×</button>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>显示名</label>
+          <input type="text" value="${esc(def.label || '')}" data-id="${esc(id)}" data-f="label" />
+        </div>
+        <div class="field">
+          <label>退出代价</label>
+          <select data-id="${esc(id)}" data-f="exitCost">
+            <option ${def.exitCost==='low'?'selected':''} value="low">低</option>
+            <option ${def.exitCost==='mid'?'selected':''} value="mid">中</option>
+            <option ${def.exitCost==='high'?'selected':''} value="high">高</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  return `
+    <div class="editor-section">
+      <h2>场景（S 轴）· 全剧本共享</h2>
+      <div id="scene-list">${items || '<div style="color:var(--text-faint);font-style:italic;">暂无场景，点击下方按钮添加</div>'}</div>
+      <button class="add-btn" onclick="addScene()">+ 添加场景</button>
+    </div>
+  `;
+}
+function bindSceneEditor() {
+  document.querySelectorAll('#scene-list input[data-f="id"]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const oldId = e.target.dataset.old;
+      const newId = e.target.value.trim();
+      if (newId && newId !== oldId) {
+        script.axisDefs.S[newId] = script.axisDefs.S[oldId];
+        delete script.axisDefs.S[oldId];
+        renderEditor();
+        renderPreview();
+      }
+    });
+  });
+  document.querySelectorAll('#scene-list [data-f="label"], #scene-list [data-f="exitCost"]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const id = e.target.dataset.id;
+      const f = e.target.dataset.f;
+      if (script.axisDefs.S[id]) script.axisDefs.S[id][f] = e.target.value;
+      renderPreview();
+    });
+  });
+}
+
+// === Presets editor ===
+function renderPresetsEditor(key) {
+  const v = script.views[key];
+  if (!v.presets) v.presets = {};
+  if (!v.presetLabels) v.presetLabels = {};
+  const sceneOptions = Object.entries(script.axisDefs.S).map(([id, d]) => `<option value="${esc(id)}">${esc(d.label)}</option>`).join('');
+  const rumorOptions = Object.entries(script.axisDefs.A.rumor).map(([id, l]) => `<option value="${esc(id)}">${esc(l)}</option>`).join('');
+  const reverbOptions = Object.entries(script.axisDefs.A.reverb).map(([id, d]) => `<option value="${esc(id)}">${esc(d.label)}</option>`).join('');
+  const npcOptions = (v.npcRoster || []).map(n => esc(n.id)).join(',');
+
+  const presetKeys = ['alpha', 'beta', 'gamma'];
+  const items = presetKeys.map(pk => {
+    const p = v.presets[pk] || { S: '', H: 'unknown', N: [], T: 12, A: { rumor: 'private', reverb: 'low' } };
+    v.presets[pk] = p;
+    return `
+      <div class="list-item">
+        <div class="item-head">
+          <span class="id-input" style="cursor:default;">${pk}</span>
+          <input type="text" placeholder="切片标签（如 一年之约）" value="${esc(v.presetLabels[pk] || '')}" data-pk="${pk}" data-f="label" style="flex:1;background:transparent;border:none;color:var(--text);font-size:13px;padding:4px 6px;" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>S 场景</label>
+            <select data-pk="${pk}" data-f="S">${sceneOptions}</select>
+          </div>
+          <div class="field">
+            <label>H 状态</label>
+            <select data-pk="${pk}" data-f="H">
+              <option value="unknown" ${p.H==='unknown'?'selected':''}>未知</option>
+              <option value="hinted" ${p.H==='hinted'?'selected':''}>暗示</option>
+              <option value="confirmed" ${p.H==='confirmed'?'selected':''}>已确认</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>N 在场 NPC ids（逗号分隔；可用: ${esc(npcOptions || '(请先在 NPC 标签页添加)')}）</label>
+          <input type="text" value="${esc((p.N || []).join(','))}" data-pk="${pk}" data-f="N" placeholder="fyx,maid" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>T 时间（1-24）</label>
+            <input type="number" min="1" max="24" value="${p.T}" data-pk="${pk}" data-f="T" />
+          </div>
+          <div class="field">
+            <label>A 舆论</label>
+            <select data-pk="${pk}" data-f="A_rumor">${rumorOptions}</select>
+          </div>
+        </div>
+        <div class="field">
+          <label>A 反响倍率</label>
+          <select data-pk="${pk}" data-f="A_reverb">${reverbOptions}</select>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // 设置默认 select 选中
+  setTimeout(() => {
+    presetKeys.forEach(pk => {
+      const p = v.presets[pk];
+      const setSel = (f, val) => {
+        const el = document.querySelector(`[data-pk="${pk}"][data-f="${f}"]`);
+        if (el) el.value = val;
+      };
+      setSel('S', p.S);
+      setSel('H', p.H);
+      setSel('A_rumor', p.A.rumor);
+      setSel('A_reverb', p.A.reverb);
+    });
+  }, 0);
+
+  return `
+    <div class="editor-section">
+      <h2>预设切片（α / β / γ）</h2>
+      ${items}
+    </div>
+  `;
+}
+function bindPresetsEditor(key) {
+  document.querySelectorAll('[data-pk]').forEach(el => {
+    el.addEventListener('input', e => {
+      const pk = e.target.dataset.pk;
+      const f = e.target.dataset.f;
+      const v = script.views[key];
+      const p = v.presets[pk];
+      if (f === 'label') { v.presetLabels[pk] = e.target.value; }
+      else if (f === 'N') { p.N = e.target.value.split(',').map(s => s.trim()).filter(Boolean); }
+      else if (f === 'T') { p.T = parseInt(e.target.value, 10) || 12; }
+      else if (f === 'A_rumor') { p.A.rumor = e.target.value; }
+      else if (f === 'A_reverb') { p.A.reverb = e.target.value; }
+      else { p[f] = e.target.value; }
+      renderPreview();
+    });
+  });
+}
+
+// === Tones editor ===
+function renderTonesEditor(key) {
+  const v = script.views[key];
+  if (!v.tones) v.tones = {};
+  const scenes = Object.entries(script.axisDefs.S);
+  const rumors = Object.entries(script.axisDefs.A.rumor);
+
+  const items = scenes.map(([sId, sDef]) => {
+    if (!v.tones[sId]) v.tones[sId] = {};
+    const rows = rumors.map(([rId, rLabel]) => `
+      <div class="field">
+        <label>${esc(rLabel)} (${esc(rId)})</label>
+        <input type="text" value="${esc(v.tones[sId][rId] || '')}" data-s="${esc(sId)}" data-r="${esc(rId)}" placeholder="这种舆论氛围下的一句 tone..." />
+      </div>
+    `).join('');
+    return `
+      <div class="list-item">
+        <div class="item-head" style="color:var(--c);font-family:var(--mono);">${esc(sDef.label)} (${esc(sId)})</div>
+        ${rows}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="editor-section">
+      <h2>Tone 文本矩阵（场景 × 舆论）</h2>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">每个组合写一句话，描述玩家在这一刻的体感。空着的会显示为占位符。</div>
+      ${items || '<div style="color:var(--text-faint);font-style:italic;">请先添加场景和舆论后再编辑 tone</div>'}
+    </div>
+  `;
+}
+function bindTonesEditor(key) {
+  document.querySelectorAll('[data-s][data-r]').forEach(el => {
+    el.addEventListener('input', e => {
+      const s = e.target.dataset.s, r = e.target.dataset.r;
+      if (!script.views[key].tones[s]) script.views[key].tones[s] = {};
+      script.views[key].tones[s][r] = e.target.value;
+      renderPreview();
+    });
+  });
+}
+
+// === Pool editor ===
+function renderPoolEditor(key) {
+  const v = script.views[key];
+  if (!v.pool) v.pool = [];
+  const sceneOpts = '<option value="">任意</option>' + Object.entries(script.axisDefs.S).map(([id, d]) => `<option value="${esc(id)}">${esc(d.label)}</option>`).join('');
+
+  const items = v.pool.map((c, i) => `
+    <div class="list-item">
+      <div class="item-head">
+        <input class="id-input" type="text" value="${esc(c.id)}" data-i="${i}" data-f="id" />
+        <button class="del-btn" onclick="delChoice('${key}', ${i})">×</button>
+      </div>
+      <div class="field">
+        <label>选项文本 <span class="req">*</span></label>
+        <input type="text" value="${esc(c.text)}" data-i="${i}" data-f="text" placeholder="玩家看到的选项内容" />
+      </div>
+      <div class="field">
+        <label>Hook 语义事件 <span class="req">*</span> · 抛给数值系统</label>
+        <input type="text" value="${esc(c.hook)}" data-i="${i}" data-f="hook" placeholder="vow_loyalty / confront_betrayal ..." style="color:var(--c);font-family:var(--mono);" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>require · S 场景</label>
+          <select data-i="${i}" data-f="req_S">${sceneOpts.replace(`value="${(c.require||{}).S || ''}"`, `value="${(c.require||{}).S || ''}" selected`)}</select>
+        </div>
+        <div class="field">
+          <label>require · H 阈值</label>
+          <select data-i="${i}" data-f="req_H">
+            <option value="">任意</option>
+            <option value="unknown" ${(c.require||{}).H==='unknown'?'selected':''}>= 未知</option>
+            <option value="hinted" ${(c.require||{}).H==='hinted'?'selected':''}>= 暗示</option>
+            <option value="hinted_or_above" ${(c.require||{}).H==='hinted_or_above'?'selected':''}>≥ 暗示</option>
+            <option value="confirmed" ${(c.require||{}).H==='confirmed'?'selected':''}>= 确认</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>require · N 必须在场 ids（逗号分隔）</label>
+          <input type="text" value="${esc((((c.require||{}).N) || []).join(','))}" data-i="${i}" data-f="req_N" placeholder="fyx,maid" />
+        </div>
+        <div class="field">
+          <label>require · Tmax（≤ 多少小时才出现）</label>
+          <input type="number" min="0" max="24" value="${(c.require||{}).Tmax ?? ''}" data-i="${i}" data-f="req_Tmax" />
+        </div>
+      </div>
+      <div class="field">
+        <label>delta · 代价方向（key: + / ++ / +++ / - / -- / ---，每行一条 key:value）</label>
+        <textarea rows="3" data-i="${i}" data-f="delta">${Object.entries(c.delta || {}).map(([k,vv]) => `${k}:${vv}`).join('\n')}</textarea>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="editor-section">
+      <h2>候选选项池（${v.pool.length}）</h2>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">作者只写这一份。引擎在运行时根据当前轴 filter 出可见选项。</div>
+      ${items}
+      <button class="add-btn" onclick="addChoice('${key}')">+ 添加选项</button>
+    </div>
+  `;
+}
+function bindPoolEditor(key) {
+  document.querySelectorAll('.list-item [data-i]').forEach(el => {
+    el.addEventListener('input', e => {
+      const i = +e.target.dataset.i;
+      const f = e.target.dataset.f;
+      const c = script.views[key].pool[i];
+      if (!c.require) c.require = {};
+      if (f === 'id' || f === 'text' || f === 'hook') c[f] = e.target.value;
+      else if (f === 'req_S') c.require.S = e.target.value || undefined;
+      else if (f === 'req_H') c.require.H = e.target.value || undefined;
+      else if (f === 'req_N') c.require.N = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+      else if (f === 'req_Tmax') c.require.Tmax = e.target.value ? parseInt(e.target.value, 10) : undefined;
+      else if (f === 'delta') {
+        c.delta = {};
+        e.target.value.split('\n').forEach(line => {
+          const m = line.split(':').map(s => s.trim());
+          if (m[0] && m[1]) c.delta[m[0]] = m[1];
+        });
+      }
+      // 清理空 require 字段
+      Object.keys(c.require).forEach(k => { if (c.require[k] === undefined) delete c.require[k]; });
+      renderPreview();
+    });
+  });
+}
+
+// ============================================================
+//  Add / Delete helpers
+// ============================================================
+function addView() {
+  const k = prompt('新视角的 key（如 hanyan / fyx）');
+  if (!k) return;
+  script.views[k] = {
+    name: k,
+    consoleTitle: `prism.refract( "${script.meta.id}", view="${k}" )`,
+    hSubLabel: '',
+    npcRoster: [],
+    presetLabels: { alpha: '', beta: '', gamma: '' },
+    presets: {
+      alpha: { S: '', H: 'unknown',   N: [], T: 20, A: { rumor: 'private', reverb: 'low' } },
+      beta:  { S: '', H: 'hinted',    N: [], T: 12, A: { rumor: 'court',   reverb: 'mid' } },
+      gamma: { S: '', H: 'confirmed', N: [], T: 4,  A: { rumor: 'all',     reverb: 'high' } }
+    },
+    tones: {},
+    pool: []
+  };
+  currentNav = { view: k, section: 'meta' };
+  render();
+}
+function deleteView(k) {
+  if (!confirm(`删除视角 "${k}"？`)) return;
+  delete script.views[k];
+  currentNav = 'meta';
+  render();
+}
+function addNpc(key) {
+  script.views[key].npcRoster.push({ id: 'npc_' + Date.now().toString(36), label: '新角色' });
+  render();
+}
+function delNpc(key, i) {
+  script.views[key].npcRoster.splice(i, 1);
+  render();
+}
+function addScene() {
+  const id = prompt('场景 id（snake_case，如 study）');
+  if (!id) return;
+  script.axisDefs.S[id] = { label: '新场景', exitCost: 'mid' };
+  render();
+}
+function delScene(id) {
+  if (!confirm(`删除场景 "${id}"？`)) return;
+  delete script.axisDefs.S[id];
+  render();
+}
+function addChoice(key) {
+  script.views[key].pool.push({
+    id: 'choice_' + Date.now().toString(36),
+    text: '',
+    hook: '',
+    require: {},
+    delta: {}
+  });
+  render();
+}
+function delChoice(key, i) {
+  script.views[key].pool.splice(i, 1);
+  render();
+}
+
+// ============================================================
+//  Navigation
+// ============================================================
+function navigate(target) {
+  currentNav = target;
+  render();
+}
+
+// ============================================================
+//  Preview / Export / Import
+// ============================================================
+function renderPreview() {
+  const json = JSON.stringify(script, null, 2);
+  // 极简语法高亮
+  const html = esc(json)
+    .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+    .replace(/: (\d+\.?\d*)/g, ': <span class="n">$1</span>');
+  document.getElementById('preview').innerHTML = html;
+}
+
+function exportScript() {
+  const json = JSON.stringify(script, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${script.meta.id || 'prism_script'}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出 JSON');
+}
+
+function loadFile(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      script = JSON.parse(r.result);
+      currentNav = 'meta';
+      render();
+      toast('已导入: ' + script.meta.title);
+    } catch (err) {
+      alert('JSON 解析失败：' + err.message);
+    }
+  };
+  r.readAsText(f);
+}
+
+function newScript() {
+  if (!confirm('清空当前编辑内容，新建空白剧本？')) return;
+  script = makeEmptyScript();
+  currentNav = 'meta';
+  render();
+}
+
+function copyJson() {
+  navigator.clipboard.writeText(JSON.stringify(script, null, 2));
+  toast('已复制 JSON 到剪贴板');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ============================================================
+//  Utils
+// ============================================================
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function val(id) { return (document.getElementById(id) || {}).value || ''; }
+function lines(id) { return val(id).split('\n').map(s => s.trim()).filter(Boolean); }
+
+// 初始：加载一个范例剧本，让人立刻看到长什么样
+script = {
+  meta: { id: 'sample_demo', title: '示例：第五幕 · 离心时刻', version: '1.0.0', author: '你' },
+  crystal: {
+    dramaticFunction: '让玩家亲历"明明在乎，却必须放手"的张力',
+    mustHappen: ['男主主动制造距离', '女主必须做出第一次回应', '真实意图不能直接说出'],
+    mustNotHappen: ['男主当面坦白', '女主当夜决裂']
+  },
+  axisDefs: {
+    S: {
+      study:     { label: '雪夜书房', exitCost: 'low' },
+      palace:    { label: '金銮殿外', exitCost: 'high' },
+      courtyard: { label: '深夜独对', exitCost: 'low' }
+    },
+    H: { illness: { label: '男主隐疾（寒毒）' } },
+    A: {
+      rumor:  { private: '私密', court: '朝堂传遍', all: '京中沸腾' },
+      reverb: {
+        low:  { label: '清夜 ×1.0', multiplier: 1.0 },
+        mid:  { label: '细雪 ×1.3', multiplier: 1.3 },
+        high: { label: '大雪 ×2.0', multiplier: 2.0 }
+      }
+    }
+  },
+  views: {
+    hanyan: {
+      name: '寒雁视角',
+      consoleTitle: 'prism.refract( "sample_demo", view="hanyan" )',
+      hSubLabel: '男主隐疾（寒毒）',
+      npcRoster: [
+        { id: 'fyx',  label: '傅云夕' },
+        { id: 'maid', label: '心腹丫鬟' }
+      ],
+      presetLabels: { alpha: '一年之约', beta: '凯旋归来', gamma: '一纸休书' },
+      presets: {
+        alpha: { S: 'study',     H: 'unknown',   N: ['fyx', 'maid'], T: 20, A: { rumor: 'private', reverb: 'low' } },
+        beta:  { S: 'palace',    H: 'hinted',    N: ['fyx'],         T: 6,  A: { rumor: 'court',   reverb: 'mid' } },
+        gamma: { S: 'courtyard', H: 'confirmed', N: ['fyx'],         T: 3,  A: { rumor: 'all',     reverb: 'high' } }
+      },
+      tones: {
+        study:     { private: '雪意未消，他唤你过去，灯只点了一盏。' },
+        palace:    { court: '满朝文武看着，每一句话都在被记。' },
+        courtyard: { all: '今夜过后，整个京城都会知道这张纸。' }
+      },
+      pool: [
+        { id: 'vow_loyalty', text: '说一句让他记你一辈子的承诺', hook: 'vow_loyalty', require: { S: 'study', N: ['fyx'] }, delta: { '信任': '+++' } },
+        { id: 'investigate', text: '借更衣靠近，闻一闻他袖中的药味', hook: 'investigate_illness', require: { S: 'study', N: ['fyx'], H: 'hinted_or_above' }, delta: { '情报': '++' } }
+      ]
+    }
+  }
+};
+render();
+</script>
+</body>
+</html>

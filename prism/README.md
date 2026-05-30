@@ -47,13 +47,22 @@ prism/
 ├── README.md           ← 你正在读的，项目侧导读
 ├── SKILL.md            ← 纯方法论文档（不绑定本项目）
 ├── demo.html           ← 可交互讲解页（双击浏览器打开即可）
-└── design-doc.md       ← 用本项目第五幕作样本的双视角剧本案例
+├── editor.html         ← 可视化剧本编辑器（双击即可使用，无需安装）
+├── design-doc.md       ← 用本项目第五幕作样本的双视角剧本案例
+└── scripts/
+    ├── _schema.json            ← 剧本 JSON 的格式说明
+    ├── index.json              ← 剧本索引
+    ├── bundle.js               ← demo.html 加载的同源 bundle（file:// 协议下也能跑）
+    ├── act5_separation.json    ← 第五幕 · 离心时刻（双视角）
+    ├── heritage_truth.json     ← 身世真相 · 嫡庶被翻起（双视角）
+    └── night_assault.json      ← 夜袭抵御 · 暗夜围杀（双视角）
 ```
 
 读的顺序建议：
-1. 先看 `demo.html`——5 分钟可视化理解方法
+1. 先看 `demo.html`——5 分钟可视化理解方法（左上角可切换三个剧本）
 2. 再扫 `SKILL.md`——10 分钟读完方法论
-3. 最后看 `design-doc.md`——15 分钟看具体怎么应用到你的场景
+3. 看 `design-doc.md`——15 分钟看具体怎么应用到本项目
+4. 想自己编剧本？打开 `editor.html` 可视化编辑，导出 JSON 后放进 `scripts/`
 
 ---
 
