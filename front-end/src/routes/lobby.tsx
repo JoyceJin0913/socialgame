@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronLeft, Share2, Sparkles, Crown, Check, Plus, X, User, Users, Bot } from "lucide-react";
 import heroImg from "@/assets/hero-huatangchun.jpg";
-import { CHARACTERS } from "@/lib/characters";
+import { CHARACTERS, PLAYABLE_CHARACTERS, PLAYABLE_CHARACTER_IDS } from "@/lib/characters";
 import { PhoneMockup } from "@/components/PhoneMockup";
 
 type LobbySearch = { char?: string };
@@ -44,7 +44,9 @@ function Lobby() {
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
-  const [charId, setCharId] = useState<string | undefined>(preselected);
+  const [charId, setCharId] = useState<string | undefined>(
+    preselected && PLAYABLE_CHARACTER_IDS.has(preselected) ? preselected : undefined
+  );
   const [mode, setMode] = useState<Mode>("multi");
 
   const toggleScript = (id: string) => {
@@ -73,8 +75,8 @@ function Lobby() {
   const handleStart = () => {
     if (!charId) return;
     if (mode === "solo") {
-      // 单人沉浸：直接进游戏
-      navigate({ to: "/scene" });
+      // 单人沉浸：直接进游戏，并把所选角色带入对应视角
+      navigate({ to: "/scene", search: { role: charId } });
     } else {
       // 站内匹配：先去匹配页（matching → 承接页 → /scene）
       navigate({ to: "/matching", search: { role: charId } });
@@ -237,8 +239,8 @@ function Lobby() {
           ) : (
             <>
               <p className="mt-2 text-[11px] text-neutral-500">点选一位角色入梦</p>
-              <div className="mt-3 grid grid-cols-3 gap-2.5">
-                {CHARACTERS.map((c) => (
+              <div className="mt-3 grid grid-cols-2 gap-2.5">
+                {PLAYABLE_CHARACTERS.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => setCharId(c.id)}

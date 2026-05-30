@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Share2, MoreHorizontal, Calendar, User, Heart, Sparkles, Lock, Wand2, X, Link2, FileText, Check } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
-import { CHARACTERS, getCharacter } from "@/lib/characters";
+import { PLAYABLE_CHARACTERS, getCharacter } from "@/lib/characters";
 
 export const Route = createFileRoute("/character/$id")({
   loader: ({ params }) => {
@@ -219,7 +219,7 @@ function CharacterDetail() {
           <h2 className="font-brush text-lg text-neutral-900">其他角色</h2>
         </div>
         <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto pb-2">
-          {CHARACTERS.filter((x) => x.id !== c.id).map((x) => (
+          {PLAYABLE_CHARACTERS.filter((x) => x.id !== c.id).map((x) => (
             <Link
               key={x.id}
               to="/character/$id"

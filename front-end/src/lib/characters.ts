@@ -102,4 +102,7 @@ export const CHARACTERS: Character[] = [
 
 ];
 
+export const PLAYABLE_CHARACTER_IDS = new Set(["hanyan", "moshen"]);
+export const PLAYABLE_CHARACTERS = CHARACTERS.filter((c) => PLAYABLE_CHARACTER_IDS.has(c.id));
+
 export const getCharacter = (id: string) => CHARACTERS.find((c) => c.id === id);

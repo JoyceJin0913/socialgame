@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import bg from "@/assets/matching-bg.png";
 import titleText from "@/assets/huatangchun-text.png";
@@ -52,16 +52,20 @@ function Matching() {
     return () => clearTimeout(t);
   }, [phase]);
 
+  const enterScene = useCallback(() => {
+    navigate({ to: "/scene", search: { role: myRoleId } });
+  }, [navigate, myRoleId]);
+
   // found 阶段倒计时
   useEffect(() => {
     if (phase !== "found") return;
     if (countdown <= 0) {
-      navigate({ to: "/scene" });
+      enterScene();
       return;
     }
     const t = setTimeout(() => setCountdown((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [phase, countdown, navigate]);
+  }, [phase, countdown, enterScene]);
 
   if (phase === "matching") {
     return (
@@ -167,7 +171,7 @@ function Matching() {
 
         <div className="flex w-full flex-col items-center gap-3">
           <button
-            onClick={() => navigate({ to: "/scene" })}
+            onClick={enterScene}
             className="w-full rounded-full border-2 border-amber-400/60 bg-amber-500/20 py-3.5 text-[14px] tracking-[0.3em] text-amber-100 backdrop-blur transition-all hover:bg-amber-400/30 active:scale-95"
           >
             立 即 入 梦

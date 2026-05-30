@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Share2, Bookmark, ChevronDown, Sparkles, Users, Clock, X } from "lucide-react";
 import heroImg from "@/assets/hero-huatangchun.jpg";
-import { CHARACTERS } from "@/lib/characters";
+import { PLAYABLE_CHARACTERS } from "@/lib/characters";
 import { PhoneMockup } from "@/components/PhoneMockup";
 
 export const Route = createFileRoute("/huatangchun")({
@@ -133,7 +133,7 @@ function HuatangChun() {
         </div>
 
         <div ref={trackRef} className="no-scrollbar mt-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[22%] pb-6 pt-4">
-          {[CHARACTERS[1], CHARACTERS[0], ...CHARACTERS.slice(2)].map((c, i) => {
+          {PLAYABLE_CHARACTERS.map((c, i) => {
             const isActive = i === active;
             return (
               <button
@@ -166,7 +166,7 @@ function HuatangChun() {
 
         {/* Dots */}
         <div className="flex justify-center gap-1.5">
-          {CHARACTERS.map((_, i) => (
+          {PLAYABLE_CHARACTERS.map((_, i) => (
             <span key={i} className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-white" : "w-1.5 bg-white/40"}`} />
           ))}
         </div>
