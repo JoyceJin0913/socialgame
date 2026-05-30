@@ -65,9 +65,19 @@ export async function chatWithAI(persona: Persona, history: ChatMessage[]): Prom
  * 收到上游 SSE 后，逐 chunk 解析 OpenAI 兼容格式：
  *   data: {"choices":[{"delta":{"content":"…"}}]}
  *   data: [DONE]
- * 每收到一段非空 content 就触发 onChunk，结束时触发 onDone
- * 返回完整文本（也通过 onDone 给出）
+ *
+ * 关键：由于 Vercel Node Function 对 SSE 有初始缓冲（chunk 攒批后
+ * 一次性下发），单纯依赖 onChunk 渲染会看起来"一卡一卡"。
+ * 这里加一个"显示打字器"：
+ *   - 后端送来的字符进 pendingBuf
+ *   - 一个 setTimeout 节奏循环（每 TYPE_INTERVAL_MS 取 N 个字喂给 onChunk）
+ *   - 当上游 done 时，把剩余 buffer 慢慢吐完才触发 onDone
+ * 这样无论后端是攒批送 100 字还是真正逐字送，用户看到的都是
+ * 平稳的"打字"节奏。
  */
+const TYPE_INTERVAL_MS = 30;   // 多久取一次
+const TYPE_CHARS_PER_TICK = 2; // 每次取几个字
+
 export async function chatWithAIStream(
   persona: Persona,
   history: ChatMessage[],
@@ -109,10 +119,37 @@ export async function chatWithAIStream(
     throw err;
   }
 
+  // ─── 显示打字器（client-side throttle）────────────────────
+  let pendingBuf = "";         // 后端到了但还没"打"出去的字
+  let displayed = "";          // 已经"打"出去的字（=最终 reply）
+  let upstreamDone = false;    // 上游收到 [DONE] 或读完
+  let resolveTyping: (() => void) | undefined;
+  const typingComplete = new Promise<void>((r) => (resolveTyping = r));
+
+  const tick = () => {
+    if (handlers.signal?.aborted) {
+      resolveTyping?.();
+      return;
+    }
+    if (pendingBuf.length > 0) {
+      const take = Math.min(TYPE_CHARS_PER_TICK, pendingBuf.length);
+      const chunk = pendingBuf.slice(0, take);
+      pendingBuf = pendingBuf.slice(take);
+      displayed += chunk;
+      handlers.onChunk?.(chunk, displayed);
+    }
+    if (pendingBuf.length === 0 && upstreamDone) {
+      resolveTyping?.();
+      return;
+    }
+    setTimeout(tick, TYPE_INTERVAL_MS);
+  };
+  setTimeout(tick, TYPE_INTERVAL_MS);
+
+  // ─── 上游 SSE 读取（直接把字符塞 pendingBuf，不直接 onChunk）─
   const reader = resp.body.getReader();
   const decoder = new TextDecoder("utf-8");
   let buffer = "";
-  let accumulated = "";
 
   try {
     while (true) {
@@ -121,20 +158,17 @@ export async function chatWithAIStream(
 
       buffer += decoder.decode(value, { stream: true });
 
-      // SSE 以 \n\n 分隔事件
       let sepIdx: number;
       while ((sepIdx = buffer.indexOf("\n\n")) !== -1) {
         const rawEvent = buffer.slice(0, sepIdx);
         buffer = buffer.slice(sepIdx + 2);
 
-        // 一个事件可能有多行 data: 前缀（OpenAI 一般一行）
         for (const line of rawEvent.split("\n")) {
           const trimmed = line.trim();
           if (!trimmed.startsWith("data:")) continue;
           const payload = trimmed.slice(5).trim();
           if (!payload) continue;
           if (payload === "[DONE]") {
-            // 上游主动收尾
             buffer = "";
             break;
           }
@@ -145,26 +179,31 @@ export async function chatWithAIStream(
               json?.choices?.[0]?.message?.content ??
               "";
             if (delta) {
-              accumulated += delta;
-              handlers.onChunk?.(delta, accumulated);
+              pendingBuf += delta;   // ← 只塞队列，渲染交给 tick
             }
           } catch {
-            // 偶发的非 JSON 行直接忽略
+            // 偶发非 JSON 行忽略
           }
         }
       }
     }
   } catch (err: any) {
     if (err?.name === "AbortError") {
-      // 主动取消，不算错误
-      handlers.onDone?.(accumulated);
-      return accumulated;
+      upstreamDone = true;
+      await typingComplete;
+      handlers.onDone?.(displayed);
+      return displayed;
     }
+    upstreamDone = true;
     handlers.onError?.(err);
     throw err;
   }
 
-  const finalText = accumulated || "（沉默良久，未发一言。）";
+  // 上游读完，让 tick 把剩余 pendingBuf 吐完
+  upstreamDone = true;
+  await typingComplete;
+
+  const finalText = displayed || "（沉默良久，未发一言。）";
   handlers.onDone?.(finalText);
   return finalText;
 }
