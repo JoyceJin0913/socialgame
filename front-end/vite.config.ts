@@ -15,19 +15,10 @@ export default defineConfig({
   vite: {
     server: {
       allowedHosts: ["meter-folder-assets-trackback.trycloudflare.com"],
-      proxy: {
-        // /api/chat → dist 的 Vercel dev (vercel dev 默认 3000)
-        // 如果端口冲突走 3001/3002，改下面的 target 即可
-        "/api": {
-          target: "http://localhost:3000",
-          changeOrigin: true,
-        },
-        // /ws 保留给将来的 multiplayer（目前 scene.tsx 不用）
-        "/ws": {
-          target: "ws://localhost:8000",
-          ws: true,
-        },
-      },
+      // 不再需要 proxy 到外部后端：/api/chat 已经在 server.ts 中由
+      // routeAPI() 接管，本地 dev 时 Cloudflare/Vite 的 SSR worker 直接
+      // 处理。读 DEEPSEEK_API_KEY 来自 .dev.vars（Cloudflare 约定）
+      // 或 process.env（普通 Node）。
     },
   },
 });

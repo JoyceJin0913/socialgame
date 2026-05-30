@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SCENES, PERSONAS, ENDINGS, type SceneConfig } from "@/lib/story";
+import { VIEWS, PERSONAS, ENDINGS, type SceneConfig, type ViewKey } from "@/lib/story";
 import {
   refract,
   type RefractedOption,
@@ -20,6 +20,14 @@ import {
   translateIntent,
   type ChatMessage,
 } from "@/lib/chat";
+import {
+  INITIAL_STATE,
+  applyHook,
+  decideEnding,
+  summarizeChange,
+  type NumericsState,
+  type EndingDecision,
+} from "@/lib/numerics";
 
 // ── Message types ─────────────────────────────────────────
 
@@ -42,25 +50,33 @@ export interface PlayState {
   sceneIdx: number;
   scene: SceneConfig | null;
   messages: PlayMessage[];
-  options: RefractedOption[] | null; // null = 还在加载
+  options: RefractedOption[] | null;
   optionsLoading: boolean;
-  translating: boolean;       // 翻译选项中（按钮显示"译…"）
-  busy: boolean;              // 等 AI 回复中
-  showContinue: boolean;      // 显示"进入下一幕"按钮
+  translating: boolean;
+  busy: boolean;
+  showContinue: boolean;
   axes: RefractedAxes | null;
   hud: HUDInfo | null;
   hookLog: PlayHookLog[];
   roundInScene: number;
   maxRoundsPerScene: number;
   endingKey: string | null;
+  // 数值系统
+  numerics: NumericsState;
+  lastChange: string[];           // 最近一次 hook 引起的数值变化（给 UI 飘字用）
+  endingDecision: EndingDecision | null;
 }
 
 const MAX_ROUNDS = 1;
+const DEFAULT_VIEW: ViewKey = "hanyan";
 
 let _msgId = 0;
 const newId = () => `m${++_msgId}`;
 
-export function usePlay() {
+export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
+  const [view, setView] = useState<ViewKey>(initialView);
+  const scenesRef = useRef(VIEWS[initialView].scenes);
+
   const [state, setState] = useState<PlayState>({
     phase: "intro",
     sceneIdx: -1,
@@ -77,6 +93,9 @@ export function usePlay() {
     roundInScene: 0,
     maxRoundsPerScene: MAX_ROUNDS,
     endingKey: null,
+    numerics: INITIAL_STATE,
+    lastChange: [],
+    endingDecision: null,
   });
 
   // 用 ref 持有当前场景的对话历史（不进 React state，频繁变动）
@@ -135,11 +154,12 @@ export function usePlay() {
   // ── 进入下一幕（或 QTE） ─────────────────────────────────
   const nextScene = useCallback(() => {
     setState((s) => {
+      const scenes = scenesRef.current;
       const nextIdx = s.sceneIdx + 1;
-      if (nextIdx >= SCENES.length) {
+      if (nextIdx >= scenes.length) {
         return { ...s, phase: "qte", showContinue: false };
       }
-      const scene = SCENES[nextIdx];
+      const scene = scenes[nextIdx];
       historyRef.current = [];
 
       const msgs: PlayMessage[] = [];
@@ -174,8 +194,13 @@ export function usePlay() {
       if (!scene || state.busy) return;
 
       if (prismMeta?.hook) {
+        const prevNum = state.numerics;
+        const nextNum = applyHook(prevNum, prismMeta.delta);
+        const change = summarizeChange(prevNum, nextNum);
         setState((s) => ({
           ...s,
+          numerics: nextNum,
+          lastChange: change,
           hookLog: [
             ...s.hookLog,
             {
@@ -186,7 +211,7 @@ export function usePlay() {
             },
           ],
         }));
-        console.log("[Prism hook]", prismMeta.hook, prismMeta.delta || {});
+        console.log("[Prism hook]", prismMeta.hook, prismMeta.delta || {}, "→", change);
       }
 
       // 玩家消息 + loading
@@ -299,14 +324,27 @@ export function usePlay() {
     nextScene();
   }, [nextScene]);
 
-  // ── QTE 完成后路由结局 ──────────────────────────────────
-  const finishQTE = useCallback((endingKey: string) => {
-    setState((s) => ({ ...s, phase: "ending", endingKey }));
+  // ── QTE 完成后路由结局（数值系统可能升级/降级 QTE 原始结果）─────
+  const finishQTE = useCallback((qteResult: string) => {
+    setState((s) => {
+      const decision = decideEnding(qteResult as any, s.numerics);
+      console.log("[Ending decision]", decision);
+      return {
+        ...s,
+        phase: "ending",
+        endingKey: decision.ending,
+        endingDecision: decision,
+      };
+    });
   }, []);
 
   // ── 重玩 ────────────────────────────────────────────────
-  const restart = useCallback(() => {
+  const restart = useCallback((newView?: ViewKey) => {
     historyRef.current = [];
+    if (newView) {
+      setView(newView);
+      scenesRef.current = VIEWS[newView].scenes;
+    }
     setState({
       phase: "intro",
       sceneIdx: -1,
@@ -323,11 +361,24 @@ export function usePlay() {
       roundInScene: 0,
       maxRoundsPerScene: MAX_ROUNDS,
       endingKey: null,
+      numerics: INITIAL_STATE,
+      lastChange: [],
+      endingDecision: null,
     });
   }, []);
 
+  // ── 切换视角（会重启）─────────────────────────────────
+  const switchView = useCallback(
+    (nextView: ViewKey) => {
+      if (nextView === view) return;
+      restart(nextView);
+    },
+    [view, restart]
+  );
+
   return {
     state,
+    view,
     startGame,
     chooseOption,
     submitFreeInput,
@@ -335,6 +386,7 @@ export function usePlay() {
     goNext,
     finishQTE,
     restart,
+    switchView,
     ending: state.endingKey ? ENDINGS[state.endingKey] : null,
   };
 }

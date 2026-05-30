@@ -41,6 +41,7 @@ function Scene() {
   const navigate = useNavigate();
   const {
     state,
+    view,
     startGame,
     chooseOption,
     submitFreeInput,
@@ -48,6 +49,7 @@ function Scene() {
     goNext,
     finishQTE,
     restart,
+    switchView,
     ending,
   } = usePlay();
 
@@ -71,6 +73,9 @@ function Scene() {
     return (
       <EndingScreen
         ending={ending}
+        numerics={state.numerics}
+        decision={state.endingDecision}
+        hookCount={state.hookLog.length}
         onRestart={() => {
           restart();
           setFreeInput("");
@@ -112,7 +117,14 @@ function Scene() {
             {scene?.sceneName || "第五幕 · 离心时刻"}
           </div>
         </div>
-        <div className="w-9" />
+        {/* 视角切换 */}
+        <button
+          onClick={() => switchView(view === "hanyan" ? "fyx" : "hanyan")}
+          className="flex h-9 items-center gap-1 rounded-full bg-black/40 px-3 text-[10px] tracking-wider text-amber-100 backdrop-blur active:scale-95"
+          title="切换视角（会重启）"
+        >
+          {view === "hanyan" ? "👁 寒雁" : "❄ 云夕"}
+        </button>
       </div>
 
       <div className="relative z-10 mx-4 mb-2 h-[3px] overflow-hidden rounded-full bg-white/10">
@@ -122,7 +134,9 @@ function Scene() {
         />
       </div>
 
-      {state.hud && <PrismHUD info={state.hud} />}
+      {state.hud && (
+        <PrismHUD info={state.hud} numerics={state.numerics} lastChange={state.lastChange} />
+      )}
 
       <div
         ref={scrollRef}
