@@ -1,0 +1,9 @@
+# 减小上传/构建上下文，敏感文件不进镜像
+node_modules
+dist
+.git
+*.log
+.dev.vars
+.DS_Store
+.vscode
+.idea

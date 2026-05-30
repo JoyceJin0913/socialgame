@@ -8,8 +8,6 @@
  *   3) decideEnding: 综合 QTE 结果 + 累积数值 决定最终结局
  */
 
-import type { QTEResult } from "@/hooks/use-qte";
-
 // ── 维度定义（精简版，对应 prism/scripts 里 delta 字段的常见 key） ──
 
 export interface NumericsState {
@@ -90,61 +88,192 @@ export function applyHook(
   return next;
 }
 
-// ── 结局判定 ─────────────────────────────────────────────
+// ── 结局判定（按对话选择）─────────────────────────────────
 
 export type EndingKey = "fuyunxi" | "zhuoqi" | "captured";
 
-export interface EndingDecision {
-  ending: EndingKey;
-  reason: string;          // 给 HUD/调试显示
-  qteContribution: string; // QTE 的原始结果
-  numericContribution: string; // 数值系统贡献的关键阈值
+// 三条"心意线"：玩家每次带 hook 的选择都会投票给其中一条
+//   trust 情意线 → 在乎他 / 信他 → 傅云夕鬼面救场
+//   self  自立线 → 强硬 / 自立 / 外援 → 卓七路过
+//   yield 隐忍线 → 退让 / 沉默 → 失声被擒后自救
+export type LineKey = "trust" | "self" | "yield";
+
+export interface EndingPick {
+  scene: string;
+  label: string;
+  line: LineKey;
 }
 
-/**
- * 综合 QTE 结果 + 累积数值 决定最终结局
- *
- * 规则（可调）：
- *   - QTE 三星 + trust ≥ 60 → fuyunxi（鬼面救场）— 男主真心愿意暴露救你
- *   - QTE 三星 + trust < 60   → zhuoqi（卓七路过）— 你叫得响但他不来
- *   - QTE 二星 + ally ≥ 30   → zhuoqi（西戎线起作用）
- *   - QTE 二星 + trust ≥ 70  → fuyunxi（提升一档）— 信任值足够高，男主仍来
- *   - 其他默认按 QTE 结果
- *
- * 这样数值系统真正影响结局，而不只是 QTE 决定一切。
- */
-export function decideEnding(qteResult: QTEResult, state: NumericsState): EndingDecision {
-  const { trust, ally, courage } = state;
-  let ending: EndingKey = qteResult;
-  let reason = `按 QTE 原始结果 → ${qteResult}`;
+export interface EndingDecision {
+  ending: EndingKey;
+  reason: string;
+  lines: Record<LineKey, number>; // 三条线累计票数
+  picks: EndingPick[];            // 每次关键选择的归类（用于结局回顾）
+}
 
-  // 三星 + 低信任：男主不来，反而是卓七路过
-  if (qteResult === "fuyunxi" && trust < 60) {
-    ending = "zhuoqi";
-    reason = `QTE 三星但 trust=${trust} < 60，男主未及现身`;
+export interface ChoiceRecord {
+  scene: string;
+  hook: string;
+}
+
+// 每个 prism hook 归入哪条心意线（覆盖寒雁 / 傅云夕两视角的 pool）
+const HOOK_LINE: Record<string, LineKey> = {
+  // ── 寒雁视角 ──
+  vow_loyalty: "trust",        // 深情立誓
+  probe_intent: "trust",       // 追问真心
+  investigate_illness: "trust",// 暗察病情
+  confront_betrayal: "trust",  // 红眼质问
+  block_departure: "trust",    // 拦他不走
+  truth_revealed: "trust",     // 看穿伪装（关键）
+  silent_consent: "yield",     // 咬唇默受
+  tactical_yield: "yield",     // 福身礼让
+  accept_silently: "yield",    // 静受休书
+  public_grace: "yield",       // 举杯大度
+  public_pushback: "self",     // 当朝硬刚
+  appeal_throne: "self",       // 殿前进言
+  reject_violently: "self",    // 撕碎休书
+  reach_ally: "self",          // 暗结外援
+  // ── 傅云夕视角 ──
+  bind_with_weight: "trust",   // 重诺缚心
+  cold_act_with_hint: "trust", // 眼神留隙
+  divorce_with_clue: "trust",  // 休书留破绽
+  cant_let_go: "trust",        // 撕书重写
+  accidental_reveal: "trust",  // 咳血露真（关键）
+  mask_with_lightness: "yield",// 轻描淡写
+  hide_symptom: "yield",       // 避酒藏疾
+  cold_act_complete: "yield",  // 冷演到底
+  escape_confrontation: "yield",// 借故离场
+  divorce_cruel: "yield",      // 绝情断念
+  pre_arrange_safety: "self",  // 预留退路（指她去找卓七）
+  signal_throne: "self",       // 递眼于帝
+  consult_wuyitai: "self",     // 求药苟活
+};
+
+// hook → 结局回顾里显示的短语
+const HOOK_LABEL: Record<string, string> = {
+  vow_loyalty: "深情立誓",
+  probe_intent: "追问真心",
+  investigate_illness: "暗察病情",
+  confront_betrayal: "红眼质问",
+  block_departure: "拦他不走",
+  truth_revealed: "看穿伪装",
+  silent_consent: "咬唇默受",
+  tactical_yield: "福身礼让",
+  accept_silently: "静受休书",
+  public_grace: "举杯大度",
+  public_pushback: "当朝硬刚",
+  appeal_throne: "殿前进言",
+  reject_violently: "撕碎休书",
+  reach_ally: "暗结外援",
+  bind_with_weight: "重诺缚心",
+  cold_act_with_hint: "眼神留隙",
+  divorce_with_clue: "休书留破绽",
+  cant_let_go: "撕书重写",
+  accidental_reveal: "咳血露真",
+  mask_with_lightness: "轻描淡写",
+  hide_symptom: "避酒藏疾",
+  cold_act_complete: "冷演到底",
+  escape_confrontation: "借故离场",
+  divorce_cruel: "绝情断念",
+  pre_arrange_safety: "预留退路",
+  signal_throne: "递眼于帝",
+  consult_wuyitai: "求药苟活",
+};
+
+// 看穿 / 暴露真相类的关键选择：直接锁定傅云夕结局（权重也更高）
+const DECISIVE_TRUST_HOOKS = new Set(["truth_revealed", "accidental_reveal"]);
+
+const ENDING_BY_LINE: Record<LineKey, EndingKey> = {
+  trust: "fuyunxi",
+  self: "zhuoqi",
+  yield: "captured",
+};
+
+export const LINE_NAME: Record<LineKey, string> = {
+  trust: "情意线",
+  self: "自立线",
+  yield: "隐忍线",
+};
+
+const REASON_BY_LINE: Record<LineKey, string> = {
+  trust: "你始终在乎他、信他——他便不顾病体，戴鬼面赶来救你。",
+  self: "你强硬自立、另结外援——危急时是西戎卓七先一步赶到。",
+  yield: "你一路隐忍退让，无人知你处境——这一夜只能靠自己。",
+};
+
+/**
+ * 按玩家在剧情中的"选择"决定结局。
+ *
+ * 规则：
+ *   1) 每个带 hook 的选择投 1 票给对应心意线；
+ *   2) "看穿伪装 / 咳血露真"等关键选择投 2 票，并直接锁定傅云夕结局；
+ *   3) 票数最高的线胜出，平局优先级 trust > self > yield；
+ *   4) 若全程自由输入（无任何 hook），回退到数值阈值兜底。
+ */
+export function decideEndingByChoices(
+  choices: ChoiceRecord[],
+  state: NumericsState
+): EndingDecision {
+  const lines: Record<LineKey, number> = { trust: 0, self: 0, yield: 0 };
+  const picks: EndingPick[] = [];
+  let decisive = false;
+
+  for (const c of choices) {
+    const line = HOOK_LINE[c.hook];
+    if (!line) continue;
+    const weight = DECISIVE_TRUST_HOOKS.has(c.hook) ? 2 : 1;
+    lines[line] += weight;
+    picks.push({ scene: c.scene, label: HOOK_LABEL[c.hook] || c.hook, line });
+    if (DECISIVE_TRUST_HOOKS.has(c.hook)) decisive = true;
   }
-  // 二星 + 高信任：男主仍来（升一档）
-  else if (qteResult === "zhuoqi" && trust >= 70) {
-    ending = "fuyunxi";
-    reason = `QTE 二星但 trust=${trust} ≥ 70，男主信你必走，鬼面赶到`;
+
+  // 全自由输入 / 无有效选择 → 数值兜底
+  if (picks.length === 0) return fallbackByNumerics(state);
+
+  if (decisive) {
+    return {
+      ending: "fuyunxi",
+      reason: "你看穿了他的伪装——他终究无法对你狠心，戴上鬼面也要护你。",
+      lines,
+      picks,
+    };
   }
-  // 二星 + 高西戎线：明确走卓七
-  else if (qteResult === "zhuoqi" && ally >= 30) {
-    ending = "zhuoqi";
-    reason = `QTE 二星 + ally=${ally} ≥ 30，西戎线接应`;
-  }
-  // 一星 + 高勇气 + 高情报：升级为卓七
-  else if (qteResult === "captured" && courage >= 70 && state.intel >= 30) {
-    ending = "zhuoqi";
-    reason = `QTE 一星但 courage=${courage}, intel=${state.intel}，自救并触发了西戎线`;
+
+  // 取票数最高的线；平局优先 trust > self > yield
+  const order: LineKey[] = ["trust", "self", "yield"];
+  let best: LineKey = "yield";
+  let bestVal = -1;
+  for (const k of order) {
+    if (lines[k] > bestVal) {
+      bestVal = lines[k];
+      best = k;
+    }
   }
 
   return {
-    ending,
-    reason,
-    qteContribution: qteResult,
-    numericContribution: `trust=${trust} courage=${courage} ally=${ally} intel=${state.intel}`,
+    ending: ENDING_BY_LINE[best],
+    reason: `${LINE_NAME[best]}（${lines[best]} 票）主导：${REASON_BY_LINE[best]}`,
+    lines,
+    picks,
   };
+}
+
+// 数值兜底（玩家全程自由输入、无可统计选择时使用）
+function fallbackByNumerics(state: NumericsState): EndingDecision {
+  const { trust, courage, ally } = state;
+  let ending: EndingKey;
+  let reason: string;
+  if (trust >= 60 || courage >= 60) {
+    ending = "fuyunxi";
+    reason = `未做关键选择，按数值（信任 ${trust} / 勇气 ${courage}）→ 鬼面救场`;
+  } else if (courage >= 35 || ally >= 30) {
+    ending = "zhuoqi";
+    reason = `未做关键选择，按数值（勇气 ${courage} / 盟友 ${ally}）→ 卓七路过`;
+  } else {
+    ending = "captured";
+    reason = "未做关键选择，数值平平 → 失声被擒";
+  }
+  return { ending, reason, lines: { trust: 0, self: 0, yield: 0 }, picks: [] };
 }
 
 // ── 摘要展示 ────────────────────────────────────────────

@@ -16,12 +16,35 @@ interface Props {
 export function PrismHUD({ info, numerics, lastChange }: Props) {
   const [showFiltered, setShowFiltered] = useState(false);
   const [showNumerics, setShowNumerics] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const axesLine = `S=${info.axes.S} · H=${info.axes.H} · N=[${info.axes.N.join(",")}] · T=${info.axes.T} · A=${info.axes.A.rumor}/${info.axes.A.reverb}`;
 
+  // 折叠态：只露出「🔮 Prism」小标签，点击展开
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        className="absolute right-3 top-3 z-30 rounded-full border border-amber-300/30 bg-black/65 px-3 py-1.5 text-[12px] tracking-widest text-amber-300 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.6)] hover:bg-black/80 hover:text-amber-200"
+        title="展开 Prism 面板"
+      >
+        🔮 Prism
+      </button>
+    );
+  }
+
   return (
-    <div className="absolute right-3 top-16 z-30 w-[260px] rounded-xl border border-amber-300/30 bg-black/65 p-3 text-[11px] text-amber-50/90 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
-      <div className="mb-1 text-[12px] tracking-widest text-amber-300">
-        🔮 Prism · <b className="text-amber-200">{info.presetLabel}</b>
+    <div className="absolute right-3 top-3 z-30 w-[260px] rounded-xl border border-amber-300/30 bg-black/65 p-3 text-[11px] text-amber-50/90 backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+      <div className="mb-1 flex items-center justify-between text-[12px] tracking-widest text-amber-300">
+        <span>
+          🔮 Prism · <b className="text-amber-200">{info.presetLabel}</b>
+        </span>
+        <button
+          onClick={() => setCollapsed(true)}
+          className="ml-2 rounded px-1.5 leading-none text-amber-200/70 hover:text-amber-100"
+          title="折叠"
+        >
+          ✕
+        </button>
       </div>
       <div className="flex justify-between">
         <span className="text-amber-50/60">剧本</span>
