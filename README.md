@@ -412,6 +412,7 @@ curl -X POST https://你的域名.vercel.app/api/chat \
 （首页自动跳转到 `/huatangchun` 剧情页）
 
 - 环境 ID：`immersed-d7g3oj41x1eb54ce2`（上海）
+- 最近部署：2026-05-30 23:56（CloudRun 容器，`front-end/` 当前代码，端口 `8080`）
 - 控制台：https://tcb.cloud.tencent.com/dev?envId=immersed-d7g3oj41x1eb54ce2#/platform-run
 
 ### 为什么用 CloudRun 而不是静态托管
