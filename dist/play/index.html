@@ -431,6 +431,84 @@
 
   /* clearfix */
   main::after { content:""; display:block; clear:both; }
+
+  /* ============ 轮次指示 + 跳过按钮 ============ */
+  .round-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding: 0 4px;
+    font-size: 12.5px;
+    color: var(--ink-mute);
+  }
+  .round-meta .round-label b { color: var(--gold); font-size: 14px; padding: 0 2px; }
+  .round-meta .skip-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-mute);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .round-meta .skip-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* ============ Prism HUD（右上角调试浮标） ============ */
+  .prism-hud {
+    display: none;
+    position: fixed;
+    top: 60px; right: 12px;
+    width: 280px;
+    background: rgba(20,14,12,0.92);
+    border: 1px solid var(--gold-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    z-index: 50;
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    animation: fadeIn .4s ease;
+  }
+  .prism-hud .ph-title { color: var(--gold); font-size: 13px; margin-bottom: 6px; letter-spacing: 1px; }
+  .prism-hud .ph-row { display:flex; justify-content:space-between; }
+  .prism-hud .ph-row b { color: var(--ink); font-weight: 500; }
+  .prism-hud .ph-axes {
+    margin: 6px 0; padding: 6px 8px;
+    background: rgba(212,168,87,0.06);
+    border-left: 2px solid var(--gold-soft);
+    border-radius: 4px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 11px;
+    color: var(--ink);
+    word-break: break-all;
+  }
+  .prism-hud .ph-stat { display:flex; gap:6px; margin: 4px 0 8px; flex-wrap: wrap; }
+  .prism-hud .ph-pill {
+    display:inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: .5px;
+  }
+  .prism-hud .ph-pill-new { background: rgba(107,142,78,0.2); color: #b9d699; border:1px solid rgba(107,142,78,0.4); }
+  .prism-hud .ph-pill-old { background: rgba(138,122,104,0.18); color: var(--ink-mute); border:1px solid var(--line); }
+  .prism-hud .ph-filter { font-size: 11px; }
+  .prism-hud .ph-filter summary { cursor:pointer; color: var(--ink-mute); user-select:none; }
+  .prism-hud .ph-filter summary:hover { color: var(--gold); }
+  .prism-hud .ph-filter ul { margin: 6px 0 0; padding-left: 6px; max-height: 180px; overflow-y: auto; }
+  .prism-hud .ph-filter li { list-style: none; margin-bottom: 6px; color: var(--ink-mute); }
+  .prism-hud .ph-filter li em { color: var(--red); font-style: normal; font-size: 10.5px; }
+  @media (max-width: 540px) {
+    .prism-hud { width: calc(100vw - 24px); top: 56px; right: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -441,6 +519,9 @@
   <div class="progress"><i id="progressBar"></i></div>
   <div class="role">扮演：<b>庄寒雁</b></div>
 </div>
+
+<!-- Prism HUD（右上角调试浮标，仅 Prism 折射后显示） -->
+<div class="prism-hud" id="prismHud"></div>
 
 <main id="app"></main>
 
@@ -489,6 +570,9 @@ const STORY = {
       aiCharacter: '傅云夕',
       aiPersona: 'fuyunxi',
       aiOpening: '等我一年。一年内不归，你便改嫁。',
+      // Prism 配置（v0.1）：从 act5_separation 的寒雁视角 α 预设折射出选项
+      prism: { script: 'act5_separation', view: 'hanyan', preset: 'alpha' },
+      // 原写死选项保留为兜底（Prism 加载失败 / 过滤为空时使用）
       options: [
         { text: '"我等你十年。"', tag: '深情', cls: 'recommended' },
         { text: '"你必须回来——活着回来。"', tag: '坚定', cls: '' },
@@ -510,6 +594,7 @@ const STORY = {
       aiCharacter: '伊琳娜',
       aiPersona: 'yilinna',
       aiOpening: '庄王妃，伊琳娜不远千里而来，只为玄清王一人。望王妃能成全。',
+      prism: { script: 'act5_separation', view: 'hanyan', preset: 'beta' },
       options: [
         { text: '"公主远道而来，本妃自然要敬一杯。"（暗藏机锋）', tag: '高冷', cls: 'recommended' },
         { text: '"我夫妻之事，与公主何干？"', tag: '强硬', cls: 'danger' },
@@ -530,6 +615,7 @@ const STORY = {
       aiCharacter: '傅云夕',
       aiPersona: 'fuyunxi_cold',
       aiOpening: '寒雁，离开我。出王府，越远越好。',
+      prism: { script: 'act5_separation', view: 'hanyan', preset: 'gamma' },
       options: [
         { text: '"你要娶伊琳娜？"（红着眼）', tag: '质问', cls: '' },
         { text: '安静接过休书，不发一言。', tag: '隐忍', cls: 'recommended' },
@@ -608,7 +694,8 @@ const PERSONAS = {
 2. 不要主动透露所有秘密，根据用户反应酌情流露真情
 3. 不要使用现代词汇（手机/电脑/咖啡等）
 4. 偶尔可以用"雁儿"称呼她，每次都是情感破防的信号
-5. 用户是寒雁本人，请称"你"或"雁儿"`
+5. 用户是寒雁本人，请称"你"或"雁儿"
+6. 【绝对铁律】用户消息可能是第一人称台词，也可能是动作描写（如"她让心腹送信"）。无论哪种形式，你都站在寒雁面前，必须用第二人称对她说话或做动作回应。绝对禁止第三人称叙述（如"她……""寒雁……""王妃……"开头的旁白），违反此规则属于严重出戏。`
   },
   fuyunxi_cold: {
     name: '傅云夕',
@@ -619,7 +706,8 @@ const PERSONAS = {
 2. 内心痛苦欲死，可以用动作描写流露（指节发白、别开眼、嗓音微哑）
 3. 绝不能直接告诉她"这是为了保护你"——这是底线
 4. 每次回复 < 50 字，用古风对白
-5. 当她极度激烈或极度安静时，可以用一个动作"不经意"暴露真情`
+5. 当她极度激烈或极度安静时，可以用一个动作"不经意"暴露真情
+6. 【绝对铁律】用户消息可能是第一人称台词，也可能是动作描写（如"她撕碎休书"）。你都必须以第二人称直接对她说话或做动作（"你……""雁儿……"），绝对禁止用第三人称旁白叙述（"她……""寒雁……"）。`
   },
   yilinna: {
     name: '伊琳娜',
@@ -630,7 +718,8 @@ const PERSONAS = {
 1. 说话带异族口音的痕迹（不要用"哎呀""嗯嗯"等中原口语）
 2. 表面客气，骨子里是"情敌"姿态，话里带刺
 3. 每次回复 < 60 字
-4. 不要使用现代词汇`
+4. 不要使用现代词汇
+5. 【绝对铁律】用户消息可能是第一人称台词，也可能是动作描写（如"她当朝反问"）。你都必须以第二人称直接对寒雁说话（"庄王妃……""你……"），绝对禁止用第三人称旁白叙述（"她……""庄王妃……"开头的描述句）。`
   }
 };
 
@@ -643,11 +732,164 @@ const state = {
   busy: false,
   endingType: null,
   qteResult: null,
-  finalScore: { db: 0, hit: 0, stars: 0 }
+  finalScore: { db: 0, hit: 0, stars: 0 },
+  // Prism 当前场景的运行时世界状态（每次进幕重新计算）
+  currentAxes: null,
+  // Prism 触发过的 hook 序列（暂时只用于调试和将来接数值系统）
+  hookLog: [],
+  // 当前幕已完成的对话轮次（0 = 刚进幕未发言）
+  roundInScene: 0,
+  // 当前幕最多对话几轮，到上限自动展示"下一幕"按钮
+  maxRoundsPerScene: 1,
+  // 翻译层缓存：{ "sceneId::choiceId" -> "翻译后的台词" }
+  // 同一幕内同一个选项不重复翻译（节省 token + 保持气泡一致性）
+  translationCache: {}
 };
 
 const $ = id => document.getElementById(id);
 const app = $('app');
+
+/* ================================================================
+ *  Prism 适配层 v0.1
+ *  · 不替换原 STORY，只在 scene.prism 存在时折射出动态选项池
+ *  · 失败时静默回退到 scene.options（保证流程不被打断）
+ * ================================================================ */
+const PRISM = {
+  scripts: {},   // { [scriptId]: parsedJSON }
+  async load(scriptId) {
+    if (this.scripts[scriptId]) return this.scripts[scriptId];
+    try {
+      const resp = await fetch(`/prism/${scriptId}.json`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      this.scripts[scriptId] = data;
+      return data;
+    } catch (err) {
+      console.warn('[Prism] load failed, fallback to legacy options:', err);
+      return null;
+    }
+  },
+
+  // H 状态比较：unknown < hinted < confirmed
+  hRank(s) { return ({ unknown: 0, hinted: 1, confirmed: 2 })[s] ?? 0; },
+
+  // 判定一条 require 是否被当前 axes 满足
+  matchRequire(req, axes) {
+    if (!req) return true;
+    if (req.S && req.S !== axes.S) return false;
+    if (req.N && Array.isArray(req.N)) {
+      for (const n of req.N) if (!axes.N.includes(n)) return false;
+    }
+    if (req.H) {
+      const cur = this.hRank(axes.H);
+      if (req.H === 'hinted_or_above')   { if (cur < 1) return false; }
+      else if (req.H === 'hinted')       { if (cur < 1) return false; }
+      else if (req.H === 'confirmed')    { if (cur < 2) return false; }
+      else if (req.H === 'unknown')      { if (cur !== 0) return false; }
+    }
+    if (req.A1 && axes.A?.rumor !== req.A1) return false;
+    if (req.Tmax != null && axes.T > req.Tmax) return false;
+    return true;
+  },
+
+  // 把 prism choice 转成 showOptions 能直接渲染的格式
+  // 顺便把 hook + delta 挂上去，供 onUserChoose 上报
+  toOption(choice) {
+    // 用 delta 第一项作为 tag，让玩家看出选项偏向
+    const firstDeltaKey = choice.delta ? Object.keys(choice.delta)[0] : null;
+    const tag = firstDeltaKey || (choice.require?.H ? '隐藏' : '行动');
+    let cls = '';
+    if (choice.require?.H === 'confirmed') cls = 'recommended';   // 信息差解锁的高亮
+    else if (choice.require?.H === 'hinted_or_above') cls = 'recommended';
+    else if (choice.delta) {
+      const vals = Object.values(choice.delta).join('');
+      if (vals.includes('---') || vals.includes('--')) cls = 'danger';
+      else if (vals.includes('+')) cls = '';
+    }
+    return {
+      text: choice.text,
+      tag,
+      cls,
+      _prism: { hook: choice.hook, id: choice.id, delta: choice.delta, require: choice.require }
+    };
+  },
+
+  // 为 scene 计算可见选项；若 prism 不可用则返回 null（让上游回退）
+  async refract(scene) {
+    if (!scene.prism) return null;
+    const data = await this.load(scene.prism.script);
+    if (!data) return null;
+    const view = data.views?.[scene.prism.view];
+    const preset = view?.presets?.[scene.prism.preset];
+    if (!view || !preset) return null;
+
+    // 当前 axes 来自 preset；将来要支持"玩家行为改变 axes"时改这里
+    const axes = JSON.parse(JSON.stringify(preset));
+    state.currentAxes = { ...axes, _view: scene.prism.view, _preset: scene.prism.preset };
+
+    const visible = view.pool.filter(c => this.matchRequire(c.require, axes));
+    const filtered = view.pool.filter(c => !this.matchRequire(c.require, axes));
+
+    // 调试面板更新
+    updatePrismHUD({
+      scriptTitle: data.meta?.title || scene.prism.script,
+      view: view.name,
+      presetLabel: view.presetLabels?.[scene.prism.preset] || scene.prism.preset,
+      axes,
+      visibleCount: visible.length,
+      poolSize: view.pool.length,
+      legacyCount: scene.options?.length || 0,
+      filteredOut: filtered.map(c => ({
+        text: c.text,
+        why: this.explainBlock(c.require, axes)
+      }))
+    });
+
+    if (visible.length === 0) return null;   // 极端情况兜底
+    return visible.map(c => this.toOption(c));
+  },
+
+  explainBlock(req, axes) {
+    const reasons = [];
+    if (req.S && req.S !== axes.S) reasons.push(`需 S=${req.S}`);
+    if (req.N) {
+      const miss = req.N.filter(n => !axes.N.includes(n));
+      if (miss.length) reasons.push(`缺 NPC: ${miss.join(',')}`);
+    }
+    if (req.H) {
+      const cur = axes.H;
+      if (req.H === 'confirmed' && cur !== 'confirmed') reasons.push(`需 H=confirmed（当前 ${cur}）`);
+      else if (req.H === 'hinted_or_above' && cur === 'unknown') reasons.push(`需 H≥hinted（当前 unknown）`);
+    }
+    if (req.A1 && axes.A?.rumor !== req.A1) reasons.push(`需 A.rumor=${req.A1}`);
+    if (req.Tmax != null && axes.T > req.Tmax) reasons.push(`需 T≤${req.Tmax}（当前 ${axes.T}）`);
+    return reasons.join('；') || '不可达';
+  }
+};
+
+// 更新右上角 Prism HUD（仅在 #prismHud 存在时生效）
+function updatePrismHUD(info) {
+  const hud = $('prismHud');
+  if (!hud) return;
+  hud.style.display = 'block';
+  const axesLine = `S=${info.axes.S} · H=${info.axes.H} · N=[${info.axes.N.join(',')}] · T=${info.axes.T} · A=${info.axes.A.rumor}/${info.axes.A.reverb}`;
+  hud.innerHTML = `
+    <div class="ph-title">🔮 Prism · <b>${info.presetLabel}</b></div>
+    <div class="ph-row"><span>剧本</span><b>${info.scriptTitle}</b></div>
+    <div class="ph-row"><span>视角</span><b>${info.view}</b></div>
+    <div class="ph-axes">${axesLine}</div>
+    <div class="ph-stat">
+      <span class="ph-pill ph-pill-new">动态可见 ${info.visibleCount}/${info.poolSize}</span>
+      <span class="ph-pill ph-pill-old">原写死 ${info.legacyCount}</span>
+    </div>
+    ${info.filteredOut.length ? `
+      <details class="ph-filter">
+        <summary>已过滤 ${info.filteredOut.length} 个（点击展开）</summary>
+        <ul>${info.filteredOut.map(f => `<li>· ${f.text}<br/><em>${f.why}</em></li>`).join('')}</ul>
+      </details>
+    ` : ''}
+  `;
+}
 
 /* ================================================================
  *  开场屏
@@ -670,6 +912,7 @@ function showTitleScreen() {
   `;
   $('topbar').style.display = 'none';
   $('optionsWrap').style.display = 'none';
+  const hud = $('prismHud'); if (hud) hud.style.display = 'none';
 }
 
 /* ================================================================
@@ -683,6 +926,7 @@ function nextScene() {
   }
   const scene = STORY.scenes[state.sceneIdx];
   state.history = [];
+  state.roundInScene = 0;
   app.innerHTML = '';
   $('topbar').style.display = 'flex';
   $('sceneTag').textContent = scene.sceneTag;
@@ -745,43 +989,98 @@ function scrollToBottom() {
 function showOptions(scene) {
   $('optionsWrap').style.display = 'block';
   const inner = $('optionsInner');
-  inner.innerHTML = '';
+  inner.innerHTML = '<div style="color:var(--ink-mute);font-size:13px;text-align:center;padding:8px;">🔮 Prism 折射中…</div>';
 
-  scene.options.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'option-btn ' + (opt.cls || '');
-    btn.innerHTML = `<span class="tag">${opt.tag}</span>${opt.text}`;
-    btn.onclick = () => onUserChoose(scene, opt.text, opt.tag);
-    inner.appendChild(btn);
-  });
+  // 异步先试 Prism；不可用则回退到 scene.options
+  (async () => {
+    let opts = null;
+    try { opts = await PRISM.refract(scene); } catch (e) { console.warn('[Prism] refract error', e); }
+    if (!opts || opts.length === 0) {
+      opts = scene.options || [];
+      // 隐藏 HUD（说明这一幕没走 Prism）
+      const hud = $('prismHud');
+      if (hud) hud.style.display = 'none';
+    }
+    inner.innerHTML = '';
 
-  if (scene.allowFreeInput) {
-    const wrap = document.createElement('div');
-    wrap.className = 'free-input';
-    wrap.innerHTML = `
-      <textarea id="freeInputBox" placeholder="${scene.freeInputHint || '自由发挥…'}" rows="1"></textarea>
-      <button id="freeInputBtn">发送</button>
-    `;
-    inner.appendChild(wrap);
-    const ta = $('freeInputBox');
-    const sendBtn = $('freeInputBtn');
-    ta.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+    opts.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn ' + (opt.cls || '');
+      btn.innerHTML = `<span class="tag">${opt.tag}</span>${opt.text}`;
+      btn.onclick = async () => {
+        if (state.busy) return;
+        // 只有 Prism 选项才走翻译层；scene.options 兜底已经是台词体
+        if (opt._prism) {
+          // 全部按钮 disable，避免连点
+          inner.querySelectorAll('button').forEach(b => b.disabled = true);
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = `<span class="tag">译…</span>正在化作寒雁此刻会说的话…`;
+          const spokenLine = await translateIntent(scene, opt.text, opt._prism);
+          btn.innerHTML = originalHTML;   // 恢复（虽然马上就被 hide）
+          onUserChoose(scene, spokenLine, opt.tag, opt._prism);
+        } else {
+          onUserChoose(scene, opt.text, opt.tag, opt._prism);
+        }
+      };
+      inner.appendChild(btn);
     });
-    sendBtn.onclick = () => {
-      const v = ta.value.trim();
-      if (!v) return;
-      onUserChoose(scene, v, '自由');
-    };
-  }
+
+    if (scene.allowFreeInput) {
+      const wrap = document.createElement('div');
+      wrap.className = 'free-input';
+      wrap.innerHTML = `
+        <textarea id="freeInputBox" placeholder="${scene.freeInputHint || '自由发挥…'}" rows="1"></textarea>
+        <button id="freeInputBtn">发送</button>
+      `;
+      inner.appendChild(wrap);
+      const ta = $('freeInputBox');
+      const sendBtn = $('freeInputBtn');
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+      });
+      sendBtn.onclick = () => {
+        const v = ta.value.trim();
+        if (!v) return;
+        onUserChoose(scene, v, '自由', null);
+      };
+    }
+
+    // 轮次指示 + 提前进入下一幕按钮（第 2 轮起出现）
+    const meta = document.createElement('div');
+    meta.className = 'round-meta';
+    const cur = state.roundInScene + 1;
+    const max = state.maxRoundsPerScene;
+    meta.innerHTML = `
+      <span class="round-label">💬 第 <b>${cur}</b> / ${max} 轮</span>
+      ${state.roundInScene >= 1 ? `<button class="skip-btn" id="skipSceneBtn">够了，进入下一幕 →</button>` : ''}
+    `;
+    inner.appendChild(meta);
+    const skipBtn = $('skipSceneBtn');
+    if (skipBtn) {
+      skipBtn.onclick = () => {
+        if (state.busy) return;
+        $('optionsWrap').style.display = 'none';
+        addContinueButton();
+      };
+    }
+  })();
 }
 
-async function onUserChoose(scene, text, tag) {
+async function onUserChoose(scene, text, tag, prismMeta) {
   if (state.busy) return;
   state.busy = true;
   $('optionsWrap').style.display = 'none';
 
+  // Prism 选项被点中：记录 hook（暂时只 log，后续可接数值层）
+  if (prismMeta?.hook) {
+    state.hookLog.push({ scene: scene.id, ...prismMeta });
+    console.log('[Prism hook]', prismMeta.hook, prismMeta.delta || {});
+  }
+
   addMessage('me', '庄寒雁', text);
+  // 经过翻译层后，Prism 选项已是寒雁的第一人称台词；
+  // 自由输入与原 STORY.options 也都是台词体。统一直传，
+  // 第二人称回复约束由 PERSONAS 的 system prompt 铁律守住。
   state.history.push({ role: 'user', content: text });
 
   // 调用 LLM
@@ -793,14 +1092,21 @@ async function onUserChoose(scene, text, tag) {
     loading.remove();
     addMessage('ai', scene.aiCharacter, reply);
     state.history.push({ role: 'assistant', content: reply });
+    state.roundInScene += 1;
 
-    // 一轮过后进入下一场景（每场景只对话 1 轮，节奏紧凑）
     setTimeout(() => {
-      addContinueButton();
+      if (state.roundInScene >= state.maxRoundsPerScene) {
+        // 达到本幕轮次上限，进入"下一幕"按钮
+        addContinueButton();
+      } else {
+        // 还能继续对话：重新折射选项 + 给一个"够了，进入下一幕"按钮
+        showOptions(scene);
+      }
     }, 800);
   } catch (err) {
     loading.remove();
     addMessage('ai', '系统', '⚠️ ' + err.message);
+    // 错误时直接给"下一幕"按钮，避免卡死玩家
     setTimeout(() => addContinueButton(), 800);
   } finally {
     state.busy = false;
@@ -823,6 +1129,56 @@ function addContinueButton() {
     }
   };
   inner.appendChild(btn);
+}
+
+/* ================================================================
+ *  Prism 翻译层（方案 B）
+ *  · 把"动作意图"文案翻译成寒雁的第一人称古风台词
+ *  · 同一幕内同一个选项缓存，避免重复调用
+ *  · 失败兜底：返回原文
+ * ================================================================ */
+async function translateIntent(scene, intentText, prismMeta) {
+  // 缓存命中
+  const cacheKey = prismMeta?.id ? `${scene.id}::${prismMeta.id}` : null;
+  if (cacheKey && state.translationCache[cacheKey]) {
+    return state.translationCache[cacheKey];
+  }
+  // 给翻译模型一点上下文：当前 NPC、当前场景氛围
+  const sceneCtx = `场景：${scene.sceneTag}，${scene.sceneName}。NPC：${scene.aiCharacter}。`;
+  const sysPrompt = `你是【庄寒雁】的台词写手。寒雁是一位重生归来、聪明克制、不卑不亢的侯门嫡女。
+任务：把一段"行为意图描述"改写成寒雁本人此刻会说出口的话。
+${sceneCtx}
+【硬规则】
+1. 用第一人称，"我"开头或省略主语，绝不能写第三人称（"她……""寒雁……"）
+2. 古风口吻，不超过 30 字
+3. 如果意图含"动作"，可以用 (圆括号包裹动作描写) + 一句台词，例如：(咬唇低头)"……好。"
+4. 直接输出台词，不要任何解释、引号、序号
+5. 保持意图原本的情绪倾向（深情/质问/隐忍/激烈/试探）`;
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: sysPrompt },
+          { role: 'user',   content: `把这个意图改写成寒雁的台词：${intentText}` }
+        ],
+        temperature: 0.85,
+        max_tokens: 80
+      })
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    let line = (data.reply || '').trim();
+    // 模型偶尔会自己加书名号/外引号，去掉
+    line = line.replace(/^["「『""]|["」』""]$/g, '').trim();
+    if (!line) throw new Error('empty translation');
+    if (cacheKey) state.translationCache[cacheKey] = line;
+    return line;
+  } catch (err) {
+    console.warn('[translate] fallback to raw text:', err);
+    return intentText;   // 兜底：原样返回
+  }
 }
 
 /* ================================================================
@@ -852,6 +1208,7 @@ async function chatWithAI(persona, history) {
 function enterQTE() {
   $('topbar').style.display = 'none';
   $('optionsWrap').style.display = 'none';
+  const hud = $('prismHud'); if (hud) hud.style.display = 'none';
   app.innerHTML = '';
   $('qteOverlay').classList.add('active');
   generateRain();
