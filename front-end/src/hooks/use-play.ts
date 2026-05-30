@@ -7,7 +7,14 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { VIEWS, PERSONAS, ENDINGS, type SceneConfig, type ViewKey } from "@/lib/story";
+import {
+  VIEWS,
+  PERSONAS,
+  ENDINGS,
+  type SceneConfig,
+  type SceneOption,
+  type ViewKey,
+} from "@/lib/story";
 import {
   refract,
   type RefractedOption,
@@ -60,6 +67,7 @@ export interface PlayState {
   hookLog: PlayHookLog[];
   roundInScene: number;
   maxRoundsPerScene: number;
+  currentBeatLabel: string | null;
   endingKey: string | null;
   // 数值系统
   numerics: NumericsState;
@@ -72,6 +80,24 @@ const DEFAULT_VIEW: ViewKey = "hanyan";
 
 let _msgId = 0;
 const newId = () => `m${++_msgId}`;
+
+function toRefractedOption(
+  option: SceneOption,
+  sceneId: string,
+  beatId: string,
+  index: number
+): RefractedOption {
+  return {
+    text: option.text,
+    tag: option.tag,
+    cls: option.cls || "",
+    _prism: {
+      hook: option.hook || "",
+      id: option.id || `${sceneId}_${beatId}_${index}`,
+      delta: option.delta,
+    },
+  };
+}
 
 export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
   const [view, setView] = useState<ViewKey>(initialView);
@@ -92,6 +118,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     hookLog: [],
     roundInScene: 0,
     maxRoundsPerScene: MAX_ROUNDS,
+    currentBeatLabel: null,
     endingKey: null,
     numerics: INITIAL_STATE,
     lastChange: [],
@@ -112,18 +139,21 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     }));
   }, []);
 
-  // ── 加载选项（折射 PRISM；失败回退到 scene.options）────────
-  const loadOptions = useCallback(async (scene: SceneConfig) => {
+  // ── 加载选项（三段式 beat 控制选项；PRISM 仍负责 HUD / 轴信息）────────
+  const loadOptions = useCallback(async (scene: SceneConfig, round = 0) => {
     setState((s) => ({ ...s, optionsLoading: true, options: null }));
 
-    let opts: RefractedOption[] | null = null;
+    const beat = scene.dialogueBeats?.[round];
+    let opts: RefractedOption[] | null = beat
+      ? beat.options.map((o, i) => toRefractedOption(o, scene.id, beat.id, i))
+      : null;
     let axes: RefractedAxes | null = null;
     let hud: HUDInfo | null = null;
 
     try {
       const result = await refract(scene);
       if (result) {
-        opts = result.options;
+        if (!opts) opts = result.options;
         axes = result.axes;
         hud = result.hud;
       }
@@ -134,12 +164,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     // 兜底
     if (!opts || opts.length === 0) {
       opts =
-        scene.options?.map((o) => ({
-          text: o.text,
-          tag: o.tag,
-          cls: (o.cls as any) || "",
-          _prism: { hook: "", id: "", delta: undefined, require: undefined },
-        })) || [];
+        scene.options?.map((o, i) => toRefractedOption(o, scene.id, "legacy", i)) || [];
     }
 
     setState((s) => ({
@@ -148,6 +173,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
       optionsLoading: false,
       axes,
       hud,
+      currentBeatLabel: beat?.label ?? null,
     }));
   }, []);
 
@@ -184,17 +210,26 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         messages: msgs,
         options: null,
         roundInScene: 0,
+        maxRoundsPerScene: scene.dialogueBeats?.length || MAX_ROUNDS,
+        currentBeatLabel: scene.dialogueBeats?.[0]?.label ?? null,
         showContinue: false,
       };
     });
   }, []);
 
-  // 当 scene 变化时，触发 loadOptions
+  // 当 scene / round 变化时，触发 loadOptions
   useEffect(() => {
     if (state.scene && state.phase === "playing" && state.options === null && !state.optionsLoading) {
-      loadOptions(state.scene);
+      loadOptions(state.scene, state.roundInScene);
     }
-  }, [state.scene, state.phase, state.options, state.optionsLoading, loadOptions]);
+  }, [
+    state.scene,
+    state.phase,
+    state.options,
+    state.optionsLoading,
+    state.roundInScene,
+    loadOptions,
+  ]);
 
   // ── 玩家选了选项 / 自由输入 ─────────────────────────────
   const submitTurn = useCallback(
@@ -279,7 +314,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         setTimeout(() => {
           setState((s) => {
             if (s.roundInScene < s.maxRoundsPerScene) {
-              loadOptions(scene);
+              loadOptions(scene, s.roundInScene);
             }
             return s;
           });
@@ -373,6 +408,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
       hookLog: [],
       roundInScene: 0,
       maxRoundsPerScene: MAX_ROUNDS,
+      currentBeatLabel: null,
       endingKey: null,
       numerics: INITIAL_STATE,
       lastChange: [],

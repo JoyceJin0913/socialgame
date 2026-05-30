@@ -29,7 +29,7 @@ export interface StreamHandlers {
   signal?: AbortSignal;
 }
 
-const CHAT_ENDPOINT = "/api/chat";
+const CHAT_ENDPOINT = import.meta.env.VITE_CHAT_ENDPOINT || "/api/chat";
 
 async function callChat(body: {
   messages: ChatMessage[];
