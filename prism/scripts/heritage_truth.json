@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "id": "heritage_truth_surfacing",
+    "title": "身世真相 · 嫡庶被翻起",
+    "version": "1.0.0",
+    "author": "Prism × socialgame"
+  },
+  "crystal": {
+    "dramaticFunction": "让玩家亲历\"我究竟是谁\"的瞬间动摇与重建",
+    "mustHappen": [
+      "某个关键人物抛出对玩家身世的暗示",
+      "玩家必须做出回应",
+      "至少一条信息差被推进"
+    ],
+    "mustNotHappen": [
+      "当场公开告知所有人",
+      "玩家直接放弃当前身份逃出府"
+    ]
+  },
+  "axisDefs": {
+    "S": {
+      "chamber": { "label": "私室低语", "exitCost": "low" },
+      "shrine":  { "label": "祠堂祭祖", "exitCost": "high" },
+      "temple":  { "label": "道观清晨", "exitCost": "mid" },
+      "study":   { "label": "书房深夜", "exitCost": "mid" }
+    },
+    "H": {
+      "lineage":         { "label": "出身真相" },
+      "mother_alive":    { "label": "生母是否在世" },
+      "daughter_knows":  { "label": "女儿察觉了多少（仅父亲视角）" },
+      "court_aware":     { "label": "朝中风声（仅父亲视角）" },
+      "wife_complicit":  { "label": "妻子是否同谋（仅父亲视角）" }
+    },
+    "A": {
+      "rumor": {
+        "private": "私下试探",
+        "court":   "朝中已闻",
+        "all":     "京中流言"
+      },
+      "reverb": {
+        "low":  { "label": "夜深 ×1.0", "multiplier": 1.0 },
+        "mid":  { "label": "晨钟 ×1.3", "multiplier": 1.3 },
+        "high": { "label": "庙会 ×2.0", "multiplier": 2.0 }
+      }
+    }
+  },
+  "views": {
+    "hanyan": {
+      "name": "寒雁视角",
+      "consoleTitle": "prism.refract( \"heritage_truth\", view=\"hanyan\" )",
+      "hSubLabel": "你对自己身世的了解程度",
+      "npcRoster": [
+        { "id": "chen_mama",      "label": "陈嬷嬷（旧仆）" },
+        { "id": "father",         "label": "父亲" },
+        { "id": "stepmother",     "label": "继母" },
+        { "id": "elder",          "label": "族中长辈" },
+        { "id": "brother",        "label": "兄长" },
+        { "id": "jingxu_daoist",  "label": "静虚道长" }
+      ],
+      "presetLabels": {
+        "alpha": "私室低语",
+        "beta":  "祠堂祭祖",
+        "gamma": "道观清晨"
+      },
+      "presets": {
+        "alpha": { "S": "chamber", "H": "hinted",    "N": ["chen_mama"],                                "T": 8,  "A": { "rumor": "private", "reverb": "low" } },
+        "beta":  { "S": "shrine",  "H": "hinted",    "N": ["father", "stepmother", "elder", "brother"], "T": 4,  "A": { "rumor": "court",   "reverb": "mid" } },
+        "gamma": { "S": "temple",  "H": "confirmed", "N": ["jingxu_daoist"],                            "T": 12, "A": { "rumor": "all",     "reverb": "high" } }
+      },
+      "tones": {
+        "chamber": {
+          "private": "老人推门进来，关门时反复确认了三遍。",
+          "court":   "她压低声音，但你知道隔墙有耳。",
+          "all":     "连她都听说了京中的传言。"
+        },
+        "shrine": {
+          "private": "列祖牌位前，只有你们一族人。",
+          "court":   "对方在所有人面前\"无意\"提起一件你不该知道的事。",
+          "all":     "祠堂外已经聚了打听消息的旁人。"
+        },
+        "temple": {
+          "private": "晨钟之下，道长把一句话说得很轻。",
+          "court":   "他眼神扫过来：你不是第一个来问的。",
+          "all":     "道长说出那句话，你才意识到京中已经有人传开了。"
+        }
+      },
+      "pool": [
+        { "id": "probe_source",         "text": "不动声色追问\"这话从何而来\"",              "hook": "probe_source",         "require": {},                                                       "delta": { "情报": "+", "风险": "+" } },
+        { "id": "flat_deny",            "text": "当场矢口否认，把对方堵回去",                "hook": "flat_deny",            "require": {},                                                       "delta": { "隐蔽": "+", "真相进度": "-" } },
+        { "id": "feign_oblivion",       "text": "假装不解，转移话题",                        "hook": "feign_oblivion",       "require": {},                                                       "delta": { "隐蔽": "++", "关系": "0" } },
+        { "id": "counter_probe",        "text": "反问对方\"你是谁派来的\"",                  "hook": "counter_probe",        "require": { "S": "chamber" },                                       "delta": { "情报": "+", "对方戒心": "+" } },
+        { "id": "bait_with_token",      "text": "留下信物试探对方反应（如玉佩半块）",        "hook": "bait_with_token",      "require": { "S": "chamber", "N": ["chen_mama"] },                   "delta": { "情报": "++", "暴露": "++" } },
+        { "id": "public_dismiss",       "text": "当众一笑置之，事后再清算",                  "hook": "public_dismiss",       "require": { "S": "shrine",  "N": ["elder"] },                      "delta": { "体面": "+", "真相进度": "-" } },
+        { "id": "swear_on_ancestors",   "text": "借祖宗牌位起誓\"我是 X 家女\"",              "hook": "swear_on_ancestors",   "require": { "S": "shrine" },                                        "delta": { "体面": "++", "后续反噬": "++" } },
+        { "id": "confront_father",      "text": "当场直问父亲\"我究竟是谁的女儿\"",          "hook": "confront_father",      "require": { "S": "shrine",  "N": ["father"], "H": "confirmed" },   "delta": { "真相进度": "+++", "父女关系": "---" } },
+        { "id": "urgent_search_relics", "text": "借故离场，立刻回房翻母亲遗物",              "hook": "urgent_search_relics", "require": { "Tmax": 6 },                                            "delta": { "情报": "+", "心力": "-" } },
+        { "id": "reach_relative",       "text": "让心腹连夜送信给某位远亲求证",              "hook": "reach_relative",       "require": { "N": ["chen_mama"], "Tmax": 8 },                        "delta": { "盟友信任": "+", "暴露": "+" } },
+        { "id": "public_confess",       "text": "跪下当众认承\"是我血脉有疑\"",              "hook": "public_confess",       "require": { "S": "shrine", "H": "confirmed" },                      "delta": { "计划崩盘": "+++" } }
+      ]
+    },
+    "father": {
+      "name": "父亲视角",
+      "consoleTitle": "prism.refract( \"heritage_truth\", view=\"father\" )",
+      "hSubLabel": "女儿对真相的察觉程度",
+      "npcRoster": [
+        { "id": "chen_mama",  "label": "陈嬷嬷（旧仆）" },
+        { "id": "daughter",   "label": "女儿" },
+        { "id": "stepmother", "label": "妻子" },
+        { "id": "elder",      "label": "族中长辈" },
+        { "id": "brother",    "label": "儿子" },
+        { "id": "steward",    "label": "管家" }
+      ],
+      "presetLabels": {
+        "alpha": "私室独酌",
+        "beta":  "祠堂当众",
+        "gamma": "书房深夜"
+      },
+      "presets": {
+        "alpha": { "S": "chamber", "H": "unknown",   "N": ["chen_mama"],                                          "T": 8, "A": { "rumor": "private", "reverb": "low" } },
+        "beta":  { "S": "shrine",  "H": "hinted",    "N": ["daughter", "stepmother", "elder", "brother"],         "T": 4, "A": { "rumor": "court",   "reverb": "mid" } },
+        "gamma": { "S": "study",   "H": "confirmed", "N": ["steward"],                                            "T": 6, "A": { "rumor": "all",     "reverb": "high" } }
+      },
+      "tones": {
+        "chamber": {
+          "private": "老人一开口，你十几年前那个夜晚立刻回到眼前。",
+          "court":   "她带来的不只是旧事——她暗示朝中也有人知道。",
+          "all":     "你听见外头打更人多说了一句不该说的话。"
+        },
+        "shrine": {
+          "private": "你扫一眼祖宗牌位，又扫一眼她——那一瞬你知道她已经在怀疑。",
+          "court":   "族中长辈眼里有打量。",
+          "all":     "今晚之后这事就遮不住了。"
+        },
+        "study": {
+          "private": "桌上那封无名信，言辞客气，却把十几年前的事说得一清二楚。",
+          "court":   "管家把第二封信送进来，说是从宫里转出来的。",
+          "all":     "京中已经在等你的下一步。"
+        }
+      },
+      "pool": [
+        { "id": "silence_witness",            "text": "当场拍案，命人把旧仆轰出去",          "hook": "silence_witness",            "require": { "S": "chamber", "N": ["chen_mama"] },                "delta": { "隐蔽": "+", "旧仆怨念": "+" } },
+        { "id": "bribe_for_silence",          "text": "重金封口，留她一命换沉默",            "hook": "bribe_for_silence",          "require": { "S": "chamber", "N": ["chen_mama"] },                "delta": { "隐蔽": "++", "资金": "-" } },
+        { "id": "mutual_assured_destruction", "text": "反过来威胁\"你说出去你也活不了\"",     "hook": "mutual_assured_destruction", "require": { "S": "chamber", "N": ["chen_mama"] },                "delta": { "隐蔽": "+++", "风险": "+++" } },
+        { "id": "public_scold_daughter",      "text": "当众斥责女儿\"不知规矩\"",            "hook": "public_scold_daughter",      "require": { "S": "shrine",  "N": ["daughter"] },                 "delta": { "体面": "+", "父女关系": "-" } },
+        { "id": "cover_with_grace",           "text": "当众替女儿打圆场，保住体面",          "hook": "cover_with_grace",           "require": { "S": "shrine",  "N": ["daughter", "elder"] },        "delta": { "体面": "++", "父女关系": "+" } },
+        { "id": "private_inquiry",            "text": "私下喊女儿到偏房，问她知道多少",      "hook": "private_inquiry",            "require": { "S": "shrine",  "N": ["daughter"] },                 "delta": { "情报": "+", "女儿戒心": "+" } },
+        { "id": "suppress_letter",            "text": "把举报信压下来，假装没看见",          "hook": "suppress_letter",            "require": { "S": "study" },                                       "delta": { "隐蔽": "+", "朝堂风险": "+" } },
+        { "id": "delegate_to_wife",           "text": "把举报信交给妻子，让她处理",          "hook": "delegate_to_wife",           "require": { "S": "study", "H": "confirmed" },                     "delta": { "妻子掌控": "++", "自身风险": "-" } },
+        { "id": "preemptive_disclosure",      "text": "提笔上奏，主动澄清家世（赌一把）",    "hook": "preemptive_disclosure",      "require": { "S": "study", "H": "hinted_or_above" },               "delta": { "朝堂主动权": "+", "家族体面": "--" } },
+        { "id": "eliminate_threat",           "text": "当夜召旧仆灭口",                      "hook": "eliminate_threat",           "require": { "Tmax": 6 },                                          "delta": { "隐蔽": "+++", "黑化": "++" } }
+      ]
+    }
+  }
+}
