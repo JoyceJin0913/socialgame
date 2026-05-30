@@ -1,0 +1,2590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>《重生之贵女难求》C2A2C互动文游 v5.0 · 可玩版</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #14141f;
+  --bg-card: #1a1a2e;
+  --bg-card-hover: #222240;
+  --bg-bubble-self: #2d4a3e;
+  --bg-bubble-npc: #252538;
+  --text-primary: #e8e6e3;
+  --text-secondary: #9a9aab;
+  --accent-gold: #c9a96e;
+  --accent-red: #c45c5c;
+  --accent-blue: #6b8cae;
+  --accent-green: #4a9c6d;
+  --accent-purple: #9b6bcb;
+  --hint-bg: rgba(201,169,110,0.12);
+  --hint-border: rgba(201,169,110,0.35);
+  --choice-bg: #1e1e32;
+  --choice-border: #2a2a45;
+  --choice-hover: #282842;
+  --tag-default: #6b8cae;
+  --tag-warm: #c45c5c;
+  --tag-cool: #5c9c9c;
+  --tag-gold: #c9a96e;
+  --tag-dark: #8b7355;
+  --gradient-gold: linear-gradient(135deg, #c9a96e 0%, #e8d5a3 50%, #c9a96e 100%);
+  --shadow-glow: 0 0 20px rgba(201,169,110,0.3);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+body {
+  font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary);
+  height: 100vh; overflow: hidden; display: flex; justify-content: center;
+}
+.app-container {
+  width: 100%; max-width: 430px; height: 100vh;
+  display: flex; flex-direction: column; position: relative;
+  background: var(--bg-primary); overflow: hidden;
+}
+
+/* ===== SCREEN SYSTEM ===== */
+.screen {
+  display: none; width: 100%; height: 100%;
+  flex-direction: column; overflow-y: auto; overflow-x: hidden;
+  animation: fadeIn 0.4s ease;
+}
+.screen.active { display: flex; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+@keyframes slideUp { from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.6} }
+@keyframes shimmer { 0%{background-position:-200%0}100%{background-position:200%0} }
+@keyframes typingDots { 0%,20%{content:'.'}40%{content:'..'}60%{content:'...'}100%{content:''} }
+
+/* ===== HEADER ===== */
+.game-header {
+  padding: 14px 16px; background: linear-gradient(180deg, rgba(10,10,15,0.98) 0%, transparent 100%);
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(10px);
+}
+.header-left button {
+  background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 4px;
+}
+.header-center { text-align: center; }
+.header-title { font-size: 13px; font-weight: 700; color: var(--accent-gold); }
+.header-subtitle { font-size: 11px; color: var(--text-secondary); }
+.header-right { display: flex; gap: 12px; align-items: center; }
+.header-icon-btn { background: none; border: none; color: var(--text-secondary); font-size: 16px; cursor: pointer; }
+
+/* ===== PARAMETER BAR ===== */
+.param-bar {
+  display: flex; gap: 6px; padding: 8px 16px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: rgba(20,20,31,0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  scrollbar-width: none;
+}
+.param-bar::-webkit-scrollbar { display: none; }
+.param-chip {
+  flex-shrink: 0; display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px; font-size: 11px;
+  background: var(--bg-card); border: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+.param-chip .p-icon { font-size: 12px; }
+.param-chip .p-val { color: var(--accent-gold); font-weight: 600; min-width: 24px; text-align: right;}
+.param-chip.p-up .p-val { color: var(--accent-green); animation: pulse 0.5s ease 3; }
+.param-chip.p-down .p-val { color: var(--accent-red); animation: pulse 0.5s ease 3; }
+
+/* ===== CHAT AREA ===== */
+.chat-area {
+  flex: 1; overflow-y: auto; padding: 16px;
+  scroll-behavior: smooth; display: flex; flex-direction: column; gap: 16px;
+}
+.chat-area::-webkit-scrollbar { width: 4px; }
+.chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* Narrative Block */
+.narrative-block {
+  line-height: 1.85; font-size: 14.5px; color: var(--text-primary);
+  padding: 16px; background: linear-gradient(135deg, rgba(201,169,110,0.06) 0%, rgba(107,140,174,0.04) 100%);
+  border-radius: var(--radius-md); border-left: 3px solid var(--accent-gold);
+  position: relative;
+}
+.narrative-block b, .narrative-block strong { color: var(--accent-gold); }
+
+/* Dialogue Bubbles */
+.dialogue-bubble { display: flex; gap: 10px; animation: slideUp 0.35s ease; }
+.dialogue-bubble.self { flex-direction: row-reverse; }
+.bubble-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08);
+}
+.dialogue-bubble.self .bubble-avatar { background: var(--bg-bubble-self); }
+.bubble-content { max-width: 75%; }
+.bubble-name { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+.dialogue-bubble.self .bubble-name { text-align: right; }
+.bubble-body {
+  padding: 10px 14px; border-radius: var(--radius-md);
+  font-size: 14px; line-height: 1.65;
+  background: var(--bg-bubble-npc); position: relative;
+}
+.dialogue-bubble.self .bubble-body { background: var(--bg-bubble-self); }
+
+/* Card Popup in dialogue */
+.card-popup {
+  margin-top: 8px; padding: 12px; border-radius: var(--radius-sm);
+  font-size: 12px; line-height: 1.7; border-left: 3px solid;
+  background: rgba(0,0,0,0.25);
+}
+.card-popup.roleCard { border-color: var(--accent-blue); }
+.card-popup.warningCard { border-color: var(--accent-red); background: rgba(196,92,92,0.08); }
+.card-popup.itemCard { border-color: var(--accent-purple); }
+.card-popup.relationMap { border-color: var(--accent-green); }
+.card-popup strong:first-child { font-size: 13px; display: block; margin-bottom: 4px; color: var(--accent-gold); }
+
+/* Hint Block */
+.hint-block {
+  display: flex; gap: 10px; padding: 14px; border-radius: var(--radius-md);
+  background: var(--hint-bg); border: 1px solid var(--hint-border);
+  animation: slideUp 0.35s ease 0.1s both;
+}
+.hint-icon { font-size: 22px; flex-shrink: 0; }
+.hint-content .hint-label { font-size: 12px; color: var(--accent-gold); font-weight: 600; margin-bottom: 4px; }
+.hint-text { font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+
+/* Inner Monologue */
+.inner-monologue {
+  margin: 4px 0; padding: 12px 16px; border-radius: var(--radius-sm);
+  font-style: italic; font-size: 13.5px; line-height: 1.75;
+  color: #c9b896; background: rgba(201,169,110,0.05);
+  border-left: 2px dashed rgba(201,169,110,0.3);
+}
+
+/* Narrative Transition */
+.narrative-transition {
+  text-align: center; padding: 16px; margin: 8px 0;
+  font-style: italic; line-height: 1.85; color: #b8a88e;
+  background: radial-gradient(ellipse at center, rgba(139,115,85,0.1) 0%, transparent 70%);
+  border-radius: var(--radius-md);
+}
+.narrative-transition.suspense::after { content: ''; }
+
+/* ===== CHOICE CARDS ===== */
+.choice-section { display: flex; flex-direction: column; gap: 10px; animation: slideUp 0.4s ease 0.2s both; }
+.choice-section-title { font-size: 15px; font-weight: 700; color: var(--accent-gold); text-align: center; }
+.choice-btn {
+  width: 100%; padding: 14px 16px; border-radius: var(--radius-md);
+  background: var(--choice-bg); border: 1px solid var(--choice-border);
+  cursor: pointer; text-align: left; transition: all 0.25s ease;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.choice-btn:hover:not(:disabled) { background: var(--choice-hover); border-color: var(--accent-gold); transform: translateX(4px); }
+.choice-btn:active:not(:disabled) { transform: scale(0.98); }
+.choice-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.choice-btn.recommended { border-color: var(--accent-gold); background: rgba(201,169,110,0.08); }
+.choice-btn.selected { border-color: var(--accent-gold); background: rgba(74,156,109,0.12); box-shadow: inset 0 0 0 1px var(--accent-gold); }
+.choice-prefix {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; width: fit-content;
+}
+.choice-prefix[data-type="gold"] { background: rgba(201,169,110,0.2); color: var(--accent-gold); }
+.choice-prefix[data-type="warm"] { background: rgba(196,92,92,0.2); color: var(--accent-warm); }
+.choice-prefix[data-type="cool"] { background: rgba(92,156,156,0.2); color: var(--tag-cool); }
+.choice-prefix[data-type="dark"] { background: rgba(139,115,85,0.2); color: var(--tag-dark); }
+.choice-prefix[data-type="default"] { background: rgba(107,140,174,0.2); color: var(--tag-default); }
+.choice-main-text { font-size: 14px; line-height: 1.55; color: var(--text-primary); }
+.choice-effect { font-size: 11.5px; color: var(--accent-green); line-height: 1.5; }
+.choice-effect .warn { color: var(--accent-red); }
+.choice-lock-badge { font-size: 10.5px; color: var(--text-secondary); }
+
+/* ===== INPUT BAR ===== */
+.input-bar {
+  display: flex; align-items: flex-end; gap: 8px;
+  padding: 10px 16px; background: var(--bg-secondary);
+  border-top: 1px solid rgba(255,255,255,0.04); z-index: 50;
+}
+.input-field-wrapper {
+  flex: 1; position: relative;
+}
+#inputField {
+  width: 100%; max-height: 80px; padding: 10px 14px;
+  border-radius: var(--radius-md); border: 1px solid var(--choice-border);
+  background: var(--bg-card); color: var(--text-primary);
+  font-size: 14px; resize: none; outline: none; line-height: 1.5;
+  font-family: inherit;
+}
+#inputField:focus { border-color: var(--accent-gold); }
+#inputField::placeholder { color: var(--text-secondary); opacity: 0.5; }
+.send-btn {
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  background: var(--gradient-gold); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #1a1a2e; flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.send-btn:hover { transform: scale(1.08); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ===== CONSEQUENCE DISPLAY ===== */
+.consequence-display {
+  padding: 14px 16px; border-radius: var(--radius-md);
+  background: rgba(74,156,109,0.08); border: 1px solid rgba(74,156,109,0.25);
+  animation: slideUp 0.4s ease; margin: 4px 0;
+}
+.consequence-display .conseq-title { font-size: 13px; font-weight: 700; color: var(--accent-green); margin-bottom: 6px; }
+.consequence-display .conseq-body { font-size: 13px; line-height: 1.7; color: var(--text-primary); }
+.consequence-display.negative { background: rgba(196,92,92,0.06); border-color: rgba(196,92,92,0.25); }
+.consequence-display.negative .conseq-title { color: var(--accent-red); }
+
+/* Post Choice Event (memory flashback etc.) */
+.post-choice-event {
+  margin: 12px 0; padding: 16px; border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(155,107,203,0.08), rgba(107,140,174,0.06));
+  border: 1px solid rgba(155,107,203,0.2);
+  animation: slideUp 0.5s ease 0.3s both;
+}
+.post-choice-event .event-title { font-size: 14px; font-weight: 700; color: var(--accent-purple); margin-bottom: 8px; }
+.post-choice-event .event-body { font-size: 13px; line-height: 1.8; color: #c8c0d8; }
+
+/* Mini Game Section */
+.mini-game-section { margin: 12px 0; animation: slideUp 0.4s ease 0.3s both; }
+.mini-game-header { font-size: 14px; font-weight: 700; color: var(--accent-purple); margin-bottom: 10px; }
+.mini-game-options { display: flex; flex-direction: column; gap: 8px; }
+.mini-game-option {
+  padding: 12px 14px; border-radius: var(--radius-sm);
+  background: var(--bg-card); border: 1px solid rgba(155,107,203,0.2);
+  cursor: pointer; font-size: 13.5px; transition: all 0.2s;
+  display: flex; align-items: center; gap: 10px;
+}
+.mini-game-option:hover { border-color: var(--accent-purple); background: rgba(155,107,203,0.08); }
+.mg-icon { font-size: 20px; }
+
+/* Mission Tracker */
+.mission-tracker {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: rgba(201,169,110,0.04); border: 1px solid rgba(201,169,110,0.12);
+  font-size: 12px;
+}
+.mt-current { color: var(--accent-gold); font-weight: 600; }
+.mt-overall { color: var(--text-secondary); }
+.mt-progress { color: var(--accent-green); font-weight: 700; }
+
+/* Scene Overlay / Transition */
+.scene-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.88); z-index: 999;
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+}
+.scene-overlay.active { display: flex; animation: fadeIn 0.5s ease; }
+.overlay-text { font-size: 22px; font-weight: 700; color: var(--accent-gold); text-align: center; }
+.overlay-sub { font-size: 14px; color: var(--text-secondary); }
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex; align-items: center; gap: 6px; padding: 12px 16px;
+  animation: slideUp 0.3s ease;
+}
+.typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-secondary); animation: bounce 1.4s infinite both; }
+.typing-dot:nth-child(2) { animation-delay: 0.16s; }
+.typing-dot:nth-child(3) { animation-delay: 0.32s; }
+@keyframes bounce { 0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1} }
+
+/* Act Ending Report */
+.act-ending-report {
+  margin: 16px 0; padding: 20px; border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(201,169,110,0.12), rgba(107,140,174,0.08));
+  border: 1px solid rgba(201,169,110,0.3); text-align: center;
+  animation: slideUp 0.5s ease;
+}
+.aer-title { font-size: 18px; font-weight: 800; color: var(--accent-gold); margin-bottom: 8px; }
+.aer-summary { font-size: 14px; color: var(--text-primary); line-height: 1.6; margin-bottom: 12px; }
+.aer-next { font-size: 12.5px; color: var(--accent-blue); line-height: 1.7; }
+.aer-next strong { color: var(--accent-gold); }
+
+/* ===== ENTRY SCREEN ===== */
+.entry-screen { align-items: center; justify-content: center; text-align: center; }
+.cover-art {
+  width: 200px; height: 280px; border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d1f3d 50%, #1a2a3e 100%);
+  border: 2px solid rgba(201,169,110,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 64px; margin-bottom: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  position: relative; overflow: hidden;
+}
+.cover-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,transparent 60%,rgba(0,0,0,0.6)); }
+.entry-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.entry-author { font-size: 14px; color: var(--text-secondary); margin-bottom: 4px; }
+.entry-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 12px 0 20px; }
+.entry-tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; background: var(--bg-card); color: var(--text-secondary); }
+.cta-button {
+  padding: 16px 48px; border-radius: 30px; font-size: 17px; font-weight: 800;
+  background: var(--gradient-gold); color: #1a1a2e; border: none;
+  cursor: pointer; box-shadow: var(--shadow-glow); transition: all 0.3s;
+  animation: float 3s ease-in-out infinite;
+}
+.cta-button:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(201,169,110,0.5); }
+
+/* ===== CHARACTER SELECT SCREEN ===== */
+.char-select-screen { padding: 20px 16px; }
+.char-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.char-card {
+  padding: 16px; border-radius: var(--radius-md); cursor: pointer;
+  background: var(--bg-card); border: 2px solid transparent;
+  transition: all 0.25s; display: flex; gap: 14px; align-items: center;
+}
+.char-card:hover { border-color: var(--accent-gold); background: var(--bg-card-hover); }
+.char-card.selected { border-color: var(--accent-gold); background: rgba(201,169,110,0.08); }
+.char-avatar-lg { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; background: var(--bg-secondary); flex-shrink: 0; }
+.char-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+.char-info .char-title { font-size: 12px; color: var(--accent-gold); margin-bottom: 4px; }
+.char-info p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.char-difficulty { margin-left: auto; font-size: 11px; padding: 3px 8px; border-radius: 10px; background: var(--bg-secondary); }
+
+/* ===== MODE SELECT SCREEN ===== */
+.mode-screen { padding: 20px 16px; }
+.mode-option {
+  padding: 20px; border-radius: var(--radius-md); cursor: pointer;
+  background: var(--bg-card); border: 2px solid transparent;
+  margin-bottom: 12px; transition: all 0.25s;
+}
+.mode-option:hover { border-color: var(--accent-gold); }
+.mode-option.selected { border-color: var(--accent-gold); background: rgba(201,169,110,0.08); }
+.mode-option h3 { font-size: 16px; margin-bottom: 6px; }
+.mode-option p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* ===== ENDING SCREEN ===== */
+.ending-screen { padding: 20px 16px; align-items: center; }
+.ending-badge { font-size: 56px; margin: 16px 0; }
+.ending-title-lg { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+.ending-subtitle-lg { font-size: 14px; color: var(--text-secondary); text-align: center; margin-bottom: 24px; }
+.fate-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; width: 100%; margin: 20px 0; }
+.fate-item { padding: 12px; border-radius: var(--radius-sm); background: var(--bg-card); text-align: center; }
+.fate-avatar { font-size: 28px; }
+.fate-name { font-size: 13px; font-weight: 600; margin: 4px 0 2px; }
+.fate-desc { font-size: 11px; color: var(--text-secondary); }
+.achievement-list { width: 100%; display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
+.achievement-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--bg-card); }
+.achievement-icon { font-size: 20px; }
+.achievement-info .achievement-name { font-size: 13px; font-weight: 600; }
+.achievement-desc { font-size: 11px; color: var(--text-secondary); }
+.achievement-lock { margin-left: auto; font-size: 12px; }
+.share-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+.share-btn {
+  padding: 10px 20px; border-radius: var(--radius-md);
+  background: var(--bg-card); border: 1px solid var(--choice-border);
+  color: var(--text-primary); font-size: 13px; cursor: pointer; transition: all 0.2s;
+}
+.share-btn:hover { border-color: var(--accent-gold); }
+
+/* Relation Graph Container */
+.relation-graph-container { width: 100%; height: 250px; position: relative; margin: 16px 0; background: var(--bg-card); border-radius: var(--radius-md); }
+.graph-node { position: absolute; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 2; }
+.graph-node.player { box-shadow: 0 0 0 3px var(--accent-gold); }
+.graph-label { position: absolute; font-size: 10px; color: var(--text-secondary); white-space: nowrap; transform: translateX(-50%); z-index: 3; }
+
+/* Param Chart Container */
+.param-chart-container { width: 100%; height: 200px; background: var(--bg-card); border-radius: var(--radius-md); padding: 12px; margin: 16px 0; }
+
+/* Social Screen */
+.social-screen { padding: 20px 16px; }
+.codex-player { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--radius-md); background: var(--bg-card); margin-bottom: 10px; }
+.codex-player-rank { width: 28px; height: 28px; border-radius: 50%; background: var(--gradient-gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #1a1a2e; flex-shrink: 0; }
+.codex-player-role { font-size: 14px; font-weight: 700; }
+.codex-player-stat { font-size: 12px; color: var(--text-secondary); }
+
+/* ===== TYPING CURSOR ===== */
+.typing-cursor::after {
+  content: '▍'; color: var(--accent-gold);
+  animation: cursorBlink 0.8s step-end infinite;
+}
+@keyframes cursorBlink { 0%,100%{opacity:1}50%{opacity:0} }
+
+/* Streaming narrative block */
+.narrative-block.streaming .nb-text { min-height: 1.4em; }
+.narrative-block.streaming.done .nb-text .typing-cursor::after { display: none; }
+
+/* Streaming dialogue */
+.dialogue-bubble.streaming .bubble-body { min-height: 1.4em; }
+.dialogue-bubble.streaming.done .bubble-body .typing-cursor::after { display: none; }
+
+/* Hint streaming */
+.hint-block.streaming .hint-text { min-height: 1.4em; }
+.hint-block.streaming.done .hint-text .typing-cursor::after { display: none; }
+
+/* Consequence streaming */
+.consequence-display.streaming .conseq-body { min-height: 1.4em; }
+.consequence-display.streaming.done .conseq-body .typing-cursor::after { display: none; }
+
+/* Skip button */
+.skip-btn {
+  position: fixed; bottom: 80px; right: 16px; z-index: 200;
+  background: rgba(201,169,110,0.2); border: 1px solid var(--accent-gold);
+  color: var(--accent-gold); font-size: 12px; padding: 6px 14px;
+  border-radius: 20px; cursor: pointer; backdrop-filter: blur(6px);
+  transition: all 0.2s;
+}
+.skip-btn:hover { background: rgba(201,169,110,0.35); }
+.skip-btn.hidden { display: none; }
+
+/* ===== VALUE DISCLOSURE PANEL (选择后数值白盒化展示) ===== */
+.value-disclosure {
+  margin: 12px 0; padding: 16px; border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(201,169,110,0.06) 0%, rgba(107,140,174,0.04) 100%);
+  border: 1px solid rgba(201,169,110,0.25);
+  animation: slideUp 0.4s ease;
+}
+.vd-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; cursor: pointer;
+}
+.vd-title {
+  font-size: 14px; font-weight: 700; color: var(--accent-gold);
+  display: flex; align-items: center; gap: 6px;
+}
+.vd-toggle {
+  font-size: 11px; color: var(--text-secondary);
+  padding: 3px 10px; border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  transition: all 0.2s;
+}
+.vd-toggle:hover { background: rgba(201,169,110,0.15); color: var(--accent-gold); }
+.vd-body {
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+  max-height: 600px; opacity: 1;
+}
+.vd-body.collapsed { max-height: 0; opacity: 0; }
+.vd-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; margin: 4px 0; border-radius: var(--radius-sm);
+  background: rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+.vd-item:hover { transform: translateX(4px); background: rgba(0,0,0,0.3); }
+.vd-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.vd-info { flex: 1; min-width: 0; }
+.vd-name { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.vd-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+.vd-values { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.vd-old { font-size: 13px; color: var(--text-secondary); text-decoration: line-through; opacity: 0.6; min-width: 28px; text-align: right; }
+.vd-arrow { font-size: 14px; color: var(--text-secondary); }
+.vd-delta {
+  font-size: 14px; font-weight: 700; padding: 2px 10px; border-radius: 10px;
+  min-width: 48px; text-align: center;
+}
+.vd-delta.positive { color: var(--accent-green); background: rgba(74,156,109,0.15); }
+.vd-delta.negative { color: var(--accent-red); background: rgba(196,92,92,0.15); }
+.vd-new {
+  font-size: 15px; font-weight: 800; color: var(--accent-gold);
+  min-width: 36px; text-align: right;
+  animation: pulse 0.5s ease 2;
+}
+/* 数值条 */
+.vd-bar-wrap { width: 80px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.vd-bar { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.vd-summary {
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px dashed rgba(201,169,110,0.2);
+  font-size: 11.5px; color: var(--text-secondary); line-height: 1.7;
+}
+.vd-summary strong { color: var(--accent-gold); }
+.vd-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 700; margin-left: 6px;
+}
+.vd-badge.critical-up { background: rgba(74,156,109,0.2); color: var(--accent-green); }
+.vd-badge.critical-down { background: rgba(196,92,92,0.2); color: var(--accent-red); }
+.vd-badge.warning { background: rgba(201,169,110,0.15); color: var(--accent-gold); }
+/* 关系影响说明 */
+.vd-relation-note {
+  margin-top: 10px; padding: 10px 12px; border-radius: var(--radius-sm);
+  background: rgba(155,107,203,0.06); border-left: 3px solid var(--accent-purple);
+  font-size: 11.5px; line-height: 1.7; color: #c8c0d8;
+}
+
+/* Scrollbar styling */
+.chat-area::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+
+<!-- ==================== SCREEN 0: ENTRY ==================== -->
+<div class="screen active" id="screenEntry" onclick="startGame()">
+  <div class="entry-screen">
+    <div class="cover-art">🌸</div>
+    <div class="entry-title">重生之贵女难求</div>
+    <div class="entry-author">作者：千山茶客 | 知乎盐选</div>
+    <div class="entry-tags">
+      <span class="entry-tag"># 重生</span>
+      <span class="entry-tag"># 复仇</span>
+      <span class="entry-tag"># 宅斗</span>
+      <span class="entry-tag"># 言情</span>
+      <span class="entry-tag"># 权谋</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;">
+      约3-4小时沉浸体验 &middot; 5种结局 &middot; <span style="color:var(--accent-gold)">12,847人已入戏</span>
+    </div>
+    <button class="cta-button">✨ 一键入戏 &middot; 进入小说世界</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 1: CHARACTER SELECT ==================== -->
+<div class="screen" id="screenCharSelect">
+  <div class="char-select-screen">
+    <div style="font-size:18px;font-weight:700;color:var(--accent-gold);margin-bottom:4px;">🎭 认领你的角色</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">选择一个视角，以第一人称进入小说世界</div>
+    <div id="charListEl" class="char-list"></div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN 2: GAME MAIN ==================== -->
+<div class="screen" id="screenGame">
+  <!-- Header -->
+  <div class="game-header">
+    <div class="header-left"><button onclick="showMenu()">←</button></div>
+    <div class="header-center">
+      <div class="header-title" id="headerActName">第一幕·前世噩梦</div>
+      <div class="header-subtitle" id="headerSceneName">【序章】夺命喜宴</div>
+    </div>
+    <div class="header-right">
+      <span style="font-size:11px;color:var(--accent-gold)" id="headerProgress">1/5</span>
+      <button class="header-icon-btn" onclick="toggleParamBar()">📊</button>
+      <button class="header-icon-btn" onclick="showAPIConfigPanel()" title="AI智能体配置" id="aiConfigBtn">🧠</button>
+    </div>
+  </div>
+
+  <!-- Parameter Bar -->
+  <div class="param-bar" id="paramBar"></div>
+
+  <!-- Chat Area -->
+  <div class="chat-area" id="chatArea"></div>
+
+  <!-- Input Bar -->
+  <div class="input-bar" id="inputBar">
+    <div class="input-field-wrapper">
+      <textarea id="inputField" rows="1" placeholder="以角色的身份输入对话或动作..." onkeydown="handleInputKey(event)"></textarea>
+    </div>
+    <button class="send-btn" id="sendBtn" onclick="sendUserInput()">➤</button>
+  </div>
+
+  <!-- Scene Overlay -->
+  <div class="scene-overlay" id="sceneOverlay">
+    <div class="overlay-text" id="overlayText"></div>
+    <div class="overlay-sub scene-overlay-sub" id="overlaySub"></div>
+  </div>
+
+  <!-- Skip Button -->
+  <button class="skip-btn hidden" id="skipBtn" onclick="skipStreaming()">⏩ 跳过</button>
+</div>
+
+<!-- ==================== SCREEN 3: ENDING ==================== -->
+<div class="screen" id="screenEnding">
+  <div class="ending-screen">
+    <div class="ending-badge" id="endingBadge">🌸</div>
+    <div class="ending-title-lg" id="endingTitle"></div>
+    <div class="ending-subtitle-lg" id="endingSubtitle"></div>
+    
+    <div style="width:100%">
+      <h3 style="font-size:15px;color:var(--accent-gold);margin-bottom:10px;text-align:center">📖 结局叙事</h3>
+      <div id="endingNarrative"></div>
+      
+      <h3 style="font-size:15px;color:var(--accent-gold);margin:16px 0 10px;text-align:center">📈 参数最终值</h3>
+      <div class="param-chart-container" id="paramChart"></div>
+      
+      <h3 style="font-size:15px;color:var(--accent-gold);margin:16px 0 10px;text-align:center">👥 角色命运</h3>
+      <div class="fate-grid" id="fateGrid"></div>
+      
+      <h3 style="font-size:15px;color:var(--accent-gold);margin:16px 0 10px;text-align:center">🏆 成就解锁</h3>
+      <div class="achievement-list" id="achievementList"></div>
+      
+      <h3 style="font-size:15px;color:var(--accent-gold);margin:16px 0 10px;text-align:center">🕸️ 关系图谱</h3>
+      <div class="relation-graph-container" id="relationGraph"></div>
+      
+      <div class="share-buttons">
+        <button class="share-btn" onclick="shareToPlatform('zhihu')">📱 分享到知乎圈子</button>
+        <button class="share-btn" onclick="shareToPlatform('wechat')">💬 微信分享</button>
+        <button class="share-btn" onclick="shareToPlatform('weibo')">🔵 新浪微博</button>
+      </div>
+      
+      <button class="btn btn-primary" style="margin-top:20px;width:100%" onclick="location.reload()">🔄 重新开始</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end app-container -->
+
+<script>
+// ============================================================
+//  🎮 C2A2C 互动文游引擎 v5.0 — 核心游戏逻辑
+//  支持：选项驱动 + 自由输入智能响应 + 参数系统 + 剧情分支
+// ============================================================
+
+const CHARACTERS = [
+  { id: 'zhuang_hanyan', name: '庄寒雁', title: '侯门嫡女·重生者', avatar: '🌸',
+    desc: '聪慧坚韧、外柔内刚、有仇必报。前世死于毒酒，今生誓要改写命运。',
+    difficulty: '推荐新手', isProtagonist: true },
+  { id: 'fu_yunxi', name: '傅云夕', title: '玄清王·深情男主', avatar: '❄️',
+    desc: '外冷内热、文武双全、深情专一。从不近女色的冰山王爷，只为一人破例。',
+    difficulty: '中等', isLoveInterest: true },
+  { id: 'wei_rufeng', name: '卫如风', title: '卫亲王世子·反派', avatar: '🐺',
+    desc: '虚伪自私、利用完即弃。表面温润如玉的世子，实则是你前世的夺命人。',
+    difficulty: '高难度' },
+  { id: 'zhuang_yushan', name: '庄语山', title: '庶姐·嫉妒成狂', avatar: '🦊',
+    desc: '虚荣阴狠、不择手段。鸠占鹊巢取代你嫁给卫如风的前世仇敌。',
+    difficulty: '中等' },
+  { id: 'zhou_shi', name: '周氏', title: '继母·幕后黑手', avatar: '🐍',
+    desc: '表面恭顺实则阴毒、心机深沉。毒杀你母亲的主谋，进府后步步紧逼。',
+    difficulty: '困难' }
+];
+
+// 完整的游戏剧本数据（从 interactive_script.json 提取）
+const SCRIPT_DATA = (function() {
+  // 这里嵌入完整剧本的核心场景数据
+  // 生产环境中应从 JSON 文件 fetch 加载
+  const acts = [];
+  
+  // === 第一幕 ===
+  acts.push({
+    actId: 1, name: '第一幕·前世噩梦', subtitle: '雪夜承宠 → 毒酒重生',
+    scenes: [
+      // s1_1
+      {
+        sceneId: 's1_1', name: '【序章】夺命喜宴', nodeIndex: '1/5',
+        timer: { remaining: '07:00' },
+        sceneBackground: { atmosphere: '喜庆中透着诡异的不安' },
+        narrativeBlock: {
+          text: `入宫十年，早已习惯了被遗忘的滋味。
+
+今夜，窗外落雪无声。偏殿里，你独自坐着，手边摆着一盏孤灯——这是你唯一拿得出的家当。
+
+红烛摇曳，灯晕将大喜的窗幔映得绯色如雾。
+
+你——**{playerRoleName}**，{playerRoleTitle}，端坐于此等待着命运的下一步。`,
+          mood: '温馨→微妙不安'
+        },
+        dialogueFlow: [
+          { id: 'd1_1_1', speaker: '汲蓝', avatar: '👧🏻', text: '戌时了，小姐莫急，世子该是很快便到了。', mood: '欢喜' },
+          { id: 'd1_1_2', speaker: '姝红', avatar: '👧🏻', text: '坏东西，小姐也是你能打趣的了？真是不知天高地厚。', mood: '嗔怪打趣' },
+          { id: 'd1_1_3', speaker: '陈妈妈', avatar: '👵🏻', text: '都少说两句，进了王府，做事不能行差一步。不对，现在应该叫世子妃。', mood: '提醒规矩',
+            cardPopup: { type: 'roleCard', title: '👥 NPC卡：贴身三人组', content: '**陈妈妈**: 王氏留下的乳母，忠心耿耿，视寒雁如己出\n**汲蓝**: 贴身大丫鬟，活泼机灵，消息灵通\n**姝红**: 贴身二丫鬟，沉稳冷静，行事滴水不漏\n\n⚠️ 这三人在前世为你而死！' } }
+        ],
+        playerInnerMonologue: null,
+        narrativeTransition: { 
+          text: `不知坐了多久，只听「咯吱——」一声，门被推开了。\n\n你下意识低头去看——盖头下，并不是意料中的绸靴，而是一双精致的绣花鞋，大红鞋面上绣着五彩的百子千孙图。\n\n没来由的，心里突然一慌。`, suspense: true },
+        dialogueFlow_continued: [
+          { id: 'd1_1_4', speaker: '汲蓝', avatar: '👧🏻', text: '三小姐怎么来了？！', mood: '震惊' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '来人竟然是你的庶姐——**庄语山**！她穿着一身比你还要精致的嫁衣，身后还跟着几个粗壮婆子......\n\n听到这个消息，你心里......' },
+        choiceCards: {
+          title: '你的选择',
+          choices: [
+            { id: 'opt_aware', prefixTag: '直面真相', prefixType: 'default', text: '掀开盖头看个究竟——直觉感到不安，不想蒙在鼓里', effectPreview: '勇气+5 | 获得更多信息 | 心理冲击更大', consequence: '直面真相，但心理冲击更大。你看到了庄语山脸上的得意笑容和身后粗壮婆子的狰狞面目。' },
+            { id: 'opt_wait', prefixTag: '静观其变 ⭐', prefixType: 'gold', text: '保持镇定先观察——看她到底想做什么，再决定如何应对', effectPreview: '智谋+5 | 保持主动权 | 可能错过第一时间反应机会', consequence: '更从容应对，但可能错过第一时间反应的机会。你冷静地观察着她的一举一动。', recommended: true },
+            { id: 'opt_speak', prefixTag: '主动破冰', prefixType: 'cool', text: '先开口试探：「语山姐姐？你怎么来了？」掌握话语主动权', effectPreview: '社交+5 | 打破沉默 | 可能暴露自己的不安', consequence: '掌握话语主动权，但可能暴露你的不安。庄语山眼中闪过一丝意外。' }
+          ]
+        },
+        allowFreeInput: true,
+        aiResponses: {
+          // 自由输入的智能响应模板（根据关键词匹配）
+          patterns: [
+            { keywords: ['掀开', '盖头', '看看', '是谁'], responses: [
+              { speaker: '系统旁白', avatar: '📜', text: '你一把掀开了盖头的红绸。烛光映照下，庄语山那张涂满脂粉的脸庞出现在你眼前——她笑得那样甜，却让你从心底发寒。', isNarration: true },
+              { speaker: '庄语山', avatar: '🦊', text: '哎呀？妹妹怎么自己掀了盖头？这可是不吉利呢......不过也好，让姐姐好好看看你这张脸。', mood: '阴阳怪气' }
+            ]},
+            { keywords: ['等', '观察', '不动', '静'], responses: [
+              { speaker: '系统旁白', avatar: '📜', text: '你没有动，只是静静地坐在那里，透过盖头的缝隙观察着一切。庄语山在房中踱步，似乎在享受这一刻。', isNarration: true },
+              { speaker: '汲蓝', avatar: '👧🏻', text: '（小声紧张）小姐......三小姐她......', mood: '担忧' }
+            ]},
+            { keywords: ['问', '说话', '开口', '姐姐'], responses: [
+              { speaker: '你（庄寒雁）', avatar: '🌸', text: '「语山姐姐？这么晚了，你怎么来了？」你努力让自己的声音听起来平静。', isPlayer: true },
+              { speaker: '庄语山', avatar: '🦊', text: '（笑着走近）妹妹真是客气呢。姐姐这不是担心你嘛，毕竟今晚是你的大喜日子呀。', mood: '虚伪' }
+            ]}
+          ],
+          defaultResponse: { speaker: '系统旁白', avatar: '📜', text: '你心中翻涌着各种念头，但最终还是选择了自己的方式来面对眼前的局面......\n\n庄语山似乎察觉到了什么，嘴角微微上扬。', isNarration: true }
+        },
+        missionTracker: { currentObjective: '了解眼前发生的事情', overallActMission: '本幕中：从毒酒中重生，并决定应对继母进门的策略', progressPercent: 20 }
+      },
+
+      // s1_2
+      {
+        sceneId: 's1_2', name: '【觉醒】毒酒与真相', nodeIndex: '2/5',
+        timer: { remaining: '08:00' },
+        narrativeBlock: { text: '庄语山带着几个粗壮婆子闯了进来，脸上挂着令人毛骨悚然的笑容。\n\n她身后的人端着一杯酒——那酒色殷红如血，在烛光下泛着诡异的光泽。', mood: '紧张→恐惧' },
+        dialogueFlow: [
+          { id: 'd1_2_1', speaker: '庄语山', avatar: '🦊', text: '四妹妹~ 世子让妾身送酒来了。妹妹快些喝了吧，误了妾身和世子爷的洞房花烛，可是要怪罪的。', mood: '阴阳怪气',
+            cardPopup: { type: 'roleCard', title: '🦊 角色卡：庄语山（反派）', content: '**身份**: 庶女，你的「姐姐」\n**真实面目**: 嫉妒、阴狠、虚荣\n**当前行为**: 鸠占鹊巢，取代你嫁给卫如风\n**核心动机**: 渴望嫡女地位 + 对卫如风的占有欲\n**前世结果**: 成为了世子妃，而你死于毒酒' } },
+          { id: 'd1_2_2', speaker: '庄寒雁（你）', avatar: '🌸', text: '你说什么？！你……你说什么？！「易求无价宝，难得有情郎」……那不是我的诗！！', mood: '震惊→愤怒→绝望', isPlayer: true },
+          { id: 'd1_2_3', speaker: '庄语山', avatar: '🦊', text: '（冷笑）妹妹可能不知道，那次赏荷宴上，世子可是夸赞了我这句诗呢。哦对了，妹妹平时喜欢在府里绣花写字，当然是不知道这些事的。\n\n我想要你的嫡女之位，想的心尖儿都疼了！大婚之夜，妹妹重病不治，姐姐舍身代嫁——听着真真是如戏文一般呐~', mood: '揭露真相 得意洋洋',
+            cardPopup: { type: 'warningCard', title: '💀 真相卡片·前世阴谋全貌', content: '🔴 **周氏**：毒杀了你的母亲王氏\n🔴 **「山贼掳走」事件**：是周氏设计的局\n🔴 **庄语山与卫如风**：早已暗通款曲\n🔴 **弟弟庄寒明**：被害致死（被设计斗殴杀人）\n🔴 **汲蓝、姝红**：为你而死（被发落给侍卫）\n🔴 **卫如风**：知道你十二岁被「掳走」的事，以此为借口纳庄语山为正妃' } }
+        ],
+        narrativeTransition: { 
+          text: `致命鸩毒，见血封喉。你只觉得喉咙一甜，嘴角一滴滴淌出鲜血......
+
+**是你的错！是你识人不清，认贼作父！**
+**如果这一切能重来......**
+
+——猛然惊醒！`, 
+          transitionType: 'death_to_rebirth',
+          screenEffect: '画面逐渐变黑→心跳声渐弱→猛然睁眼→光线刺目' },
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '陈妈妈告诉你——周氏明日就要进门了。父亲对你冷淡，弟弟还不知道发生了什么。这是重生的第一天......\n\n面对即将到来的命运转折，你打算......' },
+        choiceCards: {
+          title: '重生后的第一个决定',
+          choices: [
+            { id: 'opt_resist', prefixTag: '对抗到底', prefixType: 'warm', text: '坚决反对周氏进门，不惜与父亲撕破脸！绝不让前世悲剧重演！', effectPreview: '勇气+15 | 父亲关系-20 | 解锁【刚烈】路线', consequence: '怒火中烧，拍案而起。你在父亲面前表现出了前所未有的强硬态度，所有人都愣住了。这为你赢得了「不好惹」的名声，但也让父亲更加疏远。', cinematic: '怒火中烧，拍案而起' },
+            { id: 'opt_strategize', prefixTag: '以退为进 ⭐推荐', prefixType: 'gold', text: '假意顺从让周氏进门，暗中布局。忍一时风平浪静，退一步海阔天空。', effectPreview: '智谋+20 | 父亲关系+15 | 解锁【隐忍】路线（原著路线）', consequence: '赢得父亲好感，降低敌人警觉。但需要极强的心理素质和演技。你眼中闪过一丝冷光，嘴角微微上扬——好，那就陪你们演下去。', recommended: true, cinematic: '眼中闪过一丝冷光，嘴角微微上扬' },
+            { id: 'opt_emotional', prefixTag: '哭诉求助', prefixType: 'cool', text: '向父亲哭诉不愿继母，试图唤起他的怜惜和保护欲。', effectPreview: '勇气-5 | 父亲关系+5 | 解锁【柔弱】路线', consequence: '可能引起父亲短暂怜惜但长期被视为软弱。某些隐藏剧情需要此路线触发。眼泪如断了线的珍珠般落下......', cinematic: '眼泪如断了线的珍珠般落下' }
+          ]
+        },
+        allowFreeInput: true,
+        postChoiceEvent: { 
+          type: 'memory_flashback', 
+          title: '【记忆回闪】前世的教训', 
+          content: `无论你选择了什么，夜深人静时，前世的记忆如潮水般涌来——
+
+▪ 周氏毒杀了母亲王氏
+▪ 「山贼掳走」是周氏设计的局
+▪ 语山与卫如风早已暗通款曲
+▪ 弟弟被人设计害死
+▪ 忠心的汲蓝、姝红为你而死
+
+这一次，你绝不会重蹈覆辙。`,
+          effect: '强化复仇动机 | 黑化值+5'
+        },
+        missionTracker: { currentObjective: '决定对周氏进门的态度', overallActMission: '确立重生后的基本策略', progressPercent: 40 }
+      },
+
+      // s1_3
+      {
+        sceneId: 's1_3', name: '【亲情】姐弟情深', nodeIndex: '3/5',
+        timer: { remaining: '06:00' },
+        narrativeBlock: { text: '重生回十二岁的清晨。\n\n阳光透过雕花的窗棂照进来，空气中飘着淡淡的花香。你还活着，一切都还来得及。\n\n门外传来急促的脚步声——', mood: '平静→温暖' },
+        dialogueFlow: [
+          { id: 'd1_3_1', speaker: '庄寒明', avatar: '👦🏻', text: '姐姐！！！', mood: '焦急跑来',
+            cardPopup: { type: 'roleCard', title: '👦🏻 NPC卡：庄寒明（明哥儿）', content: '**身份**: 你的亲弟弟，庄侯府嫡子\n**年龄**: 十一岁\n**性格**: 聪明伶俐、重情重义、有些调皮\n**前世结局**: 被设计与人斗殴失手杀人→入狱→折磨至死\n**今生目标**: 保护他活下去！\n**当前信任度**: 70/100' } },
+          { id: 'd1_3_2', speaker: '庄寒明', avatar: '👦🏻', text: '听说姐姐醒了，我便马上赶来！姐姐感觉怎么样了？他们说你病了好几天了......', mood: '关切' }
+        ],
+        playerInnerMonologue: { speaker: '{playerRole}（你）', avatar: '🌸', text: '（看着他稚嫩的脸庞，眼眶一热——上一世，他就是这么跑来看你的，然后......你没能保护好他。）', isPlayer: true },
+        dialogueFlow_continued: [{ id: 'd1_3_3', speaker: '庄寒明', avatar: '👦🏻', text: '姐姐，我听说爹要娶那个女人了！我们的娘亲只有一个！！姐，这不可以！', mood: '愤怒' }],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '弟弟急匆匆跑来看你，他对周氏进门极度愤怒。他是你在乎的人之一。\n\n面对弟弟的信任和依赖，你心里的感觉是......' },
+        choiceCards: {
+          title: '如何对待明哥儿？',
+          choices: [
+            { id: 'opt_partial_truth', prefixTag: '坦诚相告', prefixType: 'default', text: '告诉他要保护好自己，但不透露重生真相。「明哥儿，你要听姐姐的话，以后凡事多留个心眼......」', effectPreview: '明哥儿信任度+20 | 智谋+10 | 弟弟成为可靠盟友', consequence: '建立深厚信任，弟弟会配合你的计划。但弟弟知道得越多风险越大。' },
+            { id: 'opt_full_protect', prefixTag: '完全保护', prefixType: 'cool', text: '什么都不说，只让他听话就好。「姐姐会处理好的，你只要乖乖读书就行。」', effectPreview: '明哥儿信任度+5 | 安全性+15', consequence: '弟弟可能因不知情而犯错，但至少不会卷入危险。' },
+            { id: 'opt_together_fight', prefixTag: '共同战斗 🔒', prefixType: 'warm', text: '告诉明哥儿一切，让他加入复仇计划！（需智谋≥50或勇气≥60）', effectPreview: '明哥儿信任度+30 | 复仇进度+10 | 风险极高', consequence: '弟弟成长加速，但一个十一岁的孩子承担太多可能崩溃或露出破绽。', lockCondition: 'wisdom>=50 or courage>=60' }
+          ]
+        },
+        miniGame: { gameId: 'brother_promise', name: '【小游戏】姐弟约定', triggerAfterChoice: true,
+          rules: { description: '从以下承诺中选择1-2个给弟弟（多选）：', options: [
+            { id: 'promise_protect', text: '「我会保护你」', icon: '🛡️', reward: { trust: 10, safety: 5 } },
+            { id: 'promise_stronger', text: '「我们一起变强」', icon: '⚔️', reward: { wisdom: 5, unlocks: 'martial_arts_storyline' } },
+            { id: 'promise_never_part', text: '「永远不分开」', icon: '💕', reward: { bond: 15 } }
+          ]}},
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '获得弟弟的信任和支持', overallActMission: '确立重生后的基本策略', progressPercent: 60 }
+      },
+
+      // s1_4
+      {
+        sceneId: 's1_4', name: '【抉择】丫鬟去留', nodeIndex: '4/5',
+        timer: { remaining: '05:00' },
+        narrativeBlock: { text: '暮色四合。屋子里只剩下你和汲蓝、姝红三人。\n\n你知道接下来要面对的是什么——周氏、庄语山、卫如风......这是一条布满荆棘的路。\n\n而她们跟着你，只会受苦。', mood: '沉重→不舍' },
+        dialogueFlow: [
+          { id: 'd1_4_1', speaker: '庄寒雁（你）', avatar: '🌸', text: '汲蓝、姝红，你们两个是我的贴身丫鬟，我自然是信得过你们的。可是跟着我，这条路凶险......我不愿骗你们。', isPlayer: true, mood: '认真' },
+          { id: 'd1_4_2', speaker: '姝红', avatar: '👧🏻', text: '（直直跪下，声音颤抖却坚定）奴婢是小姐的贴身丫鬟，这一生只认小姐这一个主子。奴婢就是死也要死在小姐身边！', mood: '忠诚宣言' },
+          { id: 'd1_4_3', speaker: '汲蓝', avatar: '👧🏻', text: '（眼眶泛红）小姐莫要折煞奴婢了！眼下这种局面丢下小姐那还是人吗？小姐莫怕，那周氏进了门，奴婢们也会保护小姐不受欺负的。就莫要赶奴婢出府了！！', mood: '激动表忠心' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '汲蓝和姝红是你最亲近的人。前世她们为你而死。这一世，你给她们选择的权利。\n\n面对她们的忠诚，你决定......' },
+        choiceCards: {
+          title: '丫鬟的去留——她们愿意跟随你吗？',
+          choices: [
+            { id: 'opt_choice', prefixTag: '给予选择权', prefixType: 'default', text: '告知实情，让她们自己决定去留。「你们若想离开，我不会勉强。但若留下......」', effectPreview: '忠诚度MAX | 解锁【生死相随】技能', consequence: '忠诚度大幅提升。她们会选择留下。解锁特殊护主事件。' },
+            { id: 'opt_force', prefixTag: '强行留下', prefixType: 'dark', text: '以主子身份要求她们必须跟随。这是命令，不是商量。', effectPreview: '表面服从 | 忠诚度一般 | 安全但缺乏真正的信任', consequence: '她们会服从但内心有保留。关键时刻可能不会拼死保护。' },
+            { id: 'opt_warm_hearts', prefixTag: '温暖收心 ⭐推荐', prefixType: 'gold', text: '用真诚打动她们，许诺保护。「从今往后，我们一起面对。」', effectPreview: '忠诚度MAX++ | 解锁【同心协力】组合技', consequence: '获得死忠伙伴，后续可触发多个姐妹情深剧情。', recommended: true }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '确任核心团队的忠诚', overallActMission: '确立重生后的基本策略', progressPercent: 80 }
+      },
+
+      // s1_5
+      {
+        sceneId: 's1_5', name: '【过渡】父亲到来', nodeIndex: '5/5',
+        timer: { remaining: '09:00' },
+        narrativeBlock: { text: '次日清晨。\n\n陈妈妈匆匆进来：「老爷来了！」压低声音，「姑娘，你准备好了吗？」\n\n庄仕洋——你的父亲——走进了屋子。他身穿大红织锦云纹长袍，脸上看不出什么表达式。', mood: '压抑→警觉' },
+        dialogueFlow: [
+          { id: 'd1_5_1', speaker: '陈妈妈', avatar: '👵🏻', text: '老爷来了！（压低声音）姑娘，你准备好了吗？', mood: '紧张' },
+          { id: 'd1_5_2', speaker: '庄仕洋', avatar: '👨‍⚖️', text: '雁儿感觉可好些了？', mood: '例行询问',
+            cardPopup: { type: 'roleCard', title: '👨‍⚖️ NPC卡：庄仕洋（父亲）', content: '**身份**: 三品大臣，庄侯府当家\n**性格**: 自大、冷酷、重名利轻亲情\n**对你的态度**: 冷淡（偏爱周氏和庄语山）\n**关键秘密**: 他似乎并不喜欢你和明哥儿这对正妻所出的子女......为什么？\n**当前关系**: 20/100\n\n⚠️ 此人是不可攻略NPC，但他的态度影响府中地位' } }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '这是重生后第一次面对父亲。他的态度将决定你在府中的起始位置。\n\n面对父亲的询问，你决定......' },
+        choiceCards: {
+          title: '面对父亲——你的表演开始',
+          choices: [
+            { id: 'opt_obedient_tears', prefixTag: '顺从哭泣', prefixType: 'cool', text: '表现出害怕失去父亲的脆弱模样，眼眶微红：「爹......女儿有些怕......」（智谋路线）', effectPreview: '父亲关系+20 | 周氏敌意-5 | 进入「伪装乖巧」模式', consequence: '降低所有人戒心，赢得父亲好感。但长期维持这种人设会很累。', recommendedFor: '智谋路线玩家' },
+            { id: 'opt_calm_rational', prefixTag: '冷静理性', prefixType: 'default', text: '不卑不亢地回应：「多谢父亲挂怀，女儿已无大碍。」', effectPreview: '父亲关系+5 | 智谋+15 | 勇气+5 | 引起父亲注意', consequence: '父亲会觉得你「变了」，可能会更加关注你也可能更加警惕。', recommendedFor: '均衡型玩家' },
+            { id: 'opt_distant_polite', prefixTag: '疏远有礼', prefixType: 'dark', text: '保持距离感，只做最低限度的礼数。微微福身：「父亲安好。」', effectPreview: '父亲关系-10 | 勇气+15 | 周氏敌意+10', consequence: '放弃争取父亲，专注于自身力量建设。适合激进路线。', recommendedFor: '激进路线玩家' }
+          ]
+        },
+        allowFreeInput: true,
+        actEndingReport: {
+          triggerCondition: '此节点完成后',
+          content: { 
+            title: '【第一幕结算报告】',
+            summary: '恭喜完成第一幕·前世噩梦！',
+            nextActPreview: { actName: '第二幕·暗流涌动', keyEvents: ['周氏进门初次交锋', '茶楼偶遇傅云夕&卫如风（CP触发）', '富贵楼当宝', '夜间探索情报'] }
+          }
+        },
+        missionTracker: { currentObjective: '在父亲面前站稳脚跟', overallActMission: '本幕中：确立重生后的基本策略 ✅ 即将完成', progressPercent: 95 }
+      }
+    ]
+  });
+
+  // === 第二幕 ===
+  acts.push({
+    actId: 2, name: '第二幕·暗流涌动', subtitle: '继母进门 → 茶楼初遇',
+    scenes: [
+      {
+        sceneId: 's2_1', name: '【交锋】继母入门', nodeIndex: '1/6',
+        timer: { remaining: '12:00' },
+        narrativeBlock: { text: '大宗十三年的初冬。周氏带着庄语山正式踏入庄侯府的大门。\n\n初夏日头含着些微暖意，透过雕花的红木窗照进屋子。中庭一座古朴小亭，翘角飞檐，一汪清澈池水绕着亭周流过。\n\n今日便是那对母女进府的日子。表面上恭顺有礼，眼底却藏着野心。而你——已经做好了准备。', mood: '平静→警觉' },
+        dialogueFlow: [
+          { id: 'd2_1_1', speaker: '系统旁白', avatar: '📜', text: '你来到前厅，便听到厅中传来清脆的笑声。庄仕洋坐在中央，身侧坐着周氏，庄语山搬来一个小几子卧在两人身前，逗得庄仕洋哈哈大笑。', mood: '故意晾着你' },
+          { id: 'd2_1_2', speaker: '庄寒雁（内心）', avatar: '🌸', text: '（心中冷笑）她们是想逼我先开口——那样一开始就输了气势。我就偏偏不开口，看谁比较有耐心。', style: 'inner_thought', isPlayer: true },
+          { id: 'd2_1_3', speaker: '系统旁白', avatar: '📜', text: '你始终笑盈盈地看着她们，遇上周氏的目光，不闪不避，甚至唇角扬得更高......仿佛遇到了什么极为开心的事情。', mood: '暗中较劲' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '这是一场**回合制社交战斗**！周氏试图用冷落战术让你失礼。\n\n面对这种局面，你觉得......' },
+        choiceCards: {
+          title: '【社交战】初次交锋——三回合舌战',
+          isSocialBattle: true,
+          battleInfo: { rounds: 3, opponent: '周氏 + 庄语山', scoringDimensions: ['礼貌性','机智度','攻击力','防守力'] },
+          choices: [
+            { id: 'round1_direct', prefixTag: '直接上前', prefixType: 'warm', text: '上前打断，礼貌说明自己到了。「父亲，周夫人，女儿到了。」', effectPreview: '礼貌性7 | 机智5 | 攻击3 | 防守3' },
+            { id: 'round1_wait', prefixTag: '安静等待 ⭐推荐', prefixType: 'gold', text: '安静等待，直到父亲发现你。用沉默对抗冷落。', effectPreview: '礼貌性9 | 机智8 | 攻击1 | 防守8', recommended: true },
+            { id: 'round1_cough', prefixTag: '制造声响', prefixType: 'default', text: '故意轻咳一声或弄掉手帕引起注意。', effectPreview: '礼貌性5 | 机智9 | 攻击5 | 防守4' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '在继母进门当天不失分寸', overallActMission: '本幕中：应对周氏进门 | 外出寻找武师 | CP触发 | 夜间探索', progressPercent: 17 }
+      },
+      {
+        sceneId: 's2_2', name: '【邂逅】茶楼初遇 ⭐CP触发点', nodeIndex: '2/6',
+        timer: { remaining: '10:00' }, isKeyScene: true, keySceneBadge: '⭐ CP事件',
+        narrativeBlock: { text: '几日后。你和汲蓝、姝红从后院的狗洞溜出府（是的，你决定出去办事），换上了普通的丫鬟衣裳。\n\n你们要去**东城的顺昌武馆**——为明哥儿寻一位武师。\n\n顺昌武馆内。你正在和管事交涉，忽然——', mood: '日常→意外' },
+        dialogueFlow: [
+          { id: 'd2_2_1', speaker: '？？？(红衣男子)', avatar: '🌺', text: '几位姑娘怎么称呼？这可是男人来的地方啊~（意味深长的笑容，目光却落在你身上）', mood: '搭讪',
+            cardPopup: { type: 'roleCard', title: '🌺 ??? 角色卡（暂时锁定）', content: '**外貌**: 绯色绸袍，绝色容颜，桃花眼\n**给你的感觉**: 美艳但轻浮......不太可靠\n**身份**: 待揭晓\n⚠️ 建议：不要透露真实身份' } },
+          { id: 'd2_2_2', speaker: '庄寒雁（你）', avatar: '🌸', text: '小女姓倪，名妲曳。（随口编了个假名）', mood: '隐瞒身份', isPlayer: true },
+          { id: 'd2_2_3', speaker: '云霓郡主', avatar: '👸🏻', text: '（从旁边走出来）小李，这是新买的丫头？（好奇地看着你）', mood: '解围' },
+          { id: 'd2_2_4', speaker: '系统旁白', avatar: '📜', text: '你注意到红衣男子身边还有一位——**青衫男子**，安静地站着，目光清冷，气质卓然。他没有说话，但你总觉得......他在看着你。', mood: '心动预感',
+            cardPopup: { type: 'roleCard', title: '❄️ ??? 角色卡（暂时锁定）⭐⭐⭐', content: '**外貌**: 青衫，墨眸，清冷如谪仙\n**给你的感觉**: 危险......但又莫名安心？\n**身份**: 待揭晓\n⭐⭐⭐ **此人极为重要！建议重点关注**' } }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '你刚刚遇到了三个人：\n1. 🌺 **红衣美男**——轻浮但似有深意\n2. ❄️ **青衫冷男**——危险但令人在意\n3. 👸🏻 **云霓郡主**——皇室中人，爽朗可爱\n\n这次相遇看似普通，却埋下了命运的种子。你的注意力被谁吸引？......' },
+        choiceCards: {
+          title: '【CP事件】命定之初见——三个人的命运交汇',
+          choices: [
+            { id: 'focus_cold_man', prefixTag: '关注青衫男子 ⭐主线CP', prefixType: 'gold', text: '那位青衫男子虽然话不多，但给你的感觉很特别......你不由自主地多看了几眼。', effectPreview: '傅云夕好感度+15 | 开启「云寒之恋」CP线', consequence: '你会在之后的富贵楼再次遇到他，那时你才会知道他的真正身份。CP线从此开始萌芽。', cpFlag: 'fu_yunxi_route', recommended: true },
+            { id: 'focus_red_man', prefixTag: '关注红衣男子', prefixType: 'default', text: '那位红衣男子虽然看起来轻浮，但确实美得惊人......而且似乎对你很感兴趣。', effectPreview: '赫连煜好感度+20 | 开启「欢喜冤家」支线', consequence: '赫连煜会成为你的朋友/盟友/麻烦制造者。一条充满欢笑和麻烦的支线。', cpFlag: 'helian_yu_route' },
+            { id: 'focus_no_one', prefixTag: '专心正事', prefixType: 'cool', text: '你是来找武师的，不想和这些贵公子扯上关系。告辞离开。', effectPreview: '专注度+15 | CP线暂不激活', consequence: '你错过了最早的接触机会，但这不代表以后不会再遇。' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '外出寻找武师 & 意外遭遇贵人', overallActMission: '本幕中：应对周氏进门 | 外出寻找武师 | ⭐CP触发 | 夜间探索', progressPercent: 33 }
+      },
+      {
+        sceneId: 's2_3', name: '【奇遇】富贵楼当宝', nodeIndex: '3/6',
+        timer: { remaining: '08:00' },
+        narrativeBlock: { text: '从武馆出来后，你做了一个大胆的决定——去**富贵楼**（京城最大的当铺）典当你手中的一样东西。\n\n那是周氏「送」给明哥儿的一只「宠物鸟」——但你看出了它的真正来历。', mood: '决心→谨慎' },
+        dialogueFlow: [
+          { id: 'd2_3_1', speaker: '系统旁白', avatar: '📜', 
+            cardPopup: { type: 'itemCard', title: '🐦 物品卡：號鹏鸟', content: '**外观**: 通体黑色的小鸟，长尾有一簇白羽\n**名义**: 周氏送给明哥儿的「有趣宠物」\n**真相**: **淫毒之鸟——號鹏**！\n▪ 见美貌女子便会泄精（产缅玲）\n▪ 缅玲闻之即令人失神志\n▪ 服下更是催情圣药\n▪ **周氏的真实目的**: 毁掉明哥儿的身体！！！\n⚠️ 必须尽快处理掉！' } },
+          { id: 'd2_3_2', speaker: '掌柜（老方）', avatar: '👴🏻', text: '姑娘要典当什么？', mood: '常规询问' },
+          { id: 'd2_3_3', speaker: '庄寒雁（你）', avatar: '🌸', text: '（打开木盒，露出笼中之鸟）掌柜的，估个价吧。', isPlayer: true },
+          { id: 'd2_3_4', speaker: '掌柜', avatar: '👴🏻', text: '（大吃一惊）这......姑娘这是何意？莫不是在戏耍老夫？', mood: '震惊 不识货' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '你需要说服富贵楼的掌柜相信这只鸟的价值。這是號鹏，产出的缅玲价值连城。但普通人不认识它。\n\n你打算如何说服他们？......' },
+        choiceCards: {
+          title: '【交易】富贵楼谈判——把毒鸟变成银子',
+          choices: [
+            { id: 'opt_direct_explain', prefixTag: '直接解释', prefixType: 'default', text: '告诉掌柜这是號鹏，详细说明其价值和用途。「掌柜的可认得此物？」', effectPreview: '成功率中等 | 掌柜请示上级 | 合理价格' },
+            { id: 'opt_mystery_act', prefixTag: '故作神秘 ⭐推荐', prefixType: 'gold', text: '不说是什么，让对方自己去发现。保持神秘感，勾起好奇心。', effectPreview: '成功率高 | 引起好奇心 | 可能更高价格', recommended: true },
+            { id: 'opt_wait_owner', prefixTag: '要求见主人', prefixType: 'cool', text: '只跟能做主的人谈。「请贵楼主一见。」', effectPreview: '直接见江玉楼 | 跳过中间环节 | 身份暴露风险' }
+          ]
+        },
+        specialOutcome: { condition: 'any_option_success', reveal: '你成功将鸟以**一千两黄金+两百两黄金笼子**的价格当出。获得了第一笔资金。\n\n更重要的是——你在二楼看到了几个熟悉的身影......\n\n二楼雅座里坐着的，正是武馆见过的红衣男子（赫连煜）、青衫男子（傅云夕），还有一位锦衣华服的年轻人。' },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '将毒鸟变现并获得资金', overallActMission: '本幕中：应对周氏进门 | 外出寻找武师 | ⭐CP触发 | 夜间探索', progressPercent: 50 }
+      },
+      {
+        sceneId: 's2_4', name: '【布局】鹬蚌相争', nodeIndex: '4/6',
+        timer: { remaining: '07:00' },
+        narrativeBlock: { text: '回到府中后，你需要应对复杂的内部局势。周氏正在积极拉拢各方势力，而你可以利用这一点——**让敌人互相牵制**。\n\n你有有限的时间和精力，只能优先处理一件事。', mood: '冷静分析' },
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '目前府中有多个可以利用的矛盾点：\n🦊 媚姨娘对周氏心存嫉妒\n📋 林管家似乎与周氏有私下往来\n🎁 周氏送明哥儿的礼物暗藏杀机\n\n你决定优先处理哪个方向？......' },
+        choiceCards: {
+          title: '【策略】府中布局——你的第一步棋',
+          choices: [
+            { id: 'focus_meiyu', prefixTag: '离间计', prefixType: 'warm', text: '重点对付媚姨娘——利用她的嫉妒心让她和周氏互斗。暗示周氏受宠，挑拨关系。', effectPreview: '敌人互相消耗 | 复仇进度+10 | 引发后续中毒事件' },
+            { id: 'focus_brother', prefixTag: '守护策略', prefixType: 'gold', text: '重点保护明哥儿——确保周氏的捧杀计谋失效。检查所有送给弟弟的东西。', effectPreview: '明哥儿安全 | 信任度+15 | 解锁武学支线' },
+            { id: 'focus_info', prefixTag: '情报优先', prefixType: 'cool', text: '重点收集情报——摸清周氏的所有底牌和安排。知己知彼，百战不殆。', effectPreview: '智谋+20 | 全局视野 | 后期收益巨大' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '在府中布下第一颗棋子', overallActMission: '本幕中：应对周氏进门 | 外出寻找武师 | ⭐CP触发 | 夜间探索', progressPercent: 67 }
+      },
+      {
+        sceneId: 's2_5', name: '【夜间探索】暗流涌动', nodeIndex: '5/6',
+        timer: { remaining: '15:00' }, isTimedExploration: true,
+        narrativeBlock: { text: '入夜。各归各院。\n\n这是**私聊和秘密行动**的最佳时机。\n\n远处隐约传来祠堂方向的哭声......后花园有一个黑影在交接什么东西......某个院落有人在深夜抚琴......\n\n今夜的侯府，注定不平静。', mood: '神秘→警觉' },
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '夜间探索规则：限时15分钟，每个方向有不同发现和风险。\n\n你想要探索哪个方向？......' },
+        choiceCards: {
+          title: '【探索】夜间行动——选择调查方向',
+          choices: [
+            { id: 'explore_shrine', prefixTag: '祠堂方向 🔴高风险', prefixType: 'warm', text: '调查神秘哭声——可能与生母有关，或许能发现周氏的秘密仪式？', effectPreview: '可能触发生母相关记忆碎片 | 发现周氏的秘密仪式？', riskLevel: 'HIGH' },
+            { id: 'explore_garden', prefixTag: '后花园 🟡中等风险', prefixType: 'default', text: '追踪黑影——有人在进行秘密交易，可能是周氏的外部联络网。', effectPreview: '可能发现周氏与外人的密谋证据', riskLevel: 'MEDIUM' },
+            { id: 'explore_ownroom', prefixTag: '搜索房间 🟢低风险', prefixType: 'cool', text: '搜寻自己房间——寻找母亲遗物和可能的隐藏信息。', effectPreview: '可能找到母亲留下的隐藏信息/证据', riskLevel: 'LOW' }
+          ]
+        },
+        miniGame: { gameId: 'stealth_check', name: '【小游戏】潜行检定 D20', triggerAfterChoice: true,
+          rules: { description: '投掷D20判定潜行是否成功：', resultTable: {'1-5': '❌ 被发现！触发危机事件', '6-15': '⚠️ 惊险过关，获得部分信息', '16-20': '✅ 完美潜行，获得全部信息+额外奖励'} }},
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '收集夜间情报', overallActMission: '本幕中：应对周氏进门 | 外出寻找武师 | ⭐CP触发 | 夜间探索 ✅ 即将完成', progressPercent: 90 },
+        actTransition: { toAct: 3, preview: '下一幕：【第三幕·宅斗风云】——宫宴祝捷之夜，风云际会' }
+      }
+    ]
+  });
+
+  // === 第三幕 ===
+  acts.push({
+    actId: 3, name: '第三幕·宅斗风云', subtitle: '宫宴风波 → 左手题字',
+    scenes: [
+      {
+        sceneId: 's3_1', name: '【宫宴】祝捷之夜·风云际会', nodeIndex: '1/7',
+        timer: { remaining: '10:00' },
+        narrativeBlock: { text: '宫中夜宴的日子到了。\n\n这是你重生后第一次正式亮相于京中贵人面前。也是你与**傅云夕**、**卫如风**正式「相见」的场合。\n\n皇宫。彩凤殿。皇太后端坐高位，四周夫人小姐环侍。', mood: '紧张→观察' },
+        dialogueFlow: [
+          { id: 's3_1_1', speaker: '系统旁白', avatar: '📜', text: '你一眼就注意到了几个关键人物......',
+            cardPopup: { type: 'relationMap', title: '👥 宫宴人物关系图', content: '**友方**:\n▪ 邓婵（尚书千金，闺蜜）\n▪ 云霓郡主（皇室，爽朗）\n\n**敌方**:\n▪ 周氏（继母，敌意高）\n▪ 庄语山（庶姐，嫉妒）\n▪ 李佳棋（右相之女，敌意不明但倾向敌方）\n\n**中立/未知**:\n▪ 太后（态度神秘——她居然赏了你一只玉镯！）\n▪ 皇后（表面温和）\n▪ 七皇子（圆滑，属于敌方阵营）' } },
+          { id: 's3_1_2', speaker: '庄语山', avatar: '🦊', text: '（凑过来，声音甜美但眼神不善）四妹妹怎么只顾着跟这位小姐说话，都不理姐姐了？', mood: '挑衅' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '庄语山当众给你使绊子。你的反应会影响在场所有人对你的印象。\n\n面对这种明嘲暗讽，你选择......' },
+        choiceCards: {
+          title: '【社交】宫宴开场——应对刁难',
+          choices: [
+            { id: 'elegant_counter', prefixTag: '优雅回击 ⭐推荐', prefixType: 'gold', text: '「语山姐姐怎么这样说？雁儿自从母亲过世后身体便一直不太好......倒是姐姐刚进府太忙，都没顾上来看我。」——既表明原因又暗指她不懂礼数', effectPreview: '声望+20 | 太后好感+10 | 庄语山敌意+15', recommended: true },
+            { id: 'ignore', prefixTag: '不予理会', prefixType: 'cool', text: '当她不存在，继续与邓婵交谈。', effectPreview: '声望+5 | 语山 Frustration+20' },
+            { id: 'direct_confront', prefixTag: '当众质问', prefixType: 'warm', text: '「姐姐是想说什么？」直接反问，不留情面。', effectPreview: '勇气+15 | 声望-5 | 高风险高回报' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '在宫宴中以得体姿态亮相', overallActMission: '本幕：参加宫宴 | 应对陷阱 | ⭐才艺展示 | 救弟弟 | ⭐CP梅林相遇', progressPercent: 14 }
+      },
+      {
+        sceneId: 's3_2', name: '【陷阱】烫伤事件', nodeIndex: '2/7',
+        timer: { remaining: '08:00' },
+        narrativeBlock: { text: '才艺展示环节开始了。\n\n云霓郡主献上了失传多年的**战场祝捷舞**，惊艳四座。七皇子提议各家小姐展示才艺。**李佳棋**率先上台，以一曲《懒画眉》艳压群芳。\n\n而就在这时，庄语山端着一杯茶「不小心」朝你和邓婵的方向泼了过来——\n**你的右手被严重烫伤。无法弹琴。**\n\n李佳棋微笑着说：「臣女听闻庄大人府上四小姐色艺双绝，尤其是弹得一手好琴。想请庄四小姐也演奏一曲。」', mood: '危机→压力→决断' },
+        dialogueFlow: [
+          { id: 's3_2_1', speaker: '李佳棋', avatar: '💄', text: '（弹完琴，得意地）臣女听闻庄大人府上四小姐色艺双绝，尤其是弹得一手好琴。想请庄四小姐也演奏一曲，臣女洗耳恭听。', mood: '当众点名挑战' },
+          { id: 's3_2_2', speaker: '系统旁白', avatar: '📜', text: '这是明摆着的圈套——庄语山已经在李佳棋耳边说了什么，两人交换了一个阴森的笑容。',
+            cardPopup: { type: 'warningCard', title: '⚠️ 危机状态面板', content: '**右手状态**: 🔴 严重烫伤（无法触碰琴弦）\n**社会压力**: 🔴🔴🔴 极高（皇上+满朝文武看着）\n**敌方意图**: 让你出丑 / 无法展示才艺 / 承认无能\n**可用资源**: 你的脑子 / 左手 / 过去的琴艺知识', urgent: true } }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '**双重打击**：\n1. 右手烫伤无法弹琴\n2. 对手当众要求展示琴艺\n3. 皇上也在等你回应\n\n你该怎么办？......' },
+        choiceCards: {
+          title: '【危机】烫伤+刁难 双重打击',
+          choices: [
+            { id: 'left_hand_masterpiece', prefixTag: '出奇制胜 ⭐⭐⭐ S级选择', prefixType: 'gold', text: '用左手写字画画代替弹琴！闭目挥墨，一鸣惊人。（原著名场面！）', effectPreview: '🌟声望+30 | 皇上好感+25 | 傅云夕关注度+30 | 解锁「才名远播」', consequence: '《班师回朝图》跃然纸上，配诗百战沙场碎铁衣。满堂寂静，随即掌声雷动。连皇上都连连称赞。\n\n**傅云夕的目光第一次认真地落在你身上。**', cpFlagTrigger: true, cinematic: 'FULL', recommended: true },
+            { id: 'decline_elegantly', prefixTag: '称病推脱', prefixType: 'cool', text: '以手伤为由拒绝展示。保全面子但错失机会。', effectPreview: '声望-5 | 安全 | 李佳棋独占风头' },
+            { id: 'counter_expose', prefixTag: '反将一军', prefixType: 'warm', text: '揭露庄语山泼茶的真相！需要证据或高智商检定。', effectPreview: '高风险 | 成功则声望暴增+语山社死 | 失败则被指责斤斤计较' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '化解才艺展示危机', overallActMission: '参加宫宴 | 应对陷阱 | ⭐才艺展示 | 救弟弟 | ⭐CP梅林相遇', progressPercent: 29 }
+      },
+      {
+        sceneId: 's3_3', name: '【危机】弟陷险境', nodeIndex: '3/7',
+        timer: { remaining: '07:00' },
+        narrativeBlock: { text: '宫宴中途，你发现明哥儿不见了。\n\n你四处寻找，最后在一处偏僻的花园里发现了令人怒火中烧的一幕——', mood: '焦急→暴怒' },
+        dialogueFlow: [
+          { id: 's3_3_1', speaker: '张威（周氏侄子）', avatar: '😈', text: '（按着明哥儿往假山上推）庄寒明，别以为顶着个嫡子的头就敢在爷面前撒泼！你姐姐是嫡女又如何，谁都知道她不受宠，我偏要说她丑笨低贱！', mood: '欺凌' },
+          { id: 's3_3_2', speaker: '庄寒明', avatar: '👦🏻', text: '（脸颊上有五个鲜红的巴掌印，双眼赤红）不许你这么说！！', mood: '愤怒不屈' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '你的弟弟被人欺负！太子居然也在旁边看热闹！\n\n作为姐姐，你能容忍吗？......' },
+        choiceCards: {
+          title: '【行动】还你一掌——保护弟弟',
+          choices: [
+            { id: 'slap_back', prefixTag: '还你一掌 ⭐⭐⭐ 原著名场面', prefixType: 'gold', text: '走到张威面前甜甜叫一声「表哥」——然后在他伸手的瞬间，狠狠一巴掌！「还你的。」', effectPreview: '勇气+25 | 张威仇恨MAX | 解「不好惹」名声', consequence: '你条理清晰地列出了他的**四大罪状**，把他吓得落荒而逃。太子也被震住了。\n\n这是整部小说最爽的场景之一！', cinematic: 'FULL', recommended: true },
+            { id: 'smart_threaten', prefixTag: '智取威胁', prefixType: 'default', text: '用言语威胁让他放开弟弟，不动手但让他害怕。', effectPreview: '智谋+20 | 更隐蔽 | 但气势不足' },
+            { id: 'seek_help', prefixTag: '寻求帮助', prefixType: 'cool', text: '找附近的成年男性（或太子）来主持公道。', effectPreview: '安全性高 | 可能欠人情 | 勇气-5' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '保护弟弟不受欺负', overallActMission: '参加宫宴 | 应对陷阱 | ⭐才艺展示 | ✅救弟弟 | ⭐CP梅林相遇', progressPercent: 57 }
+      },
+      {
+        sceneId: 's3_5', name: '【回忆】红梅林中的相遇 ⭐⭐CP高潮', nodeIndex: '5/7',
+        timer: { remaining: '09:00' }, isKeyScene: true, keySceneBadge: '⭐⭐ CP高潮事件',
+        narrativeBlock: { text: '在被庄语山「意外」带离队伍迷路后，你独自走在宫中禁地般的红梅林中。\n\n十里红梅，大雪覆地。你望着那些梅花，想起了自己短暂而悲惨的前世......\n\n就在这时，你感觉到一道探究的目光。\n\n宫墙边，红梅下，站着一个修长的人影。\n\n那人遥遥立于风中，几乎与雪色融为一体。', mood: '唯美→紧张→暧昧→心动' },
+        dialogueFlow: [{ id: 's3_5_1', speaker: '系统旁白', avatar: '📜', text: '更糟糕的是——远处传来了一对私通男女的声音，你无处可藏......', suspense: true }],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '你在禁地中遇到了那天在武馆远远见过的青衫男子（你还不知道他就是傅云夕）。\n\n此时此刻，私通的男女正在靠近，你需要立刻做出决定......' },
+        choiceCards: {
+          title: '【CP高潮】红梅林——命中注定的重逢',
+          choices: [
+            { id: 'hide_in_his_cloak', prefixTag: '钻进大氅 ⭐⭐⭐ 原著路线', prefixType: 'gold', text: '飞快躲进陌生男人的大氅里！外面太危险了，这是唯一的选择......', effectPreview: '🌹🌹🌹 CP里程碑事件 | 傅云夕好感度+30 | 解锁「梅林初遇」记忆', consequence: '他浑身冰冷如冰，却用臂膀牢牢护住了你。带你飞身离去。\n\n事后他问：**「还不舍得出来？」**\n\n你故作天真地谢过他，匆匆离去。他却捡起了你不慎掉落的——**一根磨尖了的木簪**。\n\n（此时你还不知道，他就是**玄清王傅云夕**。）', cpFlag: 'fu_yunxi_route', unlocks: 'plum_blossom_memory', cinematic: 'FULL', recommended: true },
+            { id: 'hide_elsewhere', prefixTag: '藏到别处', prefixType: 'cool', text: '藏到树后或其他隐蔽的地方。避开那个人。', effectPreview: '错过CP事件 | 更安全 | 可能被发现' },
+            { id: 'face_boldly', prefixTag: '大方面对', prefixType: 'default', text: '假装只是路过，坦然走出去。', effectPreview: '勇气+10 | 身份可能暴露 | 对方记住你' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '经历命定的相遇', overallActMission: '参加宫宴 | 应对陷阱 | ⭐才艺展示 | ✅救弟弟 | ✅⭐CP梅林相遇', progressPercent: 86 }
+      }
+    ]
+  });
+
+  // === 第四幕 ===
+  acts.push({
+    actId: 4, name: '第四幕·命运转折', subtitle: '永不为妾 → 祠堂求婚',
+    scenes: [
+      {
+        sceneId: 's4_1', name: '【决裂】永不为妾 🔥🔥🔥', nodeIndex: '1/5',
+        timer: { remaining: '10:00' }, isKeyScene: true, keySceneBadge: '🔥 重大分歧点', globalImpact: true,
+        narrativeBlock: { text: '经过宫宴一役，你的名字开始在京城传开。\n\n但真正的风暴才刚刚来临——**卫如风提出了一个荒唐的要求**：他要娶你做**妾**，而庄语山要做他的**侧妃**！\n\n这是你重生以来面临的最大抉择。全世界都在逼迫你就范。', mood: '愤怒→决绝' },
+        dialogueFlow: [
+          { id: 's4_1_1', speaker: '卫如风', avatar: '🐺', text: '（微笑着，自以为温柔）寒雁，我知道你一直是个懂事的女子。语山做我的正妃，你来做个侧室，我们一家人和和美美的，岂不是很好？', mood: '虚伪',
+            cardPopup: { type: 'roleCard', title: '🐺 角色卡：卫如风（终极反派之一）', content: '**身份**: 卫亲王世子\n**表面**: 温润如玉、风流倜傥、待人周到\n**真实**: 虚伪至极、极度自私、利用完即弃\n**前世**: 用一杯毒酒结束了你的生命\n**今生的企图**: 想要同时拥有你和庄语山\n**执念值**: 当前数值将影响他的疯狂程度' } },
+          { id: 's4_1_2', speaker: '周氏', avatar: '🐍', text: '（满脸堆笑）雁儿，这可是天大的福气！你还不快谢过世子爷？', mood: '虚伪施压' },
+          { id: 's4_1_3', speaker: '庄语山', avatar: '🦊', text: '（假惺惺的）是啊妹妹，我们姐妹共侍一夫，也是一桩佳话不是？', mood: '阴阳怪气' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '卫如风要你做妾。庄语山要做他的侧妃（地位比你高）。周氏全力支持。父亲默许。\n\n**全世界都在逼迫你就范。**\n\n⚠️ 此选择将影响结局类型（HE/GE/BE/DE）、傅云夕CP线是否激活、复仇路线走向。\n\n你会......' },
+        choiceCards: {
+          title: '【重大抉择】永不为妾——你的人生不由别人安排',
+          choices: [
+            { id: 'declare_war', prefixTag: '🔥🔥🔥 永不为妾 ⭐True End路线', prefixType: 'gold', text: '「**我庄寒雁此生，绝不给人做妾！我要嫁的男子，必会终生只有我一人。若找不到这样的男子，我宁愿终生不嫁！不嫁！**」', effectPreview: '🌟解锁 True End/Good End | 勇气MAX | 声望暴涨 | CP强制激活', consequence: '### 「我庄寒雁此生，绝不给人做妾！」\n### 「我要嫁的男子，必会终生只有我一人。不纳妾室，不收通房，这一生只有我一人！」\n### 「若找不到这样的男子，我宁愿终生不嫁！」\n\n全场震惊。傅云夕在暗处听到了一切（CP线启动）。你被罚跪祠堂（→ 触发祠堂求婚事件）。名声大噪。\n\n**全剧最高燃时刻之一！**', branchTo: 'true_end_route', cinematic: 'FULL', achievement: '永不为妾', recommended: true },
+            { id: 'fake_agree', prefixTag: '假意应允', prefixType: 'dark', text: '表面同意，暗中准备反扑。忍辱负重，让他们以为你已经屈服。', effectPreview: '进入「卧底」模式 | 智谋+25 | 可能走入 Bad End 分支', branchTo: 'bad_end_route' },
+            { id: 'run_away', prefixTag: '逃离', prefixType: 'cool', text: '设法逃离京城，彻底脱离这一切。', effectPreview: '开启「流浪」支线 | 完全不同的故事走向', branchTo: 'wanderer_route' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '做出人生重大抉择', overallActMission: '⭐永不为妾 | ⭐⭐祠堂求婚 | ⭐⭐⭐金銮殿下聘', progressPercent: 20 }
+      },
+      {
+        sceneId: 's4_2', name: '【高潮】祠堂月下 ⭐⭐⭐ CP最高潮', nodeIndex: '2/5',
+        timer: { remaining: '12:00' }, isKeyScene: true, keySceneBadge: '⭐⭐⭐ CP最高潮', globalImpact: true,
+        narrativeBlock: { text: '因为反抗卫家，你被罚跪**祠堂整整一天一夜**。\n\n无人送饭。无人过问。\n\n膝盖酸痛，肚子咕咕叫。你啃着供品充饥，心中却在冷静地计划着下一步。\n\n——就在这时，一个身影从天而降。', mood: '孤独→惊讶→心跳加速' },
+        dialogueFlow: [
+          { id: 's4_2_1', speaker: '？？？', avatar: '❄️', text: '（熟悉的声音，带着一丝你从未听过的......温柔？）饿了？', mood: '温柔' },
+          { id: 's4_2_2', speaker: '系统旁白', avatar: '📜', text: '你抬头——\n\n乌豹大氅，墨色双眸，清冷的气息中带着......食物的香气？\n\n**傅云夕**。\n\n他带来了御厨制作的糕点。',
+            cardPopup: { type: 'roleCard', title: '❄️ 角色卡解锁：傅云夕（男主）⭐⭐⭐', content: '━━━━━━━━━━━━━━━━━\n## ❄️ 傅云夕 · 玄清王\n━━━━━━━━━━━━━━━━━\n\n**身份**: 皇上的亲弟弟，玄清王\n**年龄**: 二十一岁\n**外貌**: 斜眉入鬓，鼻梁笔挺，凤眸墨色无波，清冷如谪仙\n**性格**: 外冷内热、深情专一、极度自信\n**能力**: 文武双全、十四岁上阵、权倾朝野\n**弱点**: 不善表达感情、过于保护欲强\n**传闻*: 「断袖」（因为从不近女色）\n**真相**: 只是在等你\n\n**对你的好感度**: 由玩家之前的 Choices 决定\n**CP线状态**: 🟢 活跃中\n\n━━━━━━━━━━━━━━━━━' } },
+          { id: 's4_2_3', speaker: '傅云夕', avatar: '❄️', text: '（在你身边坐下，递过糕点）吃吧。', mood: '平淡中的温柔' },
+          { id: 's4_2_6', speaker: '傅云夕', avatar: '❄️', text: '（看着你的眼睛，一字一顿）\n\n**不纳侧妃，不娶小妾，不收通房，玄清王府只有你一位王妃。**\n\n**你说的这些，本王都可以办到。**', mood: '认真→深情', effect: '完美对应你的「永不为妾」宣言' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '傅云夕向你求婚了！他说能满足你所有的条件——正是你宣言中所说的那种男子。\n\n但他的下一句话又让你警惕起来：**「最重要的是，你不会轻易死去。」**\n\n这句话是什么意思？\n\n面对这份突如其来的心意，你......' },
+        choiceCards: {
+          title: '【CP最高潮】祠堂月下——他的求婚',
+          choices: [
+            { id: 'accept_with_heart', prefixTag: '接受 💕心动', prefixType: 'gold', text: '承认自己对他的感觉。也许......这一次可以试着相信一个人。', effectPreview: '🌹CP线锁定 | 好感度+40 | 解锁「甜蜜」分支 | 黑化值-10', consequence: '傅云夕眼中闪过一丝不易察觉的柔情。此后互动中将带有更多的暧昧和温情。', branchTo: 'sweet_romance_ending', cinematic: 'FULL' },
+            { id: 'question_and_doubt', prefixTag: '疑虑追问', prefixType: 'default', text: '「你为什么要娶我？""是不是为了别的？」——在了解基础上建立感情。', effectPreview: 'CP深入但不锁定 | 更多信息 | 智谋+10', branchTo: 'mature_romance_ending' },
+            { id: 'reject_defer', prefixTag: '拒绝/推迟', prefixType: 'cool', text: '「我还没准备好」「我不相信男人」。', effectPreview: 'CP延后但不断 | 解锁「追妻火葬场」路线', branchTo: 'pursuit_romance_ending' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '回应傅云夕的心意', overallActMission: '✅⭐永不为妾 | ✅⭐⭐祠堂求婚 | ⭐⭐⭐金銮殿下聘', progressPercent: 50 }
+      },
+      {
+        sceneId: 's4_3', name: '【终章前奏】金銮殿下聘 ⭐⭐⭐', nodeIndex: '3/5',
+        timer: { remaining: '08:00' },
+        narrativeBlock: { text: '金銮殿上。\n\n满朝文武齐聚。皇帝端坐高位。\n\n所有目光都集中在同一个方向——', mood: '震撼→紧张→感动' },
+        dialogueFlow: [
+          { id: 's4_3_1', speaker: '傅云夕', avatar: '❄️', text: '（负手而立，声音响彻大殿）\n\n**「本王以整个玄清王府为聘，下聘庄家四小姐为妃！」**', mood: '震撼全场',
+            cardPopup: { type: 'sceneCard', title: '🏛️ 场景卡：金銮殿下聘', content: '**地点**: 金銮宝殿\n**观众**: 皇帝、皇后、满朝文武、六部九卿\n**意义**: 公开的、不可撤销的、举国瞩目的求亲\n**影响**: 从此你不再是默默无闻的庄家四小姐，而是**玄清王未来的王妃**' } },
+          { id: 's4_3_2', speaker: '傅云夕', avatar: '❄️', text: '（继续，立誓）\n\n**「今生只娶庄四小姐一人，不纳侧妃，不娶小妾，不收通房，永不二心。」**', mood: '郑重宣誓' }
+        ],
+        hintPrompt: { icon: '💡', label: '剧情提示', text: '傅云夕当着满朝文武的面求了婚！\n\n各方势力的反应正在酝酿——这将决定最终走向。\n\n你倾向哪条道路？......' },
+        choiceCards: {
+          title: '【终局分支】金銮殿之后——你的选择决定结局',
+          choices: [
+            { id: 'toward_HE', prefixTag: '🌸 配合走向HE/GE', prefixType: 'gold', text: '虽然口头上说不嫁，但配合傅云夕的行动，逐步打开心扉。', effectPreview: '走向 HE 或 GE | CP完成 | 最优体验', condition: 'fu_yunxi_affection >= 70 AND revenge_progress >= 80', recommended: true },
+            { id: 'toward_DE', prefixTag: '🖤 黑化走向DE', prefixType: 'dark', text: '利用傅云夕的力量完成复仇后，抛弃所有人。', effectPreview: 'Dark End | 黑化值需>70 | 孤寂的胜利', condition: 'darkness_value >= 70' },
+            { id: 'toward_BE_TE', prefixTag: '💔 牺牲/犹豫', prefixType: 'cool', text: '认为自己的存在只会给身边的人带来危险，选择离开或牺牲自己。', effectPreview: '走向悲剧性结局 | 但精神升华' }
+          ]
+        },
+        allowFreeInput: true,
+        missionTracker: { currentObjective: '确定最终走向', overallActMission: '✅⭐永不为妾 | ✅⭐⭐祠堂求婚 | ✅⭐⭐⭐金銮殿下聘', progressPercent: 80 }
+      }
+    ]
+  });
+
+  // === 第五幕（终章） ===
+  acts.push({
+    actId: 5, name: '第五幕·尘埃落定', subtitle: '终章演绎',
+    isEnding: true,
+    scenes: [{
+      sceneId: 's5_1_final', name: '【终章】命运裁决', nodeIndex: '1/1', timer: null,
+      endingCalculation: {
+        endings: {
+          true_end: { name: '🌸 True End · 重生花开', badge: '🌸', condition: 'revenge_progress>=80 AND fu_yunxi_affection>=80' },
+          good_end: { name: '✨ Good End · 岁月静好', badge: '✨', condition: 'revenge_progress>=50 AND fu_yunxi_affection>=50' },
+          normal_end: { name: '🌙 Normal End · 浮生若梦', badge: '🌙', condition: 'true' },
+          bad_end: { name: '💔 Bad End · 梦碎重来', badge: '💔', condition: 'darkness_value<30 AND revenge_progress<30' },
+          dark_end: { name: '🖤 Dark End · 黑莲花', badge: '🖤', condition: 'darkness_value>=70' }
+        }
+      },
+      finalReport: {}
+    }]
+  });
+
+  return { acts };
+})();
+
+// ============================================================
+//  🎮 游戏状态管理
+// ============================================================
+const GameState = {
+  // 当前进度
+  currentScreen: 'entry',   // entry | charselect | game | ending
+  currentAct: 0,
+  currentScene: 0,
+
+  // 选中的角色
+  selectedCharacter: null,
+
+  // 参数系统（实时追踪）
+  parameters: {
+    fu_yunxi_affection: 0,     // 傅云夕好感度
+    wei_rufeng_affection: 15,  // 卫如风执念值
+    zhou_shi_hostility: 30,    // 周氏敌意值
+    zhuang_yushan_hostility: 25,// 庄语山敌意值
+    hanming_trust: 70,         // 明哥儿信任度
+    father_relation: 20,       // 父亲关系
+    revenge_progress: 0,       // 复仇进度
+    player_wisdom: 40,         // 智谋值
+    player_courage: 30,        // 勇气值
+    darkness_value: 10         // 黑化值
+  },
+
+  // 选择历史（用于结局计算）
+  choicesHistory: [],
+
+  // 是否已做出当前场景的选择
+  choiceMade: false,
+
+  // 小游戏数据
+  miniGameActive: false,
+};
+
+// 参数显示配置（用于参数栏）
+const PARAM_CONFIG = [
+  { key: 'fu_yunxi_affection', icon: '❄️', name: '傅云夕', color: '#87CEEB' },
+  { key: 'wei_rufeng_affection', icon: '🐺', name: '卫如风', color: '#8B0000' },
+  { key: 'zhou_shi_hostility', icon: '🐍', name: '周氏', color: '#228B22' },
+  { key: 'zhuang_yushan_hostility', icon: '🦊', name: '语山', color: '#FF6347' },
+  { key: 'hanming_trust', icon: '👦🏻', name: '明哥儿', color: '#FFD700' },
+  { key: 'father_relation', icon: '👨‍⚖️', name: '父亲', color: '#708090' },
+  { key: 'revenge_progress', icon: '⚔️', name: '复仇', color: '#DC143C' },
+  { key: 'player_wisdom', icon: '🧠', name: '智谋', color: '#9370DB' },
+  { key: 'player_courage', icon: '💪', name: '勇气', color: '#FF4500' },
+  { key: 'darkness_value', icon: '🖤', name: '黑化', color: '#2F2F2F' }
+];
+
+// ============================================================
+//  🔧 工具函数
+// ============================================================
+function $(id) { return document.getElementById(id); }
+
+function getCharInfo() {
+  return CHARACTERS.find(c => c.id === GameState.selectedCharacter) || CHARACTERS[0];
+}
+
+function getCurrentScene() {
+  const act = SCRIPT_DATA.acts[GameState.currentAct];
+  if (!act || !act.scenes) return null;
+  return act.scenes[GameState.currentScene] || null;
+}
+
+function parseEffectPreview(effectStr) {
+  // 解析效果预览字符串，返回参数变化对象
+  if (!effectStr) return {};
+  const changes = {};
+  const regex = /([^\s|]+)\s*([+-]\d+)/g;
+  let match;
+  while ((match = regex.exec(effectStr)) !== null) {
+    const paramName = match[1].trim();
+    const value = parseInt(match[2]);
+    changes[paramName] = value;
+  }
+  return changes;
+}
+
+function applyParameterChanges(changes) {
+  Object.keys(changes).forEach(key => {
+    const paramKey = mapParamNameToKey(key);
+    if (paramKey && GameState.parameters.hasOwnProperty(paramKey)) {
+      GameState.parameters[paramKey] = Math.max(0, Math.min(100, GameState.parameters[paramKey] + changes[key]));
+    }
+  });
+  renderParamBar();
+}
+
+function mapParamNameToKey(name) {
+  const mapping = {
+    '傅云夕好感度': 'fu_yunxi_affection', '傅云夕': 'fu_yunxi_affection',
+    '卫如风执念值': 'wei_rufeng_affection', '卫如风': 'wei_rufeng_affection',
+    '周氏敌意值': 'zhou_shi_hostility', '周氏': 'zhou_shi_hostility',
+    '庄语山敌意值': 'zhuang_yushan_hostility', '语山': 'zhuang_yushan_hostility',
+    '明哥儿信任度': 'hanming_trust', '明哥儿': 'hanming_trust', '信任度': 'hanming_trust',
+    '父亲关系': 'father_relation', '父亲': 'father_relation',
+    '复仇进度': 'revenge_progress', '复仇': 'revenge_progress',
+    '智谋值': 'player_wisdom', '智谋': 'player_wisdom',
+    '勇气值': 'player_courage', '勇气': 'player_courage',
+    '黑化值': 'darkness_value', '黑化': 'darkness_value',
+    '勇气': 'player_courage', '社交': null, '专注度': null, '安全性': null
+  };
+  return mapping[name] || null;
+}
+
+function checkLockCondition(condition) {
+  // 检查选项锁定条件
+  if (!condition || !condition.trim()) return true;
+  
+  // 简单条件解析：支持 "wisdom>=50", "courage>=60", "A and B", "or"
+  try {
+    const condLower = condition.toLowerCase();
+    
+    // 替换参数名为实际值
+    let evalStr = condLower
+      .replace(/(\w+)\s*>=\s*(\d+)/g, (_, param, val) => `(GameState.parameters['${mapParamNameToKey(param)||param}']||0)>=${val}`)
+      .replace(/(\w+)\s*<=\s*(\d+)/g, (_, param, val) => `(GameState.parameters['${mapParamNameToKey(param)||param}']||0)<=${val}`)
+      .replace(/\band\b/g, '&&')
+      .replace(/\bor\b/g, '||');
+    
+    return eval(evalStr);
+  } catch(e) {
+    console.warn('条件解析失败:', condition, e);
+    return true; // 解析失败时默认不锁定
+  }
+}
+
+// ============================================================
+//  🎨 渲染函数
+// ============================================================
+// 屏幕名到DOM元素ID的映射
+const SCREEN_ID_MAP = {
+  'entry': 'screenEntry',
+  'charselect': 'screenCharSelect',
+  'game': 'screenGame',
+  'ending': 'screenEnding'
+};
+
+function goToScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const targetId = SCREEN_ID_MAP[name];
+  if (targetId) {
+    $(targetId).classList.add('active');
+  } else {
+    // fallback: 首字母大写
+    $('screen' + name.charAt(0).toUpperCase() + name.slice(1))?.classList.add('active');
+  }
+  GameState.currentScreen = name;
+}
+
+// ---- 入口页 ----
+function startGame() {
+  goToScreen('charselect');
+  renderCharList();
+}
+
+// ---- 角色选择 ----
+function renderCharList() {
+  const el = $('charListEl');
+  el.innerHTML = CHARACTERS.map(c => `
+    <div class="char-card${GameState.selectedCharacter===c.id?' selected':''}" onclick="selectCharacter('${c.id}')">
+      <div class="char-avatar-lg">${c.avatar}</div>
+      <div class="char-info">
+        <h3>${c.name}</h3>
+        <div class="char-title">${c.title}</div>
+        <p>${c.desc}</p>
+      </div>
+      ${c.difficulty ? `<div class="char-difficulty">${c.difficulty}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function selectCharacter(charId) {
+  GameState.selectedCharacter = charId;
+  renderCharList();
+  setTimeout(() => enterGame(), 400);
+}
+
+// ---- 主界面 ----
+function enterGame() {
+  goToScreen('game');
+  GameState.currentAct = 0;
+  GameState.currentScene = 0;
+  renderParamBar();
+  $('chatArea').innerHTML = ''; // 首次进入清空
+  // 重置流式状态
+  _streamAbort = false; _streaming = false;
+  // async渲染（不需要await，让它在后台流式输出）
+  renderCurrentScene().catch(err => console.error('场景渲染错误:', err));
+}
+
+function renderParamBar() {
+  const bar = $('paramBar');
+  bar.innerHTML = PARAM_CONFIG.map(p => `
+    <div class="param-chip" id="chip_${p.key}">
+      <span class="p-icon">${p.icon}</span>
+      <span style="font-size:10px;color:var(--text-secondary)">${p.name}</span>
+      <span class="p-val">${GameState.parameters[p.key]}</span>
+    </div>
+  `).join('');
+}
+
+function highlightParamChange(key, delta) {
+  const chip = $(`chip_${key}`);
+  if (!chip) return;
+  chip.classList.add(delta > 0 ? 'p-up' : 'p-down');
+  setTimeout(() => chip.classList.remove('p-up', 'p-down'), 2000);
+}
+
+function toggleParamBar() {
+  const bar = $('paramBar');
+  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+}
+
+// ---- 核心场景渲染 ----
+
+// 流式引擎状态
+let _streamAbort = false;   // 是否跳过当前流
+let _streaming = false;     // 是否正在流式输出
+
+function skipStreaming() {
+  _streamAbort = true;
+}
+
+// 逐字打字机输出（支持HTML标签）
+async function typeText(element, fullHtml, speed = 28) {
+  if (_streamAbort) { element.innerHTML = fullHtml; return; }
+  _streaming = true;
+
+  // 解析HTML：把文本和标签分开
+  const tokens = []; // { type:'text'|'tag', value }
+  let buf = '';
+  let inTag = false;
+  for (let i = 0; i < fullHtml.length; i++) {
+    const ch = fullHtml[i];
+    if (ch === '<') {
+      if (buf) tokens.push({ type: 'text', value: buf });
+      buf = '<'; inTag = true;
+    } else if (ch === '>' && inTag) {
+      buf += '>'; tokens.push({ type: 'tag', value: buf });
+      buf = ''; inTag = false;
+    } else {
+      buf += ch;
+    }
+  }
+  if (buf) tokens.push({ type: 'text', value: buf });
+
+  // 先放一个typing-cursor span
+  element.innerHTML = '<span class="typing-cursor"></span>';
+  const cursor = element.querySelector('.typing-cursor');
+
+  let builtHtml = '';
+  for (const tok of tokens) {
+    if (_streamAbort) { builtHtml += tok.value; continue; }
+    if (tok.type === 'tag') {
+      builtHtml += tok.value;
+      cursor.insertAdjacentHTML('beforebegin', tok.value);
+    } else {
+      for (const ch of tok.value) {
+        if (_streamAbort) { builtHtml += tok.value.substring(tok.value.indexOf(ch)); break; }
+        builtHtml += ch;
+        // 在cursor前插入字符
+        const chEscaped = ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch;
+        cursor.insertAdjacentHTML('beforebegin', chEscaped);
+        // 滚动
+        const chat = $('chatArea');
+        chat.scrollTop = chat.scrollHeight;
+        // 标点停顿
+        if ('，。！？、；：……——'.includes(ch)) {
+          await sleep(speed * 4);
+        } else if (ch === '\n' || ch === ' ') {
+          await sleep(0);
+        } else {
+          await sleep(speed);
+        }
+      }
+    }
+  }
+  // 清理cursor
+  cursor.remove();
+  _streaming = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// 流式渲染当前场景
+async function renderCurrentScene() {
+  const scene = getCurrentScene();
+  if (!scene) {
+    goToScreen('ending');
+    renderEndingReport();
+    return;
+  }
+
+  _streamAbort = false;
+  const charInfo = getCharInfo();
+
+  // 更新header
+  const act = SCRIPT_DATA.acts[GameState.currentAct];
+  $('headerActName').textContent = act.name;
+  $('headerSceneName').textContent = scene.name;
+  $('headerProgress').textContent = `${GameState.currentScene+1}/${act.scenes.length}`;
+
+  const chat = $('chatArea');
+  // ★ 同一幕内不清空聊天区，追加新内容（保持连贯性）
+  // 仅在换幕时由 advanceToNextScene 负责清空
+
+  // 显示跳过按钮
+  const skipBtn = $('skipBtn');
+  skipBtn.classList.remove('hidden');
+
+  // === 1. 叙事文本（逐字输出）===
+  if (scene.narrativeBlock?.text) {
+    let narrativeText = scene.narrativeBlock.text
+      .replace(/\{playerRoleName\}/g, charInfo.name)
+      .replace(/\{playerRoleTitle\}/g, charInfo.title)
+      .replace(/\{playerRole\}/g, charInfo.name);
+
+    const narrEl = document.createElement('div');
+    narrEl.className = 'narrative-block streaming';
+    narrEl.innerHTML = '<div class="nb-text"></div>';
+    chat.appendChild(narrEl);
+    await typeText(narrEl.querySelector('.nb-text'), formatText(narrativeText), 22);
+    narrEl.classList.add('done');
+    narrEl.classList.remove('streaming');
+    if (_streamAbort) { _streamAbort = false; }
+    await sleep(300);
+  }
+
+  // === 2. 对话流（逐条出现，每条逐字输出）===
+  if (scene.dialogueFlow) {
+    for (const d of scene.dialogueFlow) {
+      if (d.cardPopup) {
+        // 带卡片的对话：先流式对话文字，然后直接显示卡片
+        const bubbleEl = createDialogueBubble(d, charInfo);
+        chat.appendChild(bubbleEl);
+        const bodyEl = bubbleEl.querySelector('.bubble-body');
+        const cardHtml = d.cardPopup ? `<div class="card-popup ${d.cardPopup.type}"><strong>${d.cardPopup.title}</strong>${formatText(d.cardPopup.content)}</div>` : '';
+        await typeText(bodyEl, formatText(d.text) + cardHtml, 24);
+        bubbleEl.classList.add('done');
+        bubbleEl.classList.remove('streaming');
+      } else {
+        const bubbleEl = createDialogueBubble(d, charInfo);
+        chat.appendChild(bubbleEl);
+        await typeText(bubbleEl.querySelector('.bubble-body'), formatText(d.text), 24);
+        bubbleEl.classList.add('done');
+        bubbleEl.classList.remove('streaming');
+      }
+      await sleep(200);
+      if (_streamAbort) { _streamAbort = false; }
+    }
+  }
+
+  // === 3. 玩家内心独白 ===
+  if (scene.playerInnerMonologue) {
+    let monoText = scene.playerInnerMonologue.text.replace(/\{playerRole\}/g, charInfo.name);
+    const monoEl = document.createElement('div');
+    monoEl.className = 'inner-monologue';
+    chat.appendChild(monoEl);
+    await typeText(monoEl, '（' + monoText + '）', 22);
+    if (_streamAbort) { _streamAbort = false; }
+    await sleep(200);
+  }
+
+  // === 4. 叙事过渡 ===
+  if (scene.narrativeTransition) {
+    const trEl = document.createElement('div');
+    trEl.className = `narrative-transition${scene.narrativeTransition.suspense?' suspense':''}`;
+    chat.appendChild(trEl);
+    await typeText(trEl, formatText(scene.narrativeTransition.text), 20);
+    if (_streamAbort) { _streamAbort = false; }
+    await sleep(300);
+  }
+
+  // === 5. 续接对话流 ===
+  if (scene.dialogueFlow_continued) {
+    for (const d of scene.dialogueFlow_continued) {
+      const bubbleEl = createDialogueBubble(d, charInfo);
+      chat.appendChild(bubbleEl);
+      await typeText(bubbleEl.querySelector('.bubble-body'), formatText(d.text), 24);
+      bubbleEl.classList.add('done');
+      bubbleEl.classList.remove('streaming');
+      await sleep(200);
+      if (_streamAbort) { _streamAbort = false; }
+    }
+  }
+
+  // === 6. 提示块（流式输出）===
+  if (scene.hintPrompt) {
+    const hintEl = document.createElement('div');
+    hintEl.className = 'hint-block streaming';
+    hintEl.innerHTML = `<div class="hint-icon">${scene.hintPrompt.icon}</div>
+      <div class="hint-content">
+        <div class="hint-label">${scene.hintPrompt.label}</div>
+        <div class="hint-text"></div>
+      </div>`;
+    chat.appendChild(hintEl);
+    await typeText(hintEl.querySelector('.hint-text'), formatText(scene.hintPrompt.text), 22);
+    hintEl.classList.add('done');
+    hintEl.classList.remove('streaming');
+    if (_streamAbort) { _streamAbort = false; }
+    await sleep(200);
+  }
+
+  // === 7. 选项卡（淡入）===
+  if (scene.choiceCards && !GameState.choiceMade) {
+    let choicesHtml = `<div class="choice-section" style="opacity:0;transition:opacity 0.5s"><div class="choice-section-title">${scene.choiceCards.title}</div>`;
+    scene.choiceCards.choices.forEach(choice => {
+      const locked = !checkLockCondition(choice.lockCondition);
+      const prefixType = choice.prefixType || 'default';
+      choicesHtml += `
+        <button class="choice-btn${choice.recommended ? ' recommended' : ''}" 
+                onclick="${locked ? '' : `makeChoice('${choice.id}')`}"
+                ${locked ? 'disabled title="条件未满足"' : ''}
+                data-id="${choice.id}">
+          <div>
+            <span class="choice-prefix" data-type="${prefixType}">${choice.prefixTag}</span>
+          </div>
+          <div class="choice-main-text">${choice.text}</div>
+          <div class="choice-effect">${choice.effectPreview || ''}</div>
+          ${locked ? '<div class="choice-lock-badge">🔒 需满足条件: ' + (choice.lockCondition||'') + '</div>' : ''}
+        </button>`;
+    });
+    choicesHtml += '</div>';
+    chat.insertAdjacentHTML('beforeend', choicesHtml);
+    // 淡入
+    requestAnimationFrame(() => {
+      const cs = chat.querySelector('.choice-section:last-of-type');
+      if (cs) cs.style.opacity = '1';
+    });
+  }
+
+  // === 8. 任务追踪 ===
+  if (scene.missionTracker) {
+    chat.insertAdjacentHTML('beforeend',
+      `<div class="mission-tracker">
+        <span class="mt-current">📍 ${scene.missionTracker.currentObjective}</span>
+        <span class="mt-overall">${scene.missionTracker.overallActMission}</span>
+        <span class="mt-progress">${scene.missionTracker.progressPercent}%</span>
+      </div>`);
+  }
+
+  // 隐藏跳过按钮
+  skipBtn.classList.add('hidden');
+
+  // 显示输入栏
+  $('inputBar').style.display = scene.allowFreeInput && !GameState.choiceMade ? 'flex' : 'none';
+
+  // 滚动到底部
+  requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+}
+
+// 创建对话气泡DOM（空内容，等待流式填充）
+function createDialogueBubble(d, charInfo) {
+  const isSelf = d.isPlayer || d.speaker?.includes('(你)');
+  const el = document.createElement('div');
+  el.className = `${isSelf ? 'dialogue-bubble self' : 'dialogue-bubble'} streaming`;
+  el.innerHTML = `
+    <div class="bubble-avatar">${d.avatar || '📜'}</div>
+    <div class="bubble-content">
+      <div class="bubble-name">${d.speaker}${d.mood ? ' · '+d.mood : ''}</div>
+      <div class="bubble-body"></div>
+    </div>`;
+  return el;
+}
+
+function formatText(text) {
+  if (!text) return '';
+  // 保留换行，转义HTML特殊字符
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
+}
+
+// ============================================================
+//  🎯 交互处理
+// ============================================================
+
+// ---- 做出选择 ----
+async function makeChoice(choiceId) {
+  const scene = getCurrentScene();
+  if (!scene || !scene.choiceCards) return;
+
+  const choice = scene.choiceCards.choices.find(c => c.id === choiceId);
+  if (!choice) return;
+
+  const charInfo = getCharInfo();
+  const chat = $('chatArea');
+
+  // 标记已选择
+  GameState.choiceMade = true;
+
+  // 隐藏选项按钮 & 跳过按钮
+  const choiceSection = chat.querySelector('.choice-section');
+  if (choiceSection) choiceSection.style.display = 'none';
+  $('skipBtn').classList.add('hidden');
+
+  // 1. 流式显示玩家选择气泡
+  const playerBubble = document.createElement('div');
+  playerBubble.className = 'dialogue-bubble self streaming';
+  playerBubble.innerHTML = `
+    <div class="bubble-avatar">${charInfo.avatar}</div>
+    <div class="bubble-content">
+      <div class="bubble-name">${charInfo.name}（你）</div>
+      <div class="bubble-body" style="border-left:3px solid var(--accent-gold)"></div>
+    </div>`;
+  chat.appendChild(playerBubble);
+  await typeText(playerBubble.querySelector('.bubble-body'), `<strong>[${choice.prefixTag}]</strong><br>${choice.text}`, 20);
+  playerBubble.classList.add('done');
+  playerBubble.classList.remove('streaming');
+
+  // 2. 应用参数变化
+  const changes = parseEffectPreview(choice.effectPreview);
+  
+  // ★ 数值白盒化展示：记录变化前的快照，应用变化后展示详情
+  const preSnapshot = { ...GameState.parameters };
+  applyParameterChanges(changes);
+  
+  // 展示数值白盒化面板（仅在有实际数值变化时显示）
+  if (Object.keys(changes).length > 0) {
+    await showValueDisclosure(preSnapshot, changes, choice);
+  }
+
+  // 记录到历史
+  GameState.choicesHistory.push({ scene: scene.sceneId, choice: choiceId, timestamp: Date.now() });
+
+  // 3. 流式显示后果描述
+  if (choice.consequence) {
+    const isNegative = choice.consequence.includes('失败') || choice.effectPreview?.includes('-') && !choice.recommended;
+    const conseqEl = document.createElement('div');
+    conseqEl.className = `consequence-display${isNegative?' negative':''} streaming`;
+    conseqEl.innerHTML = `<div class="conseq-title">📜 后果展开</div><div class="conseq-body"></div>`;
+    chat.appendChild(conseqEl);
+    await typeText(conseqEl.querySelector('.conseq-body'), formatText(choice.consequence), 22);
+    conseqEl.classList.add('done');
+    conseqEl.classList.remove('streaming');
+  }
+
+  // 4. 特殊效果标记
+  if (choice.cinematic) {
+    chat.innerHTML += `<div style="text-align:center;font-size:11px;color:var(--accent-gold);padding:4px;margin:4px 0;">✨ ${choice.cinematic} ✨</div>`;
+  }
+  if (choice.cpFlag) {
+    chat.innerHTML += `<div style="text-align:center;font-size:11px;color:#FF69B4;padding:4px;margin:4px 0;">💕 CP线推进: ${choice.cpFlag} 💕</div>`;
+  }
+  if (choice.achievement) {
+    chat.innerHTML += `<div style="text-align:center;font-size:11px;color:var(--accent-gold);padding:4px;margin:4px 0;">🏆 解锁成就: ${choice.achievement} 🏆</div>`;
+  }
+
+  // 5. 显示选择后事件
+  if (scene.postChoiceEvent) {
+    await sleep(400);
+    const eventEl = document.createElement('div');
+    eventEl.className = 'post-choice-event';
+    eventEl.innerHTML = `<div class="event-title">${scene.postChoiceEvent.title}</div><div class="event-body"></div>`;
+    chat.appendChild(eventEl);
+    await typeText(eventEl.querySelector('.event-body'), formatText(scene.postChoiceEvent.content), 22);
+    if (scene.postChoiceEvent.effect) {
+      const postChanges = parseEffectPreview(scene.postChoiceEvent.effect);
+      applyParameterChanges(postChanges);
+    }
+  }
+
+  // 6. 小游戏
+  if (scene.miniGame && scene.miniGame.triggerAfterChoice) {
+    await sleep(600);
+    renderMiniGame(scene.miniGame);
+  }
+
+  // 7. 隐藏输入框
+  $('inputBar').style.display = 'none';
+
+  // 8. 推进剧情
+  await sleep(scene.postChoiceEvent ? 1800 : (scene.miniGame?.triggerAfterChoice ? 1200 : 700));
+  advanceToNextScene();
+}
+
+/**
+ * ★ 数值白盒化展示面板（选择后披露）
+ * 展示所有数值变化的详细信息：变化前 → 变化量 → 变化后 + 影响说明 + 剧情影响预判
+ */
+async function showValueDisclosure(preSnapshot, rawChanges, choice) {
+  const chat = $('chatArea');
+  
+  // 参数元信息配置
+  const paramMeta = {
+    'fu_yunxi_affection': { icon: '❄️', name: '傅云夕好感度',
+      desc: 'CP线核心参数，影响关键剧情解锁与最终结局' },
+    'wei_rufeng_affection': { icon: '🐺', name: '卫如风执念值',
+      desc: '执念越高，他对你的纠缠越疯狂' },
+    'zhou_shi_hostility': { icon: '🐍', name: '周氏敌意值',
+      desc: '敌意越高，继母的针对和陷害越频繁' },
+    'zhuang_yushan_hostility': { icon: '🦊', name: '庄语山敌意值',
+      desc: '庶姐的嫉妒心强度，影响她下手的频率和力度' },
+    'hanming_trust': { icon: '👦🏻', name: '明哥儿信任度',
+      desc: '弟弟的信任决定他能获得的保护和你能收到的情报' },
+    'father_relation': { icon: '👨‍⚖️', name: '父亲关系值',
+      desc: '影响你在府中的地位和可调动资源' },
+    'revenge_progress': { icon: '⚔️', name: '复仇进度',
+      desc: '复仇完成度，达到80%以上方可触发True End' },
+    'player_wisdom': { icon: '🧠', name: '智谋值',
+      desc: '智力属性，影响智谋路线选项解锁及成功率' },
+    'player_courage': { icon: '💪', name: '勇气值',
+      desc: '勇气属性，影响对抗型和正面冲突选项的效果' },
+    'darkness_value': { icon: '🖤', name: '黑化值',
+      desc: '黑暗值≥70将走向Dark End，慎之！' }
+  };
+  
+  // 构建变化详情列表
+  const changeDetails = [];
+  for (const [displayName, delta] of Object.entries(rawChanges)) {
+    const paramKey = mapParamNameToKey(displayName);
+    if (!paramKey || !GameState.parameters.hasOwnProperty(paramKey)) continue;
+    
+    const oldValue = preSnapshot[paramKey] || 0;
+    const newValue = GameState.parameters[paramKey];
+    const meta = paramMeta[paramKey] || { icon: '📊', name: displayName, desc: '' };
+    
+    changeDetails.push({
+      key: paramKey,
+      ...meta,
+      oldValue, newValue, delta,
+      isCritical: Math.abs(delta) >= 20,
+      isSignificant: Math.abs(delta) >= 10 && Math.abs(delta) < 20
+    });
+  }
+  
+  if (changeDetails.length === 0) return; // 无变化则不展示
+  
+  // 生成每项HTML + 收集关系影响说明
+  let itemsHtml = '';
+  const relationNotes = [];
+  let hasCriticalUp = false, hasCriticalDown = false;
+  
+  changeDetails.forEach(item => {
+    const barColor = item.delta > 0 ? 'var(--accent-gold)' : (item.delta < 0 ? 'var(--accent-red)' : 'transparent');
+    const barWidth = Math.max(0, Math.min(100, item.newValue));
+    const deltaClass = item.delta > 0 ? 'positive' : (item.delta < 0 ? 'negative' : '');
+    const deltaText = item.delta > 0 ? `+${item.delta}` : `${item.delta}`;
+    const badgeHtml = item.isCritical 
+      ? `<span class="vd-badge ${item.delta>0?'critical-up':'critical-down'}">${item.delta>0?'⬆重大':'⬇重大'}</span>`
+      : item.isSignificant ? `<span class="vd-badge warning">显著</span>` : '';
+    
+    if (item.isCritical && item.delta > 0) hasCriticalUp = true;
+    if (item.isCritical && item.delta < 0) hasCriticalDown = true;
+    
+    // 关系影响预判
+    if (item.key === 'fu_yunxi_affection') {
+      if (item.newValue >= 80) relationNotes.push('💕 傅云夕好感达到「深爱」级别 ✅ 满足 True End 条件之一');
+      else if (item.newValue >= 50) relationNotes.push('💕 傅云夕好感进入「在意」区间');
+      else if (item.newValue >= 30 && item.delta > 10) relationNotes.push('💕 傅云夕开始注意到你了...');
+      else if (item.newValue < 20 && item.delta < -5) relationNotes.push('💔 傅云夕好感偏低，可能错过CP线...');
+    }
+    if (item.key === 'zhou_shi_hostility' && item.newValue >= 60)
+      relationNotes.push('⚠️ 周氏敌意偏高，她可能会加快行动步伐');
+    if (item.key === 'revenge_progress' && item.newValue >= 80)
+      relationNotes.push('⚔️ 复仇进度接近目标！True End 就在眼前');
+    if (item.key === 'darkness_value' && item.newValue >= 60)
+      relationNotes.push('🖤 黑化值持续攀升...小心走向 Dark End');
+    
+    itemsHtml += `
+      <div class="vd-item">
+        <div class="vd-icon">${item.icon}</div>
+        <div class="vd-info">
+          <div class="vd-name">${item.name} ${badgeHtml}</div>
+          ${item.desc ? `<div class="vd-desc">${item.desc}</div>` : ''}
+        </div>
+        <div class="vd-values">
+          <span class="vd-old">${item.oldValue}</span>
+          <span class="vd-arrow">→</span>
+          <span class="vd-delta ${deltaClass}">${deltaText}</span>
+          <span class="vd-new">${item.newValue}</span>
+        </div>
+        <div class="vd-bar-wrap"><div class="vd-bar" style="width:${barWidth}%;background:${barColor}"></div></div>
+      </div>`;
+  });
+  
+  // 总结
+  const totalChanges = changeDetails.length;
+  const positiveCount = changeDetails.filter(c => c.delta > 0).length;
+  const negativeCount = changeDetails.filter(c => c.delta < 0).length;
+  let summaryHtml = '<div class="vd-summary">';
+  summaryHtml += `本次选择影响了 <strong>${totalChanges}</strong> 项参数`;
+  if (positiveCount > 0) summaryHtml += `，<strong style="color:var(--accent-green)">${positiveCount}项提升</strong>`;
+  if (negativeCount > 0) summaryHtml += `，<strong style="color:var(--accent-red)">${negativeCount}项下降</strong>`;
+  summaryHtml += '。';
+  if (hasCriticalUp) summaryHtml += '<br><strong style="color:var(--accent-green)">✨ 本次选择带来显著的正面影响！</strong>';
+  if (hasCriticalDown) summaryHtml += '<br><strong style="color:var(--accent-red)">⚠️ 警告：某项数值大幅下降，可能影响后续剧情。</strong>';
+  summaryHtml += '</div>';
+  
+  // 关系影响预判块
+  const notesHtml = relationNotes.length > 0
+    ? `<div class="vd-relation-note">📋 <strong>剧情影响预判：</strong><br>${relationNotes.map(n => `• ${n}`).join('<br>')}</div>` : '';
+  
+  // 创建面板
+  const panelId = 'vd_' + Date.now();
+  const panelEl = document.createElement('div');
+  panelEl.className = 'value-disclosure';
+  panelEl.id = panelId;
+  panelEl.innerHTML = `
+    <div class="vd-header" onclick="toggleVDBody('${panelId}')">
+      <div class="vd-title">📊 数值变化详情 · 已披露</div>
+      <div class="vd-toggle" id="${panelId}_toggle">收起 ▲</div>
+    </div>
+    <div class="vd-body" id="${panelId}_body">
+      ${itemsHtml}
+      ${summaryHtml}
+      ${notesHtml}
+    </div>`;
+  chat.appendChild(panelEl);
+  
+  // 流式展开效果：先折叠→延迟展开（模拟"披露"动画）
+  const bodyEl = panelEl.querySelector('.vd-body');
+  bodyEl.classList.add('collapsed');
+  await sleep(150);
+  bodyEl.classList.remove('collapsed');
+  await sleep(300);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+/** 切换数值面板展开/收起 */
+function toggleVDBody(panelId) {
+  const body = $(`${panelId}_body`);
+  const toggle = $(`${panelId}_toggle`);
+  if (!body || !toggle) return;
+  const isCollapsed = body.classList.toggle('collapsed');
+  toggle.textContent = isCollapsed ? '展开 ▼' : '收起 ▲';
+}
+
+// ---- 自由输入（AI驱动）----
+async function sendUserInput() {
+  const input = $('inputField');
+  const text = input.value.trim();
+  if (!text || _streaming) return;
+
+  const charInfo = getCharInfo();
+  const scene = getCurrentScene();
+  const chat = $('chatArea');
+
+  // 清空输入
+  input.value = '';
+  input.style.height = 'auto';
+
+  // 1. 显示玩家消息（流式）
+  const playerBubble = document.createElement('div');
+  playerBubble.className = 'dialogue-bubble self streaming';
+  playerBubble.innerHTML = `
+    <div class="bubble-avatar">${charInfo.avatar}</div>
+    <div class="bubble-content">
+      <div class="bubble-name">${charInfo.name}（你）</div>
+      <div class="bubble-body"></div>
+    </div>`;
+  chat.appendChild(playerBubble);
+  await typeText(playerBubble.querySelector('.bubble-body'), escapeHtml(text), 20);
+  playerBubble.classList.add('done');
+  playerBubble.classList.remove('streaming');
+
+  // 2. 禁用发送按钮 + typing
+  $('sendBtn').disabled = true;
+  const typingEl = document.createElement('div');
+  typingEl.className = 'typing-indicator';
+  typingEl.id = 'typingIndicator';
+  typingEl.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div><span style="font-size:12px;color:var(--text-secondary);margin-left:6px;">${AI_ENABLED ? 'AI思考中...' : '思考中...'}</span>`;
+  chat.appendChild(typingEl);
+  chat.scrollTop = chat.scrollHeight;
+
+  // 3. 选择响应模式：AI 或 本地模拟
+  if (AI_ENABLED && AI) {
+    await _aiRespond(text, scene, charInfo, chat, typingEl);
+  } else {
+    await _localRespond(text, scene, charInfo, chat, typingEl);
+  }
+
+  $('sendBtn').disabled = false;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+/** 真实AI响应 */
+async function _aiRespond(userText, scene, charInfo, chat, typingEl) {
+  try {
+    const activeNpcId = _detectActiveNpc(scene) || 'ji_lan';
+    const agent = AI.getAgent(activeNpcId);
+    if (!agent) throw new Error('NPC不存在');
+
+    const bubbleEl = createDialogueBubble(
+      { speaker: agent.name, avatar: agent.avatar, mood: agent.mood },
+      charInfo
+    );
+    bubbleEl.className += ' streaming';
+    chat.appendChild(bubbleEl);
+    if (typingEl) typingEl.remove();
+
+    let fullText = '';
+    const bodyEl = bubbleEl.querySelector('.bubble-body');
+    const sceneContext = _buildSceneContext(scene, charInfo);
+
+    await AI.npcRespond(activeNpcId, userText, sceneContext, GameState.parameters, {
+      onChunk(chunk, accumulated) {
+        bodyEl.innerHTML = formatText(accumulated);
+        chat.scrollTop = chat.scrollHeight;
+      },
+      onDone(finalText) {
+        bodyEl.innerHTML = formatText(finalText);
+        bubbleEl.classList.add('done'); bubbleEl.classList.remove('streaming');
+        AI.recordEvent(scene.sceneId||'free_chat', `自由对话:${userText.substring(0,30)}...`, 2);
+      },
+      onError(errMsg) {
+        console.warn('AI错误:', errMsg);
+        bodyEl.innerHTML = `<span style="color:var(--accent-red)">[连接失败] ${errMsg}<br>已切换本地模式</span>`;
+        bubbleEl.classList.add('done'); bubbleEl.classList.remove('streaming');
+        setTimeout(() => _localFallback(chat, userText, scene, charInfo), 1000);
+      }
+    });
+  } catch(e) {
+    console.error('AI异常:', e);
+    typingEl?.remove();
+    await _localFallback(chat, userText, scene, charInfo);
+  }
+
+  if (!GameState.choiceMade && scene.choiceCards) {
+    await sleep(300);
+    chat.insertAdjacentHTML('beforeend',
+      '<div style="text-align:center;padding:12px"><span style="font-size:12px;color:var(--text-secondary)">👇 或选择选项推进剧情</span></div>');
+  }
+}
+
+/** 本地模拟响应 */
+async function _localRespond(userText, scene, charInfo, chat, typingEl) {
+  await sleep(500 + Math.random()*400);
+  if (typingEl) typingEl.remove();
+  const responses = generateContextualResponse(userText, scene, charInfo);
+  for (const resp of responses) {
+    const el = createDialogueBubble(resp, charInfo);
+    chat.appendChild(el);
+    await typeText(el.querySelector('.bubble-body'), formatText(resp.text), 24);
+    el.classList.add('done'); el.classList.remove('streaming');
+    await sleep(200);
+  }
+  if (!GameState.choiceMade && scene.choiceCards) {
+    await sleep(300);
+    chat.insertAdjacentHTML('beforeend',
+      '<div style="text-align:center;padding:12px"><span style="font-size:12px;color:var(--text-secondary)">👇 或选择选项推进剧情</span></div>');
+  }
+}
+
+/** AI失败fallback */
+async function _localFallback(chat, userText, scene, charInfo) {
+  const responses = generateContextualResponse(userText, scene, charInfo);
+  for (const resp of responses) {
+    const el = createDialogueBubble(resp, charInfo);
+    chat.appendChild(el);
+    await typeText(el.querySelector('.bubble-body'), formatText(resp.text), 24);
+    el.classList.add('done'); el.classList.remove('streaming');
+    await sleep(150);
+  }
+}
+
+/** 检测当前场景的活跃NPC */
+function _detectActiveNpc(scene) {
+  if (!scene.dialogueFlow) return 'ji_lan';
+  for (let i = scene.dialogueFlow.length-1; i >= 0; i--) {
+    const d = scene.dialogueFlow[i];
+    if (!d.isPlayer && !d.speaker?.includes('(你)')) {
+      return {'汲蓝':'ji_lan','姝红':'shu_hong','陈妈妈':'chen_mama',
+        '傅云夕':'fu_yunxi','周氏':'zhou_shi','庄语山':'zhuang_yushan',
+        '卫如风':'wei_rufeng','明哥儿':'hanming'}[d.speaker] || 'ji_lan';
+    }
+  }
+  return 'ji_lan';
+}
+
+/** 构建场景上下文 */
+function _buildSceneContext(scene, charInfo) {
+  return [
+    `当前场景: ${scene.name}`,
+    `扮演角色: ${charInfo.name}（${charInfo.title}）`,
+    scene.narrativeBlock?.text ? `环境: ${scene.narrativeBlock.text.substring(0,150)}` : '',
+    scene.hintPrompt?.text ? `情况: ${scene.hintPrompt.text.substring(0,120)}` : ''
+  ].filter(Boolean).join('\n');
+}
+
+function handleInputKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendUserInput();
+  }
+  // 自动调整高度
+  const field = e.target;
+  field.style.height = 'auto';
+  field.style.height = Math.min(field.scrollHeight, 80) + 'px';
+}
+
+/**
+ * 基于用户输入生成上下文相关的智能响应
+ * 这是核心函数——根据场景上下文+用户输入+角色信息生成合理的回复
+ */
+function generateContextualResponse(userText, scene, charInfo) {
+  const text = userText.toLowerCase().trim();
+  const responses = [];
+
+  // 1. 优先使用场景内置的AI响应模式
+  if (scene.aiResponses && scene.aiResponses.patterns) {
+    for (const pattern of scene.aiResponses.patterns) {
+      if (pattern.keywords.some(kw => text.includes(kw))) {
+        return pattern.responses.map(r => ({...r}));
+      }
+    }
+    // 匹配默认响应
+    if (scene.aiResponses.defaultResponse) {
+      return [scene.aiResponses.defaultResponse];
+    }
+  }
+
+  // 2. 通用智能响应（基于输入内容分析）
+  const charName = charInfo.name;
+
+  // 分析用户输入的情绪/意图
+  if (/(生气|愤怒|混蛋|滚|该死|杀了)/.test(text)) {
+    responses.push(
+      { speaker: '系统旁白', avatar: '📜', text: `你的情绪明显激动了起来。在场的人都感受到了你身上散发出的压迫感。`, isNarration: true },
+      { speaker: scene.dialogueFlow?.slice(-1)[0]?.speaker || 'NPC', avatar: scene.dialogueFlow?.slice(-1)[0]?.avatar || '😲', text: `（${charName}的反应出乎意料地激烈......）`, mood: '震惊' }
+    );
+  } else if (/(哭|泪|难过|伤心|痛苦|委屈)/.test(text)) {
+    responses.push(
+      { speaker: '系统旁白', avatar: '📜', text: `你忍不住红了眼眶，声音也带了哽咽。`, isNarration: true },
+      { speaker: '陈妈妈', avatar: '👵🏻', text: `（心疼地）姑娘......莫要难过，老奴在这里呢。`, mood: '安慰' }
+    );
+  } else if (/(笑|好笑|可笑|哼|冷笑)/.test(text)) {
+    responses.push(
+      { speaker: '系统旁白', avatar: '📜', text: `你的嘴角勾起一抹意味深长的弧度。`, isNarration: true },
+      { speaker: scene.dialogueFlow?.find(d => d.avatar==='🦊')?.speaker || '庄语山', avatar: '🦊', text: `你笑什么？有什么好笑的吗？`, mood: '不悦' }
+    );
+  } else if (/(问|谁|什么|为什么|怎么|为何)/.test(text)) {
+    responses.push(
+      { speaker: scene.dialogueFlow?.find(d => !d.isPlayer)?.speaker || 'NPC', avatar: scene.dialogueFlow?.find(d => !d.isPlayer)?.avatar || '📜', text: `这个问题......（对方似乎犹豫了一下）`, mood: '迟疑' }
+    );
+  } else if (text.length > 15) {
+    // 较长的输入 → 视为主动行动/发言
+    responses.push(
+      { speaker: '系统旁白', avatar: '📜', text: `你说道：「${userText}」\n\n这番话让周围的气氛发生了一些变化......`, isNarration: true },
+      { speaker: '汲蓝', avatar: '👧🏻', text: `（小声）小姐说得有道理......`, mood: '赞同' },
+      { speaker: '系统旁白', avatar: '📜', text: `💡 你也可以点击下方的选项来推进剧情，这样会有更明确的效果哦。`, isNarration: true }
+    );
+  } else {
+    // 短输入 → 简短互动
+    responses.push(
+      { speaker: '系统旁白', avatar: '📜', text: `你简短地回应了一句。对方似乎还在等待你更多的表示......\n\n💡 尝试输入更多内容，或者使用下方选项来做正式选择。`, isNarration: true }
+    );
+  }
+
+  // 3. 给予少量随机奖励
+  if (Math.random() > 0.7) {
+    GameState.parameters.player_wisdom = Math.min(100, GameState.parameters.player_wisdom + 1);
+    renderParamBar();
+  }
+
+  return responses;
+}
+
+// ---- 小游戏渲染 ----
+function renderMiniGame(miniGame) {
+  const chat = $('chatArea');
+  GameState.miniGameActive = true;
+
+  chat.innerHTML += `
+    <div class="mini-game-section">
+      <div class="mini-game-header">🎮 ${miniGame.name}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">${miniGame.rules.description}</div>
+      <div class="mini-game-options">
+        ${miniGame.rules.options.map(opt => `
+          <div class="mini-game-option" onclick="completeMiniGame('${opt.id}', '${JSON.stringify(opt.reward).replace(/'/g,"&#39;")}')">
+            <span class="mg-icon">${opt.icon}</span>
+            <span>${opt.text}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function completeMiniGame(optionId, rewardJson) {
+  const reward = JSON.parse(rewardJson);
+  const chat = $('chatArea');
+
+  // 应用奖励
+  Object.keys(reward).forEach(key => {
+    if (key === 'trust') GameState.parameters.hanming_trust = Math.min(100, GameState.parameters.hanming_trust + reward[key]);
+    else if (key === 'wisdom') GameState.parameters.player_wisdom = Math.min(100, GameState.parameters.player_wisdom + reward[key]);
+    else if (key === 'bond') GameState.parameters.hanming_trust = Math.min(100, GameState.parameters.hanming_trust + reward[key]);
+    else if (reward[key]) GameState.parameters.player_wisdom = Math.min(100, GameState.parameters.player_wisdom + 5);
+  });
+  renderParamBar();
+
+  // 移除小游戏区域
+  const mgSection = chat.querySelector('.mini-game-section');
+  if (mgSection) mgSection.innerHTML = `<div class="consequence-display"><div class="conseq-title">🎉 承诺达成！</div><div class="conseq-body">你们的羁绊更加深厚了。</div></div>`;
+
+  GameState.miniGameActive = false;
+
+  // 继续推进
+  setTimeout(() => advanceToNextScene(), 1000);
+}
+
+// ---- 剧情推进 ----
+function advanceToNextScene() {
+  const act = SCRIPT_DATA.acts[GameState.currentAct];
+  if (!act) {
+    goToScreen('ending');
+    renderEndingReport();
+    return;
+  }
+
+  // 强制中断当前流式
+  _streamAbort = true; _streaming = false;
+  
+  const scene = act.scenes[GameState.currentScene];
+
+  // 检查是否有幕结束报告
+  if (scene.actEndingReport) {
+    showActEnding(act, scene.actEndingReport);
+    return;
+  }
+
+  // 同一幕内场景切换：无缝衔接，无loading
+  if (GameState.currentScene < act.scenes.length - 1) {
+    GameState.currentScene++;
+    GameState.choiceMade = false;
+    _streamAbort = false; _streaming = false;
+    renderCurrentScene().catch(e => console.error('场景渲染错误:', e));
+  } else if (GameState.currentAct < SCRIPT_DATA.acts.length - 1) {
+    // 幕切换：轻量过渡 + 清空聊天区
+    const nextAct = SCRIPT_DATA.acts[GameState.currentAct + 1];
+    showSceneTransition(act.name, `下一幕：${nextAct.name}`);
+    setTimeout(() => {
+      $('chatArea').innerHTML = ''; // 换幕时才清空
+      GameState.currentAct++;
+      GameState.currentScene = 0;
+      GameState.choiceMade = false;
+      _streamAbort = false; _streaming = false;
+      renderCurrentScene().catch(e => console.error('场景渲染错误:', e));
+    }, 1200);
+  } else {
+    goToScreen('ending');
+    renderEndingReport();
+  }
+}
+
+function showSceneTransition(title, sub) {
+  const overlay = $('sceneOverlay');
+  $('overlayText').textContent = title;
+  overlay.querySelector('.scene-overlay-sub').textContent = sub;
+  overlay.classList.add('active');
+  setTimeout(() => overlay.classList.remove('active'), 2000);
+}
+
+function showActEnding(act, reportData) {
+  const chat = $('chatArea');
+
+  chat.innerHTML += `
+    <div class="act-ending-report">
+      <div class="aer-title">${reportData.content.title}</div>
+      <div class="aer-summary">${reportData.content.summary}</div>
+      ${reportData.content.nextActPreview ? `
+        <div class="aer-next">
+          <strong>${reportData.content.nextActPreview.actName}</strong><br>
+          ${reportData.content.nextActPreview.keyEvents.map(e => '• '+e).join('<br>')}
+        </div>` : ''}
+    </div>`;
+
+  chat.scrollTop = chat.scrollHeight;
+
+  // 自动推进到下一幕
+  setTimeout(() => {
+    if (GameState.currentAct < SCRIPT_DATA.acts.length - 1) {
+      $('chatArea').innerHTML = ''; // 换幕清空
+      GameState.currentAct++;
+      GameState.currentScene = 0;
+      GameState.choiceMade = false;
+      _streamAbort = false; _streaming = false;
+      renderCurrentScene().catch(e => console.error('场景渲染错误:', e));
+    } else {
+      goToScreen('ending');
+      renderEndingReport();
+    }
+  }, 3500);
+}
+
+// ============================================================
+//  📊 结局报告（支持AI动态生成）
+// ============================================================
+async function renderEndingReport() {
+  const params = GameState.parameters;
+
+  // 判定结局类型
+  let endingType = 'normal_end';
+  if (params.fu_yunxi_affection >= 80 && params.revenge_progress >= 80) endingType = 'true_end';
+  else if (params.fu_yunxi_affection >= 50 && params.revenge_progress >= 50) endingType = 'good_end';
+  else if (params.darkness_value >= 70) endingType = 'dark_end';
+  else if (params.player_wisdom < 20 || params.revenge_progress < 30) endingType = 'bad_end';
+
+  const endings = {
+    true_end: { badge: '🌸', title: 'True End · 重生花开', subtitle: '你拥有了完整的人生' },
+    good_end: { badge: '✨', title: 'Good End · 岁月静好', subtitle: '终于走出了阴霾' },
+    normal_end: { badge: '🌙', title: 'Normal End · 浮生若梦', subtitle: '未来还在自己手中' },
+    bad_end: { badge: '💔', title: 'Bad End · 梦碎重来', subtitle: '轮回之中还有希望' },
+    dark_end: { badge: '🖤', title: 'Dark End · 黑莲花', subtitle: '你赢得了世界，却输了自己' }
+  };
+
+  const ending = endings[endingType] || endings.normal_end;
+  $('endingBadge').textContent = ending.badge;
+  $('endingTitle').textContent = ending.title;
+  $('endingSubtitle').textContent = ending.subtitle;
+
+  // ★ 尝试AI动态生成个性化结局叙事
+  let aiNarrative = '';
+  if (AI_ENABLED && AI) {
+    try {
+      $('endingSubtitle').textContent += ' · AI生成中...';
+      const result = await AI.generateEnding(GameState);
+      aiNarrative = result.narrative;
+      // 用AI生成的角色命运覆盖默认
+      // （fates已在下面渲染，这里只更新叙事）
+      $('endingSubtitle').textContent = ending.subtitle + ' · 🧠AI定制';
+    } catch(e) {
+      console.warn('AI结局生成失败，使用模板:', e);
+      aiNarrative = _getTemplateNarrative(endingType);
+    }
+  } else {
+    aiNarrative = _getTemplateNarrative(endingType);
+  }
+
+  // 显示结局叙事（在成就之前插入）
+  const narrContainer = document.createElement('div');
+  narrContainer.id = 'endingNarrative';
+  narrContainer.style.cssText = 'margin-bottom:16px;padding:16px;background:linear-gradient(135deg,rgba(201,169,110,0.08),rgba(107,140,174,0.05));border-radius:12px;border-left:3px solid var(--accent-gold);line-height:1.9;font-size:14px;color:var(--text-primary);';
+  narrContainer.innerHTML = formatText(aiNarrative);
+  
+  // 插入到参数图表之前
+  const paramChartEl = $('paramChart');
+  paramChartEl.parentNode.insertBefore(narrContainer, paramChartEl);
+
+  // 角色命运
+  const fates = [
+    { avatar: '❄️', name: '傅云夕', fate: endingType==='dark_end'?'失望离去':'终身伴侣' },
+    { avatar: '👦🏻', name: '庄寒明', fate: '成才成人' },
+    { avatar: '👵🏻', name: '陈妈妈', fate: '安享晚年' },
+    { avatar: '👧🏻', name: '汲蓝&姝红', fate: '幸福美满' },
+    { avatar: '🐍', name: '周氏', fate: endingType.includes('dark')?'被你处置':'别院赎罪' },
+    { avatar: '🦊', name: '庄语山', fate: '削发为尼' },
+    { avatar: '🐺', name: '卫如风', fate: '流放病亡' },
+    { avatar: '👸🏻', name: '邓婵', fate: '恩爱白头' }
+  ];
+  $('fateGrid').innerHTML = fates.map(f => `
+    <div class="fate-item"><div class="fate-avatar">${f.avatar}</div><div class="fate-name">${f.name}</div><div class="fate-desc">${f.fate}</div></div>
+  `).join('');
+
+  // 成就
+  const achievements = [
+    { icon: '🏆', name: '永不为妾', desc: '做出了人生最燃的宣言', unlocked: GameState.choicesHistory.some(c => c.choice === 'declare_war') },
+    { icon: '💍', name: '祠堂之约', desc: '接受了傅云夕的心意', unlocked: params.fu_yunxi_affection >= 40 },
+    { icon: '👑', name: '金銮殿之聘', desc: '见证了举国瞩目的求亲', unlocked: GameState.currentAct >= 3 },
+    { icon: '🌸', name: '重生花开', desc: '达成True End', unlocked: endingType === 'true_end' },
+    { icon: '🖤', name: '黑莲花', desc: '探索了人性最深处的黑暗', unlocked: endingType === 'dark_end' },
+    { icon: '⚔️', name: '复仇成功', desc: '让所有敌人付出了代价', unlocked: params.revenge_progress >= 80 }
+  ];
+  $('achievementList').innerHTML = achievements.map(a => `
+    <div class="achievement-item">
+      <div class="achievement-icon">${a.unlocked?a.icon:'🔒'}</div>
+      <div class="achievement-info">
+        <div class="achievement-name" style="${a.unlocked?'':'color:var(--text-secondary)'}">${a.name}</div>
+        <div class="achievement-desc">${a.desc}</div>
+      </div>
+      <div class="achievement-lock">${a.unlocked?'✅':'未解锁'}</div>
+    </div>
+  `).join('');
+
+  // 参数图表
+  $('paramChart').innerHTML = Object.entries(params).map(([k,v]) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:2px 0">
+      <span style="font-size:11px;width:76px;text-align:right;color:var(--text-secondary);flex-shrink:0">${k.replace(/_/g,' ')}</span>
+      <div style="flex:1;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden">
+        <div style="width:${v}%;height:100%;background:linear-gradient(90deg,var(--accent-gold),var(--accent-blue));border-radius:4px;transition:width 0.5s"></div>
+      </div>
+      <span style="font-size:11px;width:26px;color:var(--accent-gold);text-align:right">${v}</span>
+    </div>
+  `).join('');
+
+  // 关系图谱
+  renderRelationGraph();
+}
+
+/** 模板结局叙事（无API时使用） */
+function _getTemplateNarrative(type) {
+  const t = {
+    true_end: '雪停了。\n\n你站在庭院中，看着漫天飞舞的白雪渐渐消融。身后传来熟悉的脚步声——是他。\n\n"想什么呢？"他的声音一如既往地清润。\n\n"在想......这一生，总算没有白白重来。"\n\n他轻轻握住你的手，掌心的温度透过寒冷传过来。远处传来孩子们的笑声，是明哥儿在和汲蓝打雪仗。\n\n前世的血与泪，终于化作了今生的暖阳。',
+    dark_end: '所有人都跪在你面前，瑟瑟发抖。\n\n你居高临下地看着他们——曾经欺辱你的人、背叛你的人、伤害你的人。如今，他们都在你的脚下颤抖。\n\n"求求您......饶命......"周氏的声音嘶哑破碎。\n\n你没有说话，只是微微抬了抬眼皮。下一刻，她就被拖了下去。\n\n你赢了。彻彻底底地赢了。\n\n只是......为什么心里空荡荡的？那个曾经说要护你一生的人，此刻正站在人群之外，用一种你从未见过的眼神看着你。\n\n失望？恐惧？还是......悲哀？',
+    good_end: '春暖花开时节，你坐在廊下看书。\n\n明哥儿已经长高了，正在院子里练字。汲蓝和姝红在一旁说着悄悄话，时不时发出笑声。陈妈妈端着茶点走来，脸上的皱纹里都是慈祥。\n\n一切都很安静，很美好。\n\n前世那些痛苦的记忆，仿佛已经是上辈子的事了。你深吸一口气，闻到了花香。\n\n这一世，活得很好。',
+    bad_end: '你又回到了原点。\n\n睁开眼的时候，还是那间偏殿，还是那盏孤灯。所有的一切努力，似乎都付诸东流。\n\n不......不对。\n\n你还记得这一切。记得那些人的脸，记得那些话，记得那些痛。\n\n你握紧了拳头。这一次，你不会再犯同样的错了。\n\n窗外，雪又开始下了。',
+    normal_end: '故事还没有结束。\n\n前方还有很多未知在等着你。但你已经不再是当初那个任人摆布的小姑娘了。\n\n你抬起头，迎着阳光走去。\n\n不管未来如何，至少这一次，命运掌握在自己手里。'
+  };
+  return t[type] || t.normal_end;
+}
+
+function renderRelationGraph() {
+  const container = $('relationGraph');
+  const w = container.offsetWidth, h = container.offsetHeight;
+  const cx = w/2, cy = h/2;
+
+  const nodes = [
+    {id:'player',label:getCharInfo()?.name||'我',emoji:getCharInfo()?.avatar||'🌸',x:cx,y:cy,cls:'player'},
+    {id:'fu',label:'傅云夕',emoji:'❄️',x:cx+80,y:cy-60,cls:'love'},
+    {id:'wei',label:'卫如风',emoji:'🐺',x:cx-90,y:cy-40,cls:'enemy'},
+    {id:'zhou',label:'周氏',emoji:'🐍',x:cx-70,y:cy+60,cls:'enemy'},
+    {id:'yu',label:'语山',emoji:'🦊',x:cx+70,y:cy+65,cls:'enemy'},
+    {id:'han',label:'明哥儿',emoji:'👦🏻',x:cx-30,y:cy-85,cls:'ally'},
+    {id:'chen',label:'陈妈妈',emoji:'👵🏻',x:cx+100,y:cy+20,cls:'ally'},
+    {id:'yunni',label:'郡主',emoji:'👸🏻',x:cx,y:cy+95,cls:'neutral'}
+  ];
+
+  const aff = GameState.parameters.fu_yunxi_affection;
+  const edges = [
+    {from:'player',to:'fu',label:aff>=70?'深爱':aff>=40?'在意':'初见',color:'#FF69B4',dashed:false,w:Math.max(1,aff/20)},
+    {from:'player',to:'wei',label:'仇敌',color:'#FF0000',dashed:true,w:1.5},
+    {from:'player',to:'zhou',label:'复仇',color:'#8B0000',dashed:false,w:Math.max(1,GameState.parameters.zhou_shi_hostility/25)},
+    {from:'player',to:'yu',label:'宿敌',color:'#FF4500',dashed:true,w:1.5},
+    {from:'player',to:'han',label:'姐弟',color:'#FFD700',dashed:true,w:GameState.parameters.hanming_trust/30},
+    {from:'fu',to:'wei',label:'对立',color:'#666666',dashed:true,w:1},
+    {from:'zhou',to:'yu',label:'母女',color:'#228B22',dashed:false,w:1.5}
+  ];
+
+  let svg = `<svg width="${w}" height="${h}" style="position:absolute;top:0;left:0">`;
+  edges.forEach(e => {
+    const n1=nodes.find(n=>n.id===e.from), n2=nodes.find(n=>n.id===e.to);
+    if(!n1||!n2) return;
+    svg+=`<line x1="${n1.x}"y1="${n1.y}"x2="${n2.x}"y2="${n2.y}"stroke="${e.color}"stroke-width="${e.w}"${e.dashed?' stroke-dasharray="4,4"':''} opacity="0.6"/>`;
+    const mx=(n1.x+n2.x)/2, my=(n1.y+n2.y)/2;
+    svg+=`<text x="${mx}"y="${my-2}"fill="${e.color}"font-size="9"text-anchor="middle"opacity="0.8">${e.label}</text>`;
+  });
+  svg+='</svg>';
+
+  let nodesHtml = nodes.map(n=>`
+    <div class="graph-node ${n.cls}" style="left:${n.x-22}px;top:${n.y-22}px">${n.emoji}</div>
+    <div class="graph-label" style="left:${n.x}px;top:${n.y+26}px">${n.label}</div>
+  `).join('');
+  container.innerHTML = svg + nodesHtml;
+}
+
+// ---- 其他功能 ----
+function showMenu() {
+  const actions = ['📖 存档进度', '⚙️ 设置', '🔄 重新开始', '🚪 返回首页'];
+  const choice = prompt(`菜单：\n${actions.map((a,i)=>`${i+1}. ${a}`).join('\n')}\n\n请输入数字：`);
+  switch(choice) {
+    case '1': alert(`存档功能：\n当前进度：第${GameState.currentAct+1}幕 第${GameState.currentScene+1}场\n选择次数：${GameState.choicesHistory.length}`); break;
+    case '2': alert('设置：参数显示/音效/自动播放等功能开发中'); break;
+    case '3': location.reload(); break;
+    case '4': goToScreen('entry'); break;
+  }
+}
+
+function shareToPlatform(platform) {
+  const msgs = {
+    zhihu: `🎮 我在《重生之贵女难求》互动文游中达成了结局！\n游玩时长：约3小时 | 选择次数：${GameState.choicesHistory.length}\n快来和我一起体验吧！`,
+    wechat: '请截图保存后在微信分享 📱',
+    weibo: '正在打开微博分享...'
+  };
+  alert(msgs[platform] || '分享功能演示');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Auto-resize textarea
+$('inputField')?.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+});
+</script>
+<!-- AI Agent Engine: NPC智能体 + 长期记忆 + 多重结局 -->
+<script src="scripts/ai-agent-engine.js"></script>
+<script>
+// ============================================================
+//  🧠 AI Agent 系统初始化 & 集成层
+// ============================================================
+
+let AI = null;  // 全局 AI Agent 实例
+let AI_ENABLED = false; // 是否启用了真实AI（需要配置API Key）
+
+/** 初始化AI系统 */
+function initAISystem(config) {
+  try {
+    AI = createAIAgentSystem({
+      apiKey: config.apiKey || '',
+      baseUrl: config.baseUrl || 'https://open.bigmodel.cn/api/paas/v4',
+      model: config.model || 'glm-4-flash',
+      maxTokens: 1024,
+      temperature: 0.85
+    });
+    AI_ENABLED = !!(config.apiKey);
+    
+    if (AI_ENABLED) {
+      console.log('🧠 AI Agent 已启动 | 模型:', config.model);
+    } else {
+      console.log('🧠 AI Agent 未配置API Key，使用本地模式');
+    }
+    return true;
+  } catch(e) {
+    console.error('AI初始化失败:', e);
+    AI_ENABLED = false;
+    return false;
+  }
+}
+
+/** 显示API配置弹窗 */
+function showAPIConfigPanel() {
+  const existing = $('apiConfigPanel');
+  if (existing) { existing.remove(); return; }
+
+  const savedKey = localStorage.getItem('novelworld_api_key') || '';
+  const savedUrl = localStorage.getItem('novelworld_api_url') || 'https://open.bigmodel.cn/api/paas/v4';
+  const savedModel = localStorage.getItem('novelworld_api_model') || 'glm-4-flash';
+
+  const panel = document.createElement('div');
+  panel.id = 'apiConfigPanel';
+  panel.innerHTML = `
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center">
+      <div style="background:var(--bg-card);border-radius:16px;padding:24px;width:90%;max-width:420px;border:1px solid rgba(201,169,110,0.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="color:var(--accent-gold);font-size:16px">🧠 AI 智能体配置</h3>
+          <button onclick="$('apiConfigPanel').remove()" style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer">✕</button>
+        </div>
+        
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px">API 地址</label>
+          <input id="cfgApiUrl" value="${savedUrl}" placeholder="https://open.bigmodel.cn/api/paas/v4"
+            style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--choice-border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box">
+          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px">
+            智谱GLM-4: https://open.bigmodel.cn/api/paas/v4<br>
+            DeepSeek: https://api.deepseek.com
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px">模型名称</label>
+          <input id="cfgModel" value="${savedModel}" placeholder="glm-4-flash"
+            style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--choice-border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box">
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px">API Key</label>
+          <input id="cfgApiKey" type="password" value="${savedKey}" placeholder="输入你的 API Key..."
+            style="width:100%;padding:10px;background:var(--bg-primary);border:1px solid var(--choice-border);border-radius:8px;color:var(--text-primary);font-size:13px;box-sizing:border-box">
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <button onclick="saveAPIConfig()" style="flex:1;padding:10px;background:var(--accent-gold);color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px">✅ 保存并启用</button>
+          <button onclick="testAPIConnection()" style="flex:1;padding:10px;background:transparent;color:var(--accent-gold);border:1px solid var(--accent-gold);border-radius:8px;cursor:pointer;font-size:13px">🔗 测试连接</button>
+        </div>
+
+        <div id="apiTestResult" style="margin-top:10px;font-size:12px;text-align:center;display:none"></div>
+
+        <div style="margin-top:14px;padding:10px;background:rgba(201,169,110,0.08);border-radius:8px;font-size:11px;color:var(--text-secondary);line-height:1.6">
+          💡 <b>AI功能说明：</b><br>
+          • 配置后，自由输入将调用真实大模型生成NPC回复<br>
+          • NPC具备完整人设+长期记忆，不会OOC<br>
+          • 结局会根据你的所有选择动态个性化生成<br>
+          • 不配置也可游玩，使用本地模拟模式
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(panel);
+}
+
+function saveAPIConfig() {
+  const key = $('cfgApiKey').value.trim();
+  const url = $('cfgApiUrl').value.trim();
+  const model = $('cfgModel').value.trim();
+
+  localStorage.setItem('novelworld_api_key', key);
+  localStorage.setItem('novelworld_api_url', url);
+  localStorage.setItem('novelworld_api_model', model);
+
+  initAISystem({ apiKey: key, baseUrl: url, model });
+  
+  $('apiConfigPanel').remove();
+  
+  // 显示状态提示
+  const chat = $('chatArea');
+  if (chat && AI_ENABLED) {
+    chat.insertAdjacentHTML('beforeend',
+      `<div style="text-align:center;padding:10px;color:var(--accent-green);font-size:12px">
+        🧠 AI智能体已启用！NPC现在拥有真实记忆和人格
+      </div>`);
+  }
+}
+
+async function testAPIConnection() {
+  const resultEl = $('apiTestResult');
+  resultEl.style.display = 'block';
+  resultEl.style.color = 'var(--text-secondary)';
+  resultEl.textContent = '⏳ 测试中...';
+
+  const key = $('cfgApiKey').value.trim();
+  const url = $('cfgApiUrl').value.trim();
+  const model = $('cfgModel').value.trim() || 'glm-4-flash';
+
+  if (!key) {
+    resultEl.style.color = 'var(--accent-red)';
+    resultEl.textContent = '❌ 请先填写 API Key';
+    return;
+  }
+
+  try {
+    const testClient = new AIApiClient({ apiKey: key, baseUrl: url, model, maxTokens: 20 });
+    const resp = await testClient.chat([
+      { role: 'user', content: '说"连接成功"' }
+    ], { stream: false });
+
+    resultEl.style.color = 'var(--accent-green)';
+    resultEl.textContent = `✅ 连接成功！响应: "${resp.substring(0,30)}..."`;
+  } catch(e) {
+    resultEl.style.color = 'var(--accent-red)';
+    resultEl.textContent = `❌ 连接失败: ${e.message}`;
+  }
+}
+
+// 页面加载时尝试初始化AI
+(function() {
+  const savedKey = localStorage.getItem('novelworld_api_key') || '';
+  const savedUrl = localStorage.getItem('novelworld_api_url') || '';
+  const savedModel = localStorage.getItem('novelworld_api_model') || '';
+  if (savedKey) {
+    initAISystem({ apiKey: savedKey, baseUrl: savedUrl, model: savedModel });
+  } else {
+    initAISystem({});
+  }
+})();
+</script>
+</body>
+</html>
