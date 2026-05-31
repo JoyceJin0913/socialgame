@@ -152,7 +152,7 @@ const REPORTS: Record<string, IntimacyReport> = {
   },
 };
 
-const OTHERS = ["moshen"];
+const OTHERS = ["moshen", "zhouyi", "zhuangsy", "yushan"];
 
 export function EndingScreen({
   ending,

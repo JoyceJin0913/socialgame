@@ -166,7 +166,7 @@ function HuatangChun() {
 
         {/* Dots */}
         <div className="flex justify-center gap-1.5">
-          {PLAYABLE_CHARACTERS.map((_, i) => (
+          {CHARACTERS.map((_, i) => (
             <span key={i} className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-white" : "w-1.5 bg-white/40"}`} />
           ))}
         </div>

@@ -219,7 +219,7 @@ function CharacterDetail() {
           <h2 className="font-brush text-lg text-neutral-900">其他角色</h2>
         </div>
         <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto pb-2">
-          {PLAYABLE_CHARACTERS.filter((x) => x.id !== c.id).map((x) => (
+          {CHARACTERS.filter((x) => x.id !== c.id).map((x) => (
             <Link
               key={x.id}
               to="/character/$id"
