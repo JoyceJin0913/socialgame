@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronLeft, Share2, Sparkles, Crown, Check, Plus, X, User, Users, Bot } from "lucide-react";
 import heroImg from "@/assets/hero-huatangchun.jpg";
-import { CHARACTERS, PLAYABLE_CHARACTERS, PLAYABLE_CHARACTER_IDS } from "@/lib/characters";
+import { CHARACTERS } from "@/lib/characters";
 import { PhoneMockup } from "@/components/PhoneMockup";
 
 type LobbySearch = { char?: string };
@@ -44,9 +44,7 @@ function Lobby() {
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [showPaywall, setShowPaywall] = useState(false);
-  const [charId, setCharId] = useState<string | undefined>(
-    preselected && PLAYABLE_CHARACTER_IDS.has(preselected) ? preselected : undefined
-  );
+  const [charId, setCharId] = useState<string | undefined>(preselected);
   const [mode, setMode] = useState<Mode>("multi");
 
   const toggleScript = (id: string) => {
@@ -75,8 +73,8 @@ function Lobby() {
   const handleStart = () => {
     if (!charId) return;
     if (mode === "solo") {
-      // 单人沉浸：直接进游戏，并把所选角色带入对应视角
-      navigate({ to: "/scene", search: { role: charId } });
+      // 单人沉浸：直接进游戏
+      navigate({ to: "/scene" });
     } else {
       // 站内匹配：先去匹配页（matching → 承接页 → /scene）
       navigate({ to: "/matching", search: { role: charId } });
@@ -239,21 +237,39 @@ function Lobby() {
           ) : (
             <>
               <p className="mt-2 text-[11px] text-neutral-500">点选一位角色入梦</p>
-              <div className="mt-3 grid grid-cols-2 gap-2.5">
-                {PLAYABLE_CHARACTERS.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setCharId(c.id)}
-                    className="group relative aspect-[3/4] overflow-hidden rounded-xl border border-black/10 transition active:scale-95"
-                  >
-                    <img src={c.img} alt={c.name} className="absolute inset-0 h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-2 text-left">
-                      <div className="font-brush text-base text-white">{c.name}</div>
-                      <div className="text-[9px] text-white/70">{c.gender} · {c.age}岁</div>
-                    </div>
-                  </button>
-                ))}
+              <div className="mt-3 grid grid-cols-3 gap-2.5">
+                {CHARACTERS.map((c) => {
+                  const playable = PLAYABLE_CHARACTER_IDS.has(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      disabled={!playable}
+                      onClick={() => playable && setCharId(c.id)}
+                      className={`group relative aspect-[3/4] overflow-hidden rounded-xl border border-black/10 transition ${
+                        playable ? "active:scale-95" : "cursor-not-allowed"
+                      }`}
+                    >
+                      <img
+                        src={c.img}
+                        alt={c.name}
+                        className={`absolute inset-0 h-full w-full object-cover ${
+                          playable ? "" : "grayscale opacity-75"
+                        }`}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+                      {!playable && <div className="absolute inset-0 bg-stone-300/20" />}
+                      <div className="absolute inset-x-0 bottom-0 p-2 text-left">
+                        <div className="font-brush text-base text-white">{c.name}</div>
+                        <div className="text-[9px] text-white/70">{c.gender} · {c.age}岁</div>
+                      </div>
+                      {!playable && (
+                        <div className="absolute left-1/2 top-2 min-w-[72px] -translate-x-1/2 rounded-full border border-white/35 bg-black/35 px-3 py-0.5 text-center text-[9px] tracking-wider text-white/90 backdrop-blur-sm">
+                          敬请期待
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
