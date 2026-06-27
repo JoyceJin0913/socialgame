@@ -47,6 +47,52 @@ function ScenePage() {
   );
 }
 
+/**
+ * Tag 语义系统 —— 让选项标签真正"会说话"
+ * 把零散的 tag 文案归入 4 种倾向，配颜色 + 图标，
+ * 玩家一眼就能看出这个选择偏向什么（不再只是装饰）。
+ */
+type TagTone = "affection" | "defiance" | "restraint" | "insight";
+
+const TAG_TONE: Record<string, TagTone> = {
+  // 情意线（暖橙）
+  深情: "affection", 情意: "affection", 心软: "affection", 不放: "affection",
+  坚持: "affection", 唤醒: "affection",
+  // 锋芒线（赤红）
+  反击: "defiance", 硬刚: "defiance", 决绝: "defiance", 对峙: "defiance",
+  反抗: "defiance", 质问: "defiance", 追问: "defiance", 狠心: "defiance",
+  断念: "defiance", 推拒: "defiance", 冰冷: "defiance",
+  // 隐忍线（青灰）
+  隐忍: "restraint", 克制: "restraint", 退避: "restraint", 体面: "restraint",
+  观察: "restraint", 蓄势: "restraint", 自救: "restraint", 外援: "restraint",
+  藏疾: "restraint", 强撑: "restraint", 回避: "restraint", 佯装: "restraint", 冷演: "restraint",
+  // 洞察线（紫）—— 信息差解锁的关键选择
+  看破: "insight", 暗察: "insight", 追查: "insight", 露真: "insight",
+  破绽: "insight", 破功: "insight", 破防: "insight", 几乎破功: "insight",
+  暗示: "insight", 留隙: "insight",
+};
+
+const TONE_STYLE: Record<TagTone, { cls: string; icon: string; label: string }> = {
+  affection: { cls: "bg-amber-500/20 text-amber-200 border border-amber-400/30", icon: "♥", label: "情意" },
+  defiance:  { cls: "bg-rose-500/20 text-rose-200 border border-rose-400/30", icon: "⚔", label: "锋芒" },
+  restraint: { cls: "bg-sky-500/15 text-sky-200 border border-sky-400/25", icon: "◈", label: "隐忍" },
+  insight:   { cls: "bg-violet-500/20 text-violet-200 border border-violet-400/35", icon: "✦", label: "洞察" },
+};
+
+function TagChip({ tag }: { tag: string }) {
+  const tone = TAG_TONE[tag] ?? "restraint";
+  const s = TONE_STYLE[tone];
+  return (
+    <span
+      className={`mr-2 inline-flex items-center gap-1 rounded-full px-2 py-[1px] text-[10px] tracking-wider ${s.cls}`}
+      title={`${s.label}倾向`}
+    >
+      <span className="text-[9px]">{s.icon}</span>
+      {tag}
+    </span>
+  );
+}
+
 function Scene() {
   const navigate = useNavigate();
   const { role } = Route.useSearch();
@@ -288,6 +334,14 @@ function Scene() {
                 </div>
               )}
 
+              {/* Tag 倾向图例 —— 让玩家看懂选项标签的含义 */}
+              <div className="mb-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[9px] text-white/50">
+                <span className="text-amber-300/80">♥ 情意</span>
+                <span className="text-rose-300/80">⚔ 锋芒</span>
+                <span className="text-sky-300/80">◈ 隐忍</span>
+                <span className="text-violet-300/80">✦ 洞察</span>
+              </div>
+
               <div className="space-y-2">
                 {state.options.map((opt, i) => (
                   <button
@@ -305,9 +359,7 @@ function Scene() {
                             : "border-white/20 bg-black/35 text-amber-50/90 hover:bg-white/10",
                     ].join(" ")}
                   >
-                    <span className="mr-2 inline-block rounded-full bg-white/10 px-2 py-[1px] text-[10px] tracking-wider text-amber-200/80">
-                      {opt.tag}
-                    </span>
+                    <TagChip tag={opt.tag} />
                     {opt.text}
                   </button>
                 ))}
