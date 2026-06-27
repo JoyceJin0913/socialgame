@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronLeft, Share2, Sparkles, Crown, Check, Plus, X, User, Users, Bot } from "lucide-react";
 import heroImg from "@/assets/hero-huatangchun.jpg";
-import { CHARACTERS } from "@/lib/characters";
+import { CHARACTERS, PLAYABLE_CHARACTER_IDS } from "@/lib/characters";
 import { PhoneMockup } from "@/components/PhoneMockup";
 
 type LobbySearch = { char?: string };

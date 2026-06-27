@@ -20,23 +20,51 @@
   },
   "axisDefs": {
     "S": {
-      "study":     { "label": "雪夜书房", "exitCost": "low" },
-      "palace":    { "label": "金銮殿外", "exitCost": "high" },
-      "courtyard": { "label": "深夜独对", "exitCost": "low" }
+      "study": {
+        "label": "雪夜书房",
+        "exitCost": "low"
+      },
+      "palace": {
+        "label": "金銮殿外",
+        "exitCost": "high"
+      },
+      "courtyard": {
+        "label": "深夜独对",
+        "exitCost": "low"
+      },
+      "gate": {
+        "label": "王府门前 · 雪夜送别",
+        "exitCost": "low"
+      },
+      "sidehall": {
+        "label": "金銮偏殿 · 单独对质",
+        "exitCost": "mid"
+      }
     },
     "H": {
-      "illness": { "label": "男主隐疾（寒毒）" }
+      "illness": {
+        "label": "男主隐疾（寒毒）"
+      }
     },
     "A": {
       "rumor": {
         "private": "私密",
-        "court":   "朝堂传遍",
-        "all":     "京中沸腾"
+        "court": "朝堂传遍",
+        "all": "京中沸腾"
       },
       "reverb": {
-        "low":  { "label": "清夜 ×1.0", "multiplier": 1.0 },
-        "mid":  { "label": "细雪 ×1.3", "multiplier": 1.3 },
-        "high": { "label": "大雪 ×2.0", "multiplier": 2.0 }
+        "low": {
+          "label": "清夜 ×1.0",
+          "multiplier": 1.0
+        },
+        "mid": {
+          "label": "细雪 ×1.3",
+          "multiplier": 1.3
+        },
+        "high": {
+          "label": "大雪 ×2.0",
+          "multiplier": 2.0
+        }
       }
     }
   },
@@ -46,54 +74,410 @@
       "consoleTitle": "prism.refract( \"act5_separation\", view=\"hanyan\" )",
       "hSubLabel": "男主隐疾（寒毒）",
       "npcRoster": [
-        { "id": "fyx",      "label": "傅云夕" },
-        { "id": "princess", "label": "西戎公主" },
-        { "id": "emperor",  "label": "皇上" },
-        { "id": "court",    "label": "满朝文武" },
-        { "id": "maid",     "label": "心腹丫鬟" }
+        {
+          "id": "fyx",
+          "label": "傅云夕"
+        },
+        {
+          "id": "princess",
+          "label": "西戎公主"
+        },
+        {
+          "id": "emperor",
+          "label": "皇上"
+        },
+        {
+          "id": "court",
+          "label": "满朝文武"
+        },
+        {
+          "id": "maid",
+          "label": "心腹丫鬟"
+        }
       ],
       "presetLabels": {
         "alpha": "一年之约",
-        "beta":  "凯旋归来",
+        "beta": "凯旋归来",
         "gamma": "一纸休书"
       },
       "presets": {
-        "alpha": { "S": "study",     "H": "unknown",   "N": ["fyx", "maid"],                          "T": 20, "A": { "rumor": "private", "reverb": "low" } },
-        "beta":  { "S": "palace",    "H": "hinted",    "N": ["fyx", "princess", "emperor", "court"], "T": 6,  "A": { "rumor": "court",   "reverb": "mid" } },
-        "gamma": { "S": "courtyard", "H": "confirmed", "N": ["fyx"],                                  "T": 3,  "A": { "rumor": "all",     "reverb": "high" } }
+        "alpha": {
+          "S": "study",
+          "H": "unknown",
+          "N": [
+            "fyx",
+            "maid"
+          ],
+          "T": 20,
+          "A": {
+            "rumor": "private",
+            "reverb": "low"
+          }
+        },
+        "beta": {
+          "S": "palace",
+          "H": "hinted",
+          "N": [
+            "fyx",
+            "princess",
+            "emperor",
+            "court"
+          ],
+          "T": 6,
+          "A": {
+            "rumor": "court",
+            "reverb": "mid"
+          }
+        },
+        "gamma": {
+          "S": "courtyard",
+          "H": "confirmed",
+          "N": [
+            "fyx"
+          ],
+          "T": 3,
+          "A": {
+            "rumor": "all",
+            "reverb": "high"
+          }
+        },
+        "delta": {
+          "S": "gate",
+          "H": "unknown",
+          "N": [
+            "fyx"
+          ],
+          "T": 10,
+          "A": {
+            "rumor": "private",
+            "reverb": "mid"
+          }
+        },
+        "epsilon": {
+          "S": "sidehall",
+          "H": "hinted",
+          "N": [
+            "fyx"
+          ],
+          "T": 5,
+          "A": {
+            "rumor": "court",
+            "reverb": "mid"
+          }
+        }
       },
       "tones": {
         "study": {
           "private": "雪意未消，他唤你过去，灯只点了一盏。",
-          "court":   "雪夜里，外头的脚步声还在远处徘徊。",
-          "all":     "宫中的传言已经传到了王府门外。"
+          "court": "雪夜里，外头的脚步声还在远处徘徊。",
+          "all": "宫中的传言已经传到了王府门外。"
         },
         "palace": {
           "private": "殿门外只剩你们两人，但下一刻就会有人出现。",
-          "court":   "满朝文武看着，每一句话都在被记。",
-          "all":     "京中已经在传你和公主的事了。"
+          "court": "满朝文武看着，每一句话都在被记。",
+          "all": "京中已经在传你和公主的事了。"
         },
         "courtyard": {
           "private": "更深露重，他把休书放在你面前，不敢看你。",
-          "court":   "宫里的旨意还未冷，他就动了笔。",
-          "all":     "今夜过后，整个京城都会知道这张纸。"
+          "court": "宫里的旨意还未冷，他就动了笔。",
+          "all": "今夜过后，整个京城都会知道这张纸。"
         }
       },
       "pool": [
-        { "id": "vow_loyalty",         "text": "说一句让他记你一辈子的承诺",        "hook": "vow_loyalty",         "require": { "S": "study",     "N": ["fyx"] },                              "delta": { "信任傅云夕": "+++", "内在成长": "+" } },
-        { "id": "probe_intent",        "text": "追问\"你究竟要去多久\"，盯住他的眼神", "hook": "probe_intent",        "require": { "S": "study",     "N": ["fyx"] },                              "delta": { "情报": "+", "信任傅云夕": "+" } },
-        { "id": "silent_consent",      "text": "什么也不说，咬唇低头收下他的话",      "hook": "silent_consent",      "require": { "S": "study" },                                                "delta": { "隐忍": "+", "勇气": "-" } },
-        { "id": "investigate_illness", "text": "借更衣靠近，试探他的脉象与药味",      "hook": "investigate_illness", "require": { "S": "study",     "N": ["fyx"], "H": "hinted_or_above" },     "delta": { "情报": "++", "信任傅云夕": "+" } },
-        { "id": "public_grace",        "text": "当众落落大方，向公主举杯敬一杯",      "hook": "public_grace",        "require": { "S": "palace",    "N": ["princess"] },                         "delta": { "民意": "+", "隐忍": "+" } },
-        { "id": "public_pushback",     "text": "当朝反问公主\"我夫妻之事与你何干\"",   "hook": "public_pushback",     "require": { "S": "palace",    "N": ["princess"] },                         "delta": { "勇气": "++", "王府势力": "-" } },
-        { "id": "tactical_yield",      "text": "微微福身，礼让一步退到一旁",          "hook": "tactical_yield",      "require": { "S": "palace" },                                               "delta": { "理智": "+", "机会": "-" } },
-        { "id": "appeal_throne",       "text": "当殿向皇上一句话，把局面引向另一条路", "hook": "appeal_throne",       "require": { "S": "palace",    "N": ["emperor"], "A1": "court" },         "delta": { "民意": "++", "风险": "+" } },
-        { "id": "confront_betrayal",   "text": "红着眼问他\"你要娶西戎公主？\"",       "hook": "confront_betrayal",   "require": { "S": "courtyard", "N": ["fyx"] },                              "delta": { "勇气": "+", "王府势力": "-" } },
-        { "id": "accept_silently",     "text": "安静接过休书，不发一言",              "hook": "accept_silently",     "require": { "S": "courtyard", "N": ["fyx"] },                              "delta": { "隐忍": "++", "理智": "+" } },
-        { "id": "reject_violently",    "text": "将休书撕得粉碎，告诉他\"做梦\"",        "hook": "reject_violently",    "require": { "S": "courtyard", "N": ["fyx"] },                              "delta": { "勇气": "++", "理智": "-" } },
-        { "id": "truth_revealed",      "text": "看着他的眼睛说\"我知道你在装\"",       "hook": "truth_revealed",      "require": { "S": "courtyard", "N": ["fyx"], "H": "confirmed" },           "delta": { "信任傅云夕": "+++", "隐蔽": "---" } },
-        { "id": "block_departure",     "text": "不顾礼仪，直接拦下他不让他走",        "hook": "block_departure",     "require": { "N": ["fyx"], "Tmax": 4 },                                     "delta": { "勇气": "++", "体面": "-" } },
-        { "id": "reach_ally",          "text": "让心腹连夜送信给杨琦寻援",            "hook": "reach_ally",          "require": { "N": ["maid"], "Tmax": 8 },                                    "delta": { "盟友信任": "+" } }
+        {
+          "id": "vow_loyalty",
+          "text": "说一句让他记你一辈子的承诺",
+          "hook": "vow_loyalty",
+          "require": {
+            "S": "study",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "信任傅云夕": "+++",
+            "内在成长": "+"
+          }
+        },
+        {
+          "id": "probe_intent",
+          "text": "追问\"你究竟要去多久\"，盯住他的眼神",
+          "hook": "probe_intent",
+          "require": {
+            "S": "study",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "情报": "+",
+            "信任傅云夕": "+"
+          }
+        },
+        {
+          "id": "silent_consent",
+          "text": "什么也不说，咬唇低头收下他的话",
+          "hook": "silent_consent",
+          "require": {
+            "S": "study"
+          },
+          "delta": {
+            "隐忍": "+",
+            "勇气": "-"
+          }
+        },
+        {
+          "id": "investigate_illness",
+          "text": "借更衣靠近，试探他的脉象与药味",
+          "hook": "investigate_illness",
+          "require": {
+            "S": "study",
+            "N": [
+              "fyx"
+            ],
+            "H": "hinted_or_above"
+          },
+          "delta": {
+            "情报": "++",
+            "信任傅云夕": "+"
+          }
+        },
+        {
+          "id": "public_grace",
+          "text": "当众落落大方，向公主举杯敬一杯",
+          "hook": "public_grace",
+          "require": {
+            "S": "palace",
+            "N": [
+              "princess"
+            ]
+          },
+          "delta": {
+            "民意": "+",
+            "隐忍": "+"
+          }
+        },
+        {
+          "id": "public_pushback",
+          "text": "当朝反问公主\"我夫妻之事与你何干\"",
+          "hook": "public_pushback",
+          "require": {
+            "S": "palace",
+            "N": [
+              "princess"
+            ]
+          },
+          "delta": {
+            "勇气": "++",
+            "王府势力": "-"
+          }
+        },
+        {
+          "id": "tactical_yield",
+          "text": "微微福身，礼让一步退到一旁",
+          "hook": "tactical_yield",
+          "require": {
+            "S": "palace"
+          },
+          "delta": {
+            "理智": "+",
+            "机会": "-"
+          }
+        },
+        {
+          "id": "appeal_throne",
+          "text": "当殿向皇上一句话，把局面引向另一条路",
+          "hook": "appeal_throne",
+          "require": {
+            "S": "palace",
+            "N": [
+              "emperor"
+            ],
+            "A1": "court"
+          },
+          "delta": {
+            "民意": "++",
+            "风险": "+"
+          }
+        },
+        {
+          "id": "confront_betrayal",
+          "text": "红着眼问他\"你要娶西戎公主？\"",
+          "hook": "confront_betrayal",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "勇气": "+",
+            "王府势力": "-"
+          }
+        },
+        {
+          "id": "accept_silently",
+          "text": "安静接过休书，不发一言",
+          "hook": "accept_silently",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "隐忍": "++",
+            "理智": "+"
+          }
+        },
+        {
+          "id": "reject_violently",
+          "text": "将休书撕得粉碎，告诉他\"做梦\"",
+          "hook": "reject_violently",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "勇气": "++",
+            "理智": "-"
+          }
+        },
+        {
+          "id": "truth_revealed",
+          "text": "看着他的眼睛说\"我知道你在装\"",
+          "hook": "truth_revealed",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "fyx"
+            ],
+            "H": "confirmed"
+          },
+          "delta": {
+            "信任傅云夕": "+++",
+            "隐蔽": "---"
+          }
+        },
+        {
+          "id": "block_departure",
+          "text": "不顾礼仪，直接拦下他不让他走",
+          "hook": "block_departure",
+          "require": {
+            "N": [
+              "fyx"
+            ],
+            "Tmax": 4
+          },
+          "delta": {
+            "勇气": "++",
+            "体面": "-"
+          }
+        },
+        {
+          "id": "reach_ally",
+          "text": "让心腹连夜送信给杨琦寻援",
+          "hook": "reach_ally",
+          "require": {
+            "N": [
+              "maid"
+            ],
+            "Tmax": 8
+          },
+          "delta": {
+            "盟友信任": "+"
+          }
+        },
+        {
+          "id": "send_charm",
+          "text": "把贴身的护身符塞进他手心，要他平安回来",
+          "hook": "send_charm",
+          "require": {
+            "S": "gate",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "信任傅云夕": "++",
+            "内在成长": "+"
+          }
+        },
+        {
+          "id": "feel_cold_hand",
+          "text": "握住他的手——怎么这么凉？追问他身子是不是出了问题",
+          "hook": "feel_cold_hand",
+          "require": {
+            "S": "gate",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "情报": "++",
+            "信任傅云夕": "+"
+          }
+        },
+        {
+          "id": "quiet_farewell",
+          "text": "什么也不多问，只静静看他翻身上马",
+          "hook": "quiet_farewell",
+          "require": {
+            "S": "gate"
+          },
+          "delta": {
+            "隐忍": "+",
+            "勇气": "-"
+          }
+        },
+        {
+          "id": "demand_explain",
+          "text": "堵住他：当着满朝文武，你连看我一眼都不肯？",
+          "hook": "demand_explain",
+          "require": {
+            "S": "sidehall",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "勇气": "+",
+            "信任傅云夕": "+"
+          }
+        },
+        {
+          "id": "cold_walk_away",
+          "text": "冷笑一声转身就走，不给他解释的机会",
+          "hook": "cold_walk_away",
+          "require": {
+            "S": "sidehall",
+            "N": [
+              "fyx"
+            ]
+          },
+          "delta": {
+            "隐忍": "-",
+            "勇气": "+"
+          }
+        },
+        {
+          "id": "see_through_act",
+          "text": "压低声音：你不是变了心——你是在演给所有人看",
+          "hook": "see_through_act",
+          "require": {
+            "S": "sidehall",
+            "N": [
+              "fyx"
+            ],
+            "H": "hinted_or_above"
+          },
+          "delta": {
+            "信任傅云夕": "+++",
+            "情报": "++"
+          }
+        }
       ]
     },
     "fyx": {
@@ -101,53 +485,404 @@
       "consoleTitle": "prism.refract( \"act5_separation\", view=\"fyx\" )",
       "hSubLabel": "女主对你病情的察觉",
       "npcRoster": [
-        { "id": "hanyan",   "label": "寒雁" },
-        { "id": "princess", "label": "西戎公主" },
-        { "id": "emperor",  "label": "皇上" },
-        { "id": "court",    "label": "满朝文武" },
-        { "id": "wuyitai",  "label": "吴太医" }
+        {
+          "id": "hanyan",
+          "label": "寒雁"
+        },
+        {
+          "id": "princess",
+          "label": "西戎公主"
+        },
+        {
+          "id": "emperor",
+          "label": "皇上"
+        },
+        {
+          "id": "court",
+          "label": "满朝文武"
+        },
+        {
+          "id": "wuyitai",
+          "label": "吴太医"
+        }
       ],
       "presetLabels": {
         "alpha": "出征前夜",
-        "beta":  "凯旋当朝",
+        "beta": "凯旋当朝",
         "gamma": "执笔休书"
       },
       "presets": {
-        "alpha": { "S": "study",     "H": "unknown",   "N": ["hanyan"],                                "T": 20, "A": { "rumor": "private", "reverb": "low" } },
-        "beta":  { "S": "palace",    "H": "hinted",    "N": ["hanyan", "princess", "emperor", "court"], "T": 6,  "A": { "rumor": "court",   "reverb": "mid" } },
-        "gamma": { "S": "courtyard", "H": "confirmed", "N": ["hanyan"],                                "T": 3,  "A": { "rumor": "all",     "reverb": "high" } }
+        "alpha": {
+          "S": "study",
+          "H": "unknown",
+          "N": [
+            "hanyan"
+          ],
+          "T": 20,
+          "A": {
+            "rumor": "private",
+            "reverb": "low"
+          }
+        },
+        "beta": {
+          "S": "palace",
+          "H": "hinted",
+          "N": [
+            "hanyan",
+            "princess",
+            "emperor",
+            "court"
+          ],
+          "T": 6,
+          "A": {
+            "rumor": "court",
+            "reverb": "mid"
+          }
+        },
+        "gamma": {
+          "S": "courtyard",
+          "H": "confirmed",
+          "N": [
+            "hanyan"
+          ],
+          "T": 3,
+          "A": {
+            "rumor": "all",
+            "reverb": "high"
+          }
+        },
+        "delta": {
+          "S": "gate",
+          "H": "confirmed",
+          "N": [
+            "hanyan"
+          ],
+          "T": 10,
+          "A": {
+            "rumor": "private",
+            "reverb": "mid"
+          }
+        },
+        "epsilon": {
+          "S": "sidehall",
+          "H": "confirmed",
+          "N": [
+            "hanyan"
+          ],
+          "T": 5,
+          "A": {
+            "rumor": "court",
+            "reverb": "mid"
+          }
+        }
       },
       "tones": {
         "study": {
           "private": "你看着她的眼睛，把那句你练习了一夜的话说出口。",
-          "court":   "一夜之间，你要让她相信你是真心要她\"改嫁\"的。",
-          "all":     "这话一旦说出口，全京城都会知道你不要她。"
+          "court": "一夜之间，你要让她相信你是真心要她\"改嫁\"的。",
+          "all": "这话一旦说出口，全京城都会知道你不要她。"
         },
         "palace": {
           "private": "她在那里看着你，你必须当作没看见。",
-          "court":   "满朝文武在看，公主在你身侧，你的妻子在不远处——你必须演到底。",
-          "all":     "京中已经把你和公主放在了一起。她现在听到的，全是流言。"
+          "court": "满朝文武在看，公主在你身侧，你的妻子在不远处——你必须演到底。",
+          "all": "京中已经把你和公主放在了一起。她现在听到的，全是流言。"
         },
         "courtyard": {
           "private": "你的手在抖。她要么明白你，要么恨你一辈子——你选哪个？",
-          "court":   "皇命已下，今夜过后这张休书会被宫里的人记入档。",
-          "all":     "明早全京城都会议论这张休书，但你只在乎其中一个人会怎么读它。"
+          "court": "皇命已下，今夜过后这张休书会被宫里的人记入档。",
+          "all": "明早全京城都会议论这张休书，但你只在乎其中一个人会怎么读它。"
         }
       },
       "pool": [
-        { "id": "mask_with_lightness",  "text": "把\"一年之约\"说得轻描淡写",            "hook": "mask_with_lightness",  "require": { "S": "study",     "N": ["hanyan"] },                          "delta": { "她的信任": "-", "自身负担": "+" } },
-        { "id": "bind_with_weight",     "text": "把承诺说得很重，让她不舍",            "hook": "bind_with_weight",     "require": { "S": "study",     "N": ["hanyan"] },                          "delta": { "她的信任": "++", "自身负担": "++" } },
-        { "id": "pre_arrange_safety",   "text": "暗示她\"若我不归，去找卓七\"",          "hook": "pre_arrange_safety",   "require": { "S": "study",     "N": ["hanyan"] },                          "delta": { "备份": "+", "她的不解": "+" } },
-        { "id": "hide_symptom",         "text": "借故避开她递来的杯酒（怕被发现药味）", "hook": "hide_symptom",         "require": { "S": "study",     "N": ["hanyan"], "H": "confirmed" },        "delta": { "隐蔽": "+", "她的信任": "-" } },
-        { "id": "cold_act_complete",    "text": "当众完全不看她，演到底",              "hook": "cold_act_complete",    "require": { "S": "palace",    "N": ["hanyan", "court"] },                 "delta": { "计划完成": "++", "关系": "--" } },
-        { "id": "cold_act_with_hint",   "text": "用眼神留一丝余地（赌她看得懂）",      "hook": "cold_act_with_hint",   "require": { "S": "palace",    "N": ["hanyan"] },                          "delta": { "计划完成": "+", "关系": "+" } },
-        { "id": "escape_confrontation", "text": "借故离场，避开当庭对峙",              "hook": "escape_confrontation", "require": { "S": "palace" },                                               "delta": { "风险规避": "+", "关系": "-" } },
-        { "id": "signal_throne",        "text": "暗中向皇上递眼色（仅当皇上知情时）", "hook": "signal_throne",        "require": { "S": "palace",    "N": ["emperor"], "H": "hinted_or_above" }, "delta": { "朝堂势力": "++", "暴露风险": "+" } },
-        { "id": "divorce_cruel",        "text": "把休书写得冷酷无情，断她念想",        "hook": "divorce_cruel",        "require": { "S": "courtyard", "N": ["hanyan"] },                          "delta": { "计划完成": "++", "关系": "---" } },
-        { "id": "divorce_with_clue",    "text": "把休书写得留有破绽，赌她看懂",        "hook": "divorce_with_clue",    "require": { "S": "courtyard", "N": ["hanyan"] },                          "delta": { "计划完成": "+", "关系": "+", "风险": "+" } },
-        { "id": "cant_let_go",          "text": "在递出去之前撕掉，重写",              "hook": "cant_let_go",          "require": { "S": "courtyard", "N": ["hanyan"] },                          "delta": { "关系": "+++", "计划崩盘": "---" } },
-        { "id": "accidental_reveal",    "text": "提笔前忽然咳血，让她看见",            "hook": "accidental_reveal",    "require": { "S": "courtyard", "N": ["hanyan"], "H": "confirmed" },       "delta": { "真相暴露": "+++", "计划崩盘": "---" } },
-        { "id": "consult_wuyitai",      "text": "让吴太医立刻准备最后一剂寒毒压制药", "hook": "consult_wuyitai",      "require": { "N": ["wuyitai"], "Tmax": 8 },                                "delta": { "苟活时间": "+", "隐蔽": "-" } }
+        {
+          "id": "mask_with_lightness",
+          "text": "把\"一年之约\"说得轻描淡写",
+          "hook": "mask_with_lightness",
+          "require": {
+            "S": "study",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "她的信任": "-",
+            "自身负担": "+"
+          }
+        },
+        {
+          "id": "bind_with_weight",
+          "text": "把承诺说得很重，让她不舍",
+          "hook": "bind_with_weight",
+          "require": {
+            "S": "study",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "她的信任": "++",
+            "自身负担": "++"
+          }
+        },
+        {
+          "id": "pre_arrange_safety",
+          "text": "暗示她\"若我不归，去找卓七\"",
+          "hook": "pre_arrange_safety",
+          "require": {
+            "S": "study",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "备份": "+",
+            "她的不解": "+"
+          }
+        },
+        {
+          "id": "hide_symptom",
+          "text": "借故避开她递来的杯酒（怕被发现药味）",
+          "hook": "hide_symptom",
+          "require": {
+            "S": "study",
+            "N": [
+              "hanyan"
+            ],
+            "H": "confirmed"
+          },
+          "delta": {
+            "隐蔽": "+",
+            "她的信任": "-"
+          }
+        },
+        {
+          "id": "cold_act_complete",
+          "text": "当众完全不看她，演到底",
+          "hook": "cold_act_complete",
+          "require": {
+            "S": "palace",
+            "N": [
+              "hanyan",
+              "court"
+            ]
+          },
+          "delta": {
+            "计划完成": "++",
+            "关系": "--"
+          }
+        },
+        {
+          "id": "cold_act_with_hint",
+          "text": "用眼神留一丝余地（赌她看得懂）",
+          "hook": "cold_act_with_hint",
+          "require": {
+            "S": "palace",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "计划完成": "+",
+            "关系": "+"
+          }
+        },
+        {
+          "id": "escape_confrontation",
+          "text": "借故离场，避开当庭对峙",
+          "hook": "escape_confrontation",
+          "require": {
+            "S": "palace"
+          },
+          "delta": {
+            "风险规避": "+",
+            "关系": "-"
+          }
+        },
+        {
+          "id": "signal_throne",
+          "text": "暗中向皇上递眼色（仅当皇上知情时）",
+          "hook": "signal_throne",
+          "require": {
+            "S": "palace",
+            "N": [
+              "emperor"
+            ],
+            "H": "hinted_or_above"
+          },
+          "delta": {
+            "朝堂势力": "++",
+            "暴露风险": "+"
+          }
+        },
+        {
+          "id": "divorce_cruel",
+          "text": "把休书写得冷酷无情，断她念想",
+          "hook": "divorce_cruel",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "计划完成": "++",
+            "关系": "---"
+          }
+        },
+        {
+          "id": "divorce_with_clue",
+          "text": "把休书写得留有破绽，赌她看懂",
+          "hook": "divorce_with_clue",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "计划完成": "+",
+            "关系": "+",
+            "风险": "+"
+          }
+        },
+        {
+          "id": "cant_let_go",
+          "text": "在递出去之前撕掉，重写",
+          "hook": "cant_let_go",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "关系": "+++",
+            "计划崩盘": "---"
+          }
+        },
+        {
+          "id": "accidental_reveal",
+          "text": "提笔前忽然咳血，让她看见",
+          "hook": "accidental_reveal",
+          "require": {
+            "S": "courtyard",
+            "N": [
+              "hanyan"
+            ],
+            "H": "confirmed"
+          },
+          "delta": {
+            "真相暴露": "+++",
+            "计划崩盘": "---"
+          }
+        },
+        {
+          "id": "consult_wuyitai",
+          "text": "让吴太医立刻准备最后一剂寒毒压制药",
+          "hook": "consult_wuyitai",
+          "require": {
+            "N": [
+              "wuyitai"
+            ],
+            "Tmax": 8
+          },
+          "delta": {
+            "苟活时间": "+",
+            "隐蔽": "-"
+          }
+        },
+        {
+          "id": "push_her_back",
+          "text": "硬起心肠让她回去，别让她看见你掩在袖中的咳",
+          "hook": "push_her_back",
+          "require": {
+            "S": "gate",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "她的信任": "-",
+            "隐蔽": "+"
+          }
+        },
+        {
+          "id": "take_her_charm",
+          "text": "收下她的护身符，指尖在她掌心多停了一瞬",
+          "hook": "take_her_charm",
+          "require": {
+            "S": "gate",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "她的信任": "++",
+            "自身负担": "+"
+          }
+        },
+        {
+          "id": "hide_cough",
+          "text": "趁她不注意，把要涌上来的血咳意死死压下去",
+          "hook": "hide_cough",
+          "require": {
+            "S": "gate",
+            "N": [
+              "hanyan"
+            ],
+            "H": "confirmed"
+          },
+          "delta": {
+            "隐蔽": "++",
+            "她的信任": "-"
+          }
+        },
+        {
+          "id": "stay_cold",
+          "text": "维持那副冷脸，告诉她朝堂之上各为其主",
+          "hook": "stay_cold",
+          "require": {
+            "S": "sidehall",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "计划完成": "+",
+            "关系": "-"
+          }
+        },
+        {
+          "id": "almost_break",
+          "text": "话到嘴边几乎要说出真相，最后只化成一句“你不懂”",
+          "hook": "almost_break",
+          "require": {
+            "S": "sidehall",
+            "N": [
+              "hanyan"
+            ]
+          },
+          "delta": {
+            "关系": "+",
+            "计划崩盘": "+"
+          }
+        },
+        {
+          "id": "let_her_see",
+          "text": "在转身的刹那，让她看清你眼里压着的痛",
+          "hook": "let_her_see",
+          "require": {
+            "S": "sidehall",
+            "N": [
+              "hanyan"
+            ],
+            "H": "confirmed"
+          },
+          "delta": {
+            "关系": "++",
+            "真相暴露": "+"
+          }
+        }
       ]
     }
   }
