@@ -73,7 +73,7 @@ function HuatangChun() {
   }, []);
 
   const setActiveSafe = (i: number) => {
-    const idx = Math.max(0, Math.min(CHARACTERS.length - 1, i));
+    const idx = Math.max(0, Math.min(PLAYABLE_CHARACTERS.length - 1, i));
     setActive(idx);
     centerCard(idx);
   };

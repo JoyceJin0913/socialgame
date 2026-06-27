@@ -107,10 +107,56 @@ const HANYAN_SCENES: SceneConfig[] = [
     freeInputHint: "说一句让傅云夕记你一辈子的话…",
   },
   {
+    id: "farewell_send",
+    sceneTag: "第五幕 · 雪夜送别",
+    sceneName: "玄清王府 · 门前",
+    progress: 28,
+    narrations: [
+      "出征当夜，大雪压枝。你披衣赶到府门，他已一身玄甲，翻身欲上马。",
+      "这一别便是一年。你心里那点不安越压越重——他近来总在背人时咳嗽，掌心也凉得反常。",
+      "你想在他走前，再确认一次：他到底有没有事瞒着你。",
+    ],
+    aiCharacter: "傅云夕",
+    aiPersona: "fuyunxi",
+    aiOpening: "雪大，回去吧。一年很快。",
+    prism: { script: "act5_separation", view: "hanyan", preset: "delta" },
+    dialogueBeats: [
+      {
+        id: "probe",
+        label: "试探",
+        options: [
+          { text: "把贴身护身符塞进他手心，要他平安回来。", tag: "情意", cls: "recommended", hook: "send_charm" },
+          { text: "握住他的手——怎么这么凉？追问他身子是不是出了问题。", tag: "暗察", hook: "feel_cold_hand" },
+          { text: "什么也不多问，只静静看他翻身上马。", tag: "隐忍", cls: "gentle", hook: "quiet_farewell" },
+        ],
+      },
+      {
+        id: "pressure",
+        label: "逼近",
+        options: [
+          { text: "拦在马前，要他当面立下确切的归期。", tag: "不放", cls: "recommended", hook: "block_departure" },
+          { text: "再握一次他的手，确认那股寒意究竟从何而来。", tag: "追查", hook: "feel_cold_hand" },
+          { text: "悄悄叮嘱心腹随军，替他在暗处备一条退路。", tag: "外援", hook: "reach_ally" },
+        ],
+      },
+      {
+        id: "decision",
+        label: "抉择",
+        options: [
+          { text: "塞下护身符，把所有担心都缝进这一句“活着回来”。", tag: "深情", cls: "recommended", hook: "send_charm" },
+          { text: "目送他离开，把这份不安记在心里，留待日后查证。", tag: "克制", cls: "gentle", hook: "quiet_farewell" },
+          { text: "不肯松手，逼他给一个不许糊弄的答复。", tag: "坚持", hook: "block_departure" },
+        ],
+      },
+    ],
+    allowFreeInput: true,
+    freeInputHint: "他就要出征了，你想对他说…",
+  },
+  {
     id: "reunion",
     sceneTag: "第五幕 · 凯旋归来",
     sceneName: "皇宫 · 金銮殿外",
-    progress: 40,
+    progress: 42,
     narrations: [
       "一年又两月，他凯旋。",
       "可同行的还有西戎公主——伊琳娜，金发碧眼，国书上明明白白：愿以两国和平为聘，下嫁玄清王。",
@@ -158,10 +204,56 @@ const HANYAN_SCENES: SceneConfig[] = [
     freeInputHint: "当众回应这位西戎公主…",
   },
   {
+    id: "sidehall_confront",
+    sceneTag: "第五幕 · 偏殿对质",
+    sceneName: "皇宫 · 金銮偏殿",
+    progress: 55,
+    narrations: [
+      "金銮殿散场，众人退去。你绕到偏殿，终于把他一个人堵住。",
+      "方才大殿之上，他当着所有人冷脸不语，连看你一眼都没有。",
+      "可你分明记得——出征前那个塞护身符的人，不是这样的他。这一刻只有你们两个，你要他给个交代。",
+    ],
+    aiCharacter: "傅云夕",
+    aiPersona: "fuyunxi_cold",
+    aiOpening: "庄氏，殿上的话你也听见了。莫要再纠缠。",
+    prism: { script: "act5_separation", view: "hanyan", preset: "epsilon" },
+    dialogueBeats: [
+      {
+        id: "probe",
+        label: "试探",
+        options: [
+          { text: "堵住他：当着满朝文武，你连看我一眼都不肯？", tag: "质问", cls: "recommended", hook: "demand_explain" },
+          { text: "冷笑一声转身就走，不给他解释的机会。", tag: "决绝", cls: "danger", hook: "cold_walk_away" },
+          { text: "盯着他的眼睛，等他先露出破绽。", tag: "观察", cls: "gentle", hook: "demand_explain" },
+        ],
+      },
+      {
+        id: "pressure",
+        label: "逼近",
+        options: [
+          { text: "逼问他：西戎公主、那道和离的旨意，到底是谁的主意？", tag: "追问", cls: "recommended", hook: "demand_explain" },
+          { text: "提起出征前的雪夜，问他那个塞护身符的人去哪了。", tag: "唤醒", hook: "demand_explain" },
+          { text: "干脆赌气不理他，看他急不急。", tag: "试探", cls: "gentle", hook: "cold_walk_away" },
+        ],
+      },
+      {
+        id: "decision",
+        label: "抉择",
+        options: [
+          { text: "压低声音：你不是变了心——你是在演给所有人看。", tag: "看破", cls: "recommended", hook: "see_through_act" },
+          { text: "把话咽回去，先记下他每一个反常的细节。", tag: "蓄势", cls: "gentle", hook: "demand_explain" },
+          { text: "彻底冷下脸，告诉他既然这样，那就走着瞧。", tag: "对峙", cls: "danger", hook: "cold_walk_away" },
+        ],
+      },
+    ],
+    allowFreeInput: true,
+    freeInputHint: "只有你们两个人，你要他给个交代…",
+  },
+  {
     id: "divorce",
     sceneTag: "第五幕 · 一纸休书",
     sceneName: "玄清王府 · 书房",
-    progress: 65,
+    progress: 75,
     narrations: [
       "那夜傅云夕回府，将一纸休书放在你面前。",
       "他指节因用力而发白，目光不敢看你。",
@@ -265,10 +357,56 @@ const FYX_SCENES: SceneConfig[] = [
     freeInputHint: "这句话决定她是否会等你…",
   },
   {
+    id: "farewell_send_fyx",
+    sceneTag: "第五幕 · 雪夜送别",
+    sceneName: "玄清王府 · 门前",
+    progress: 28,
+    narrations: [
+      "出征当夜，大雪压枝。你已披甲上马，她却披衣赶来，站在门前看你。",
+      "你身上的寒毒近来发作得越来越频，喉间那口血，你压了一路。",
+      "你不能让她看出来——她若知道，便绝不会让你独自赴险。",
+    ],
+    aiCharacter: "庄寒雁",
+    aiPersona: "hanyan",
+    aiOpening: "（她跑到马前，仰头看你，手里似乎攥着什么东西。）",
+    prism: { script: "act5_separation", view: "fyx", preset: "delta" },
+    dialogueBeats: [
+      {
+        id: "probe",
+        label: "试探",
+        options: [
+          { text: "硬起心肠让她回去，别让她看见你掩在袖中的咳。", tag: "推拒", cls: "danger", hook: "push_her_back" },
+          { text: "收下她递来的护身符，指尖在她掌心多停了一瞬。", tag: "心软", cls: "recommended", hook: "take_her_charm" },
+          { text: "趁她不注意，把要涌上来的血咳意死死压下去。", tag: "藏疾", cls: "gentle", hook: "hide_cough" },
+        ],
+      },
+      {
+        id: "pressure",
+        label: "逼近",
+        options: [
+          { text: "把她出府的安危先安排好，再冷声催她回屋。", tag: "护她", cls: "recommended", hook: "push_her_back" },
+          { text: "握紧那枚护身符，让她以为你只是寻常远行。", tag: "佯装", hook: "take_her_charm" },
+          { text: "别开脸，绝不让她碰到你冰凉发寒的手。", tag: "回避", cls: "gentle", hook: "hide_cough" },
+        ],
+      },
+      {
+        id: "decision",
+        label: "抉择",
+        options: [
+          { text: "最后看她一眼，把所有不舍咽下，调转马头。", tag: "决绝", cls: "danger", hook: "push_her_back" },
+          { text: "贴身收好护身符，许她一个你未必能兑现的归期。", tag: "深情", cls: "recommended", hook: "take_her_charm" },
+          { text: "强撑着不让病容露出分毫，平静地与她作别。", tag: "强撑", cls: "gentle", hook: "hide_cough" },
+        ],
+      },
+    ],
+    allowFreeInput: true,
+    freeInputHint: "你不能让她知道真相，却又舍不得…",
+  },
+  {
     id: "reunion_fyx",
     sceneTag: "第五幕 · 凯旋当朝",
     sceneName: "皇宫 · 金銮殿外",
-    progress: 40,
+    progress: 42,
     narrations: [
       "你凯旋了，身边却必须带着伊琳娜——这是和西戎议和的代价。",
       "皇兄当朝下旨准和离，是你和他演了一夜才定下的本子。",
@@ -316,10 +454,56 @@ const FYX_SCENES: SceneConfig[] = [
     freeInputHint: "她要么明白你，要么恨你一辈子…",
   },
   {
+    id: "sidehall_confront_fyx",
+    sceneTag: "第五幕 · 偏殿对质",
+    sceneName: "皇宫 · 金銮偏殿",
+    progress: 55,
+    narrations: [
+      "金銮殿散场，你刚松一口气，她却绕到偏殿，把你一个人堵住。",
+      "方才殿上你冷脸到底，连看她一眼都不敢——你怕一旦对上她的眼，这场苦肉计就演不下去。",
+      "现在只有你们两个。她在等你解释，而你最不能做的，就是解释。",
+    ],
+    aiCharacter: "庄寒雁",
+    aiPersona: "hanyan",
+    aiOpening: "（她拦在你面前，眼睛红着，却一字一句问得极稳：你倒是说话啊。）",
+    prism: { script: "act5_separation", view: "fyx", preset: "epsilon" },
+    dialogueBeats: [
+      {
+        id: "probe",
+        label: "试探",
+        options: [
+          { text: "维持那副冷脸，告诉她朝堂之上各为其主。", tag: "冷演", cls: "danger", hook: "stay_cold" },
+          { text: "话到嘴边几乎要说出真相，最后只化成一句“你不懂”。", tag: "几乎破功", cls: "recommended", hook: "almost_break" },
+          { text: "在转身的刹那，让她看清你眼里压着的痛。", tag: "露真", cls: "recommended", hook: "let_her_see" },
+        ],
+      },
+      {
+        id: "pressure",
+        label: "逼近",
+        options: [
+          { text: "把话说得更绝，逼她死心离开这摊浑水。", tag: "断念", cls: "danger", hook: "stay_cold" },
+          { text: "几度欲言又止，终究没敢把皇兄要她命的事说出口。", tag: "隐瞒", cls: "recommended", hook: "almost_break" },
+          { text: "借抬眼的一瞬，把所有没说的话都递进她眼底。", tag: "暗示", hook: "let_her_see" },
+        ],
+      },
+      {
+        id: "decision",
+        label: "抉择",
+        options: [
+          { text: "冷到底，宁可她恨你一辈子，也好过陪你赴死。", tag: "狠心", cls: "danger", hook: "stay_cold" },
+          { text: "留一句模棱两可的话，赌她日后能想明白。", tag: "留隙", cls: "recommended", hook: "almost_break" },
+          { text: "终于忍不住，让她看见你不是无情，只是不能说。", tag: "破防", cls: "recommended", hook: "let_her_see" },
+        ],
+      },
+    ],
+    allowFreeInput: true,
+    freeInputHint: "你最不能做的，就是解释，可她就在眼前…",
+  },
+  {
     id: "divorce_fyx",
     sceneTag: "第五幕 · 执笔休书",
     sceneName: "玄清王府 · 书房",
-    progress: 65,
+    progress: 75,
     narrations: [
       "皇命已下，今夜过后这张休书会被宫里的人记入档。",
       "你的手在抖。",
