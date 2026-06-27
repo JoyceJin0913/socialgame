@@ -73,8 +73,8 @@ function Lobby() {
   const handleStart = () => {
     if (!charId) return;
     if (mode === "solo") {
-      // 单人沉浸：直接进游戏
-      navigate({ to: "/scene" });
+      // 单人沉浸：直接进游戏，带上选中的角色（决定视角）
+      navigate({ to: "/scene", search: { role: charId } });
     } else {
       // 站内匹配：先去匹配页（matching → 承接页 → /scene）
       navigate({ to: "/matching", search: { role: charId } });
