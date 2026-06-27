@@ -114,7 +114,32 @@ export interface EndingDecision {
 export interface ChoiceRecord {
   scene: string;
   hook: string;
+  tag?: string;
 }
+
+/**
+ * Tag 倾向 → 心意线映射
+ * 让选项标签（深情/锋芒/隐忍/洞察 等）也参与结局投票，
+ * 与 hook 投票相互印证，使 Tag 真正影响走向而非纯展示。
+ *   情意倾向 → trust   锋芒倾向 → self   隐忍倾向 → yield
+ *   洞察倾向 → trust（且接近"看穿"，按强情意线处理）
+ */
+const TAG_LINE: Record<string, LineKey> = {
+  // 情意（trust）
+  深情: "trust", 情意: "trust", 心软: "trust", 坚定: "trust", 坚持: "trust",
+  不放: "trust", 唤醒: "trust", 追问: "trust", 质问: "trust",
+  // 锋芒（self）
+  反击: "self", 硬刚: "self", 决绝: "self", 对峙: "self", 反抗: "self",
+  狠心: "self", 断念: "self", 推拒: "self", 冰冷: "self", 自立: "self",
+  自救: "self", 外援: "self", 自谋: "self",
+  // 隐忍（yield）
+  隐忍: "yield", 克制: "yield", 退避: "yield", 体面: "yield", 观察: "yield",
+  蓄势: "yield", 藏疾: "yield", 强撑: "yield", 回避: "yield", 佯装: "yield",
+  冷演: "yield", 隐瞒: "yield",
+  // 洞察（trust，关键）
+  看破: "trust", 暗察: "trust", 追查: "trust", 露真: "trust", 破绽: "trust",
+  破功: "trust", 破防: "trust", 几乎破功: "trust", 暗示: "trust", 留隙: "trust",
+};
 
 // 每个 prism hook 归入哪条心意线（覆盖寒雁 / 傅云夕两视角的 pool）
 const HOOK_LINE: Record<string, LineKey> = {
@@ -219,11 +244,19 @@ export function decideEndingByChoices(
   let decisive = false;
 
   for (const c of choices) {
-    const line = HOOK_LINE[c.hook];
+    const hookLine = HOOK_LINE[c.hook];
+    const tagLine = c.tag ? TAG_LINE[c.tag] : undefined;
+    // 主投票：优先 hook 归线；hook 未归线则用 tag 归线兜底
+    const line = hookLine ?? tagLine;
     if (!line) continue;
     const weight = DECISIVE_TRUST_HOOKS.has(c.hook) ? 2 : 1;
     lines[line] += weight;
-    picks.push({ scene: c.scene, label: HOOK_LABEL[c.hook] || c.hook, line });
+    // 辅投票：hook 与 tag 都有归线、且方向一致时，tag 再加 0.5 票，
+    // 让"选项标签的倾向"真正参与并强化结局判定（而非纯展示）。
+    if (hookLine && tagLine && tagLine === hookLine) {
+      lines[tagLine] += 0.5;
+    }
+    picks.push({ scene: c.scene, label: HOOK_LABEL[c.hook] || c.tag || c.hook, line });
     if (DECISIVE_TRUST_HOOKS.has(c.hook)) decisive = true;
   }
 

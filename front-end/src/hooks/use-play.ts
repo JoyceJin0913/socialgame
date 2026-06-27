@@ -48,6 +48,7 @@ export type PlayMessage =
 export interface PlayHookLog {
   scene: string;
   hook: string;
+  tag?: string;
   delta?: Record<string, string>;
   id: string;
 }
@@ -94,6 +95,7 @@ function toRefractedOption(
     _prism: {
       hook: option.hook || "",
       id: option.id || `${sceneId}_${beatId}_${index}`,
+      tag: option.tag,
       delta: option.delta,
     },
   };
@@ -250,6 +252,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
             {
               scene: scene.id,
               hook: prismMeta.hook,
+              tag: prismMeta.tag,
               delta: prismMeta.delta,
               id: prismMeta.id,
             },

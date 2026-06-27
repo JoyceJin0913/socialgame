@@ -57,6 +57,7 @@ export interface PrismScript {
 export interface PrismMeta {
   hook: string;
   id: string;
+  tag?: string;
   delta?: Record<string, string>;
   require?: PrismRequire;
 }
