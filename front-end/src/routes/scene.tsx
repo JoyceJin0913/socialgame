@@ -20,6 +20,7 @@ import { usePlay } from "@/hooks/use-play";
 import { useRoomChat } from "@/hooks/use-room-chat";
 import { CHARACTERS, getCharacter } from "@/lib/characters";
 import { translateIntent } from "@/lib/chat";
+import { resolveTone, type ToneSpec } from "@/lib/tone";
 import sceneBg from "@/assets/scene-cijitang.png";
 import type { ViewKey } from "@/lib/story";
 
@@ -108,10 +109,64 @@ function TagChip({ tag }: { tag: string }) {
   );
 }
 
+/**
+ * 基调横幅 —— 让 lobby 选的标签（复仇/甜宠…）进游戏后"一眼可见"。
+ * 两版样式，切 BANNER_VARIANT 看效果：
+ *   "card" → 居中卡片，标签名大、副标题一行，仪式感强
+ *   "bar"  → 顶部细长条幅，轻量不挡正文
+ */
+const BANNER_VARIANT: "card" | "bar" = "card";
+
+const ACCENT_HEX: Record<string, string> = {
+  rose: "#fb7185", red: "#f87171", amber: "#fbbf24", purple: "#c084fc",
+  emerald: "#34d399", slate: "#cbd5e1", cyan: "#67e8f9", indigo: "#a5b4fc",
+};
+
+function ToneBanner({ tone, variant }: { tone: ToneSpec; variant: "card" | "bar" }) {
+  const hex = ACCENT_HEX[tone.accent] ?? "#fbbf24";
+  if (variant === "bar") {
+    return (
+      <div
+        className="relative z-10 mx-4 mb-2 flex items-center gap-2 rounded-full border bg-black/45 px-3 py-1.5 backdrop-blur"
+        style={{ borderColor: `${hex}55` }}
+      >
+        <span
+          className="rounded-full px-2 py-[1px] text-[10px] font-bold tracking-wider"
+          style={{ background: `${hex}26`, color: hex }}
+        >
+          {tone.label}
+        </span>
+        <span className="truncate text-[10.5px] tracking-wide text-white/65">{tone.bannerDesc}</span>
+      </div>
+    );
+  }
+  return (
+    <div
+      className="relative z-10 mx-4 mb-2 overflow-hidden rounded-xl border bg-black/45 px-4 py-2.5 text-center backdrop-blur"
+      style={{ borderColor: `${hex}55`, boxShadow: `0 12px 36px -22px ${hex}` }}
+    >
+      <div className="flex items-center justify-center gap-2">
+        <span className="h-px w-6" style={{ background: `${hex}99` }} />
+        <span className="text-[10px] tracking-[0.34em] text-white/55">本局基调</span>
+        <span className="h-px w-6" style={{ background: `${hex}99` }} />
+      </div>
+      <div
+        className="mt-1 font-brush text-[20px] tracking-[0.22em]"
+        style={{ color: hex }}
+      >
+        {tone.label}
+      </div>
+      <div className="mt-0.5 text-[11px] tracking-wide text-white/65">{tone.bannerDesc}</div>
+    </div>
+  );
+}
+
 function Scene() {
   const navigate = useNavigate();
   const { role, tags, resume, battle, room: roomCode, userId: paramUserId } = Route.useSearch();
   const initialView = roleToView(role);
+  const tagList = tags ? tags.split(",").filter(Boolean) : [];
+  const currentTone = resolveTone(tagList);
 
   // 多人模式：有 room 和 userId 参数时启用房间聊天
   const stableUserId = useRef(
@@ -146,7 +201,7 @@ function Scene() {
     restart,
     switchView,
     ending,
-  } = usePlay(initialView, resume);
+  } = usePlay(initialView, resume, tagList);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const latestMessageRef = useRef<HTMLDivElement>(null);
@@ -430,13 +485,15 @@ function Scene() {
         />
       </div>
 
+      {currentTone && <ToneBanner tone={currentTone} variant={BANNER_VARIANT} />}
+
       {state.hud && (
         <PrismHUD info={state.hud} numerics={state.numerics} lastChange={state.lastChange} />
       )}
 
       <div
         ref={scrollRef}
-        className="absolute inset-x-0 bottom-[260px] top-[108px] z-10 overflow-y-auto px-4 pb-4"
+        className={`absolute inset-x-0 bottom-[260px] z-10 overflow-y-auto px-4 pb-4 ${currentTone ? "top-[170px]" : "top-[108px]"}`}
       >
         {allMessages.map((m) => {
           const isLatestMessage = m.id === latestMId;
