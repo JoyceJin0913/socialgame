@@ -1,11 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookOpen, ChevronRight, ShieldCheck, Sparkles, UserRound, Users } from "lucide-react";
 import heroHuatang from "@/assets/hero-huatangchun.jpg";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { DEFAULT_PROFILE, normalizeNick, readPlayerProfile, savePlayerProfile } from "@/lib/player-profile";
 
+type EntrySearch = { entered?: string };
+
 export const Route = createFileRoute("/")({
+  validateSearch: (s: Record<string, unknown>): EntrySearch => ({
+    entered: typeof s.entered === "string" ? s.entered : undefined,
+  }),
   component: EntryPage,
   head: () => ({
     meta: [
@@ -21,11 +26,21 @@ const PLAY_STYLES = ["剧情沉浸", "高能对戏", "轻松社交"];
 
 function Entry() {
   const navigate = useNavigate();
+  const { entered } = Route.useSearch();
   const saved = readPlayerProfile();
   const [nick, setNick] = useState(saved.nick === DEFAULT_PROFILE.nick ? "" : saved.nick);
   const [ageRange, setAgeRange] = useState(saved.ageRange);
   const [pronoun, setPronoun] = useState(saved.pronoun);
   const [playStyle, setPlayStyle] = useState(saved.playStyle || PLAY_STYLES[0]);
+
+  // 已登记用户带 ?entered=1 进入时（如从 /novel 顶部按钮回来），直接跳过登记页
+  useEffect(() => {
+    if (entered !== "1") return;
+    const stored = readPlayerProfile();
+    if (stored.nick && stored.nick !== DEFAULT_PROFILE.nick) {
+      navigate({ to: "/huatangchun", replace: true });
+    }
+  }, [entered, navigate]);
 
   const cleanNick = normalizeNick(nick);
   const canEnter = nick.trim().length > 0;
