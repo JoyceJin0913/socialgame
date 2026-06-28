@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Share2, Bookmark, ChevronDown, Sparkles, Users, Clock, X } from "lucide-react";
+import { Share2, Bookmark, ChevronDown, Sparkles, Users, Clock, X, UserRound } from "lucide-react";
 import heroImg from "@/assets/hero-huatangchun.jpg";
 import { PLAYABLE_CHARACTERS } from "@/lib/characters";
 import { PhoneMockup } from "@/components/PhoneMockup";
@@ -89,6 +89,13 @@ function HuatangChun() {
         {/* Top bar */}
         <div className="relative z-10 flex items-center justify-end px-5 pt-12">
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate({ to: "/profile" })}
+              className="grid h-9 w-9 place-items-center rounded-full bg-black/25 backdrop-blur-md"
+              aria-label="个人主页"
+            >
+              <UserRound className="h-4 w-4 text-white" />
+            </button>
             <button className="grid h-9 w-9 place-items-center rounded-full bg-black/25 backdrop-blur-md">
               <Bookmark className="h-4 w-4 text-white" />
             </button>
