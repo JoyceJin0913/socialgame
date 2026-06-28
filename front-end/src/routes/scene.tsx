@@ -393,7 +393,7 @@ function Scene() {
 
       <div className="relative z-10 flex items-center justify-between px-4 pt-12 pb-3">
         <button
-          onClick={() => navigate({ to: "/" })}
+          onClick={() => navigate({ to: "/huatangchun" })}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur active:scale-95"
         >
           <ChevronLeft size={18} />
