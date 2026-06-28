@@ -1,19 +1,21 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, Map as MapIcon, Paperclip, Puzzle, X, Check, Share2, Sparkles } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import malePortrait from "@/assets/minigame-character-male.png";
 import femalePortrait from "@/assets/minigame-character-female.png";
 import matronPortrait from "@/assets/minigame-character-matron.png";
 import scene1 from "@/assets/minigame-scene-1.png";
-import scene2 from "@/assets/minigame-scene-2.png";
-import scene3 from "@/assets/minigame-scene-3.png";
 import scene4 from "@/assets/minigame-scene-4.png";
 import scene5 from "@/assets/minigame-scene-5.png";
 import sceneShunchang from "@/assets/minigame-scene-shunchang.jpg";
-import sceneApobi from "@/assets/minigame-scene-apobi.png";
 
 export const Route = createFileRoute("/minigame")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    from: typeof s.from === "string" ? s.from : undefined,
+    role: typeof s.role === "string" ? s.role : undefined,
+    resume: typeof s.resume === "string" ? s.resume : undefined,
+  }),
   component: MinigamePage,
   ssr: false,
   head: () => ({
@@ -52,25 +54,6 @@ const SCENES: Scene[] = [
     ],
   },
   {
-    id: "furong", name: "芙蓉园", icon: "🌺",
-    gradient: "linear-gradient(135deg,#2a1a2a 0%,#1a2a1a 100%)",
-    backgroundImage: scene2,
-    npcId: "jiaomeng",
-    hotspots: [
-      { id: "h1", clueId: "prescription", x: "30%", y: "60%", label: "药案" },
-      { id: "h2", clueId: "pillow_clue", x: "68%", y: "40%", label: "软枕" },
-    ],
-  },
-  {
-    id: "gongtong", name: "珙桐苑", icon: "🌳",
-    gradient: "linear-gradient(135deg,#1a1a2a 0%,#2a1a1a 100%)",
-    backgroundImage: scene3,
-    hotspots: [
-      { id: "h1", clueId: "letter_zhou", x: "26%", y: "44%", label: "暗格" },
-      { id: "h2", clueId: "poison_bottle", x: "72%", y: "62%", label: "妆台" },
-    ],
-  },
-  {
     id: "tianlao", name: "天牢", icon: "⛓️",
     gradient: "linear-gradient(135deg,#0a0a0a 0%,#151515 100%)",
     backgroundImage: scene4,
@@ -90,15 +73,6 @@ const SCENES: Scene[] = [
     backgroundImage: sceneShunchang,
     npcId: "yangqi",
     hotspots: [{ id: "h1", clueId: "tangmen_token", x: "50%", y: "55%", label: "兵架" }],
-  },
-  {
-    id: "apobi", name: "城外破屋", icon: "🏚️",
-    gradient: "linear-gradient(135deg,#1a1a1a 0%,#2a2a1a 100%)",
-    backgroundImage: sceneApobi,
-    hotspots: [
-      { id: "h1", clueId: "silk_handkerchief", x: "32%", y: "50%", label: "残箱" },
-      { id: "h2", clueId: "candle_clue", x: "70%", y: "48%", label: "烛台" },
-    ],
   },
 ];
 
@@ -205,7 +179,25 @@ const NPCS: Record<NpcId, Npc> = {
 };
 
 const GOLD = "#c9a96e";
-const TOTAL_CLUES = 24;
+const TOTAL_CLUES = SCENES.reduce((sum, scene) => {
+  const hotspotClues = scene.hotspots.length;
+  const dialogueClues = scene.npcId
+    ? new Set(NPCS[scene.npcId as NpcId].dialogues.map((d) => d.clueId)).size
+    : 0;
+  return sum + hotspotClues + dialogueClues;
+}, 0);
+
+const INTRO_STREAM = [
+  { kind: "p", text: "你（庄寒雁）近日接连发现怪异之处：" },
+  { kind: "li", text: "· 母亲王氏临终前的话语残缺，似乎藏着无法说出口的秘密；" },
+  { kind: "li", text: "· 父亲庄仕洋虽慈爱，却总在你问及身世时神色闪躲；" },
+  { kind: "li", text: "· 府中老仆偶然提及「侯爷」二字，又匆匆噤声……" },
+  { kind: "em", text: "你心中疑窦丛生——我究竟是谁的孩子？" },
+  { kind: "p", text: "现在，任务【揭开身世之谜】已触发！" },
+  { kind: "hint", text: "调查核心场景、对话人物、收集任意三条线索，找出真相！" },
+] as const;
+
+const INTRO_TOTAL_CHARS = INTRO_STREAM.reduce((sum, part) => sum + part.text.length, 0);
 
 /* ============ State ============ */
 
@@ -224,6 +216,7 @@ function MinigamePage() {
 
 function Game() {
   const navigate = useNavigate();
+  const { from, role, resume } = Route.useSearch();
   const [showIntro, setShowIntro] = useState(true);
   const [view, setView] = useState<View>({ kind: "scene", sceneId: "qingqiu" });
   const [collected, setCollected] = useState<Set<string>>(new Set());
@@ -256,6 +249,21 @@ function Game() {
     setVisited((v) => new Set(v).add(id));
     setShowMap(false);
   };
+  const exitToStory = () => {
+    if (from === "scene") {
+      navigate({
+        to: "/scene",
+        search: {
+          role: role === "fyx" ? "moshen" : "hanyan",
+          resume: resume || "sidehall_confront",
+        },
+      });
+      return;
+    }
+
+    navigate({ to: "/huatangchun" });
+  };
+  const currentSceneId = view.kind === "scene" ? view.sceneId : null;
 
   return (
     <div className="relative h-full overflow-hidden bg-black text-white" style={{ fontFamily: "'Noto Serif SC', serif" }}>
@@ -274,7 +282,7 @@ function Game() {
           collected={collected}
           onHotspot={(clueId) => collectClue(clueId)}
           onNpc={(npcId) => setView({ kind: "dialogue", npcId, sceneId: view.sceneId })}
-          onBack={() => navigate({ to: "/play", search: { role: "hanyan", mode: "solo", partner: "peirong" } })}
+          onBack={exitToStory}
           onMap={() => setShowMap(true)}
           onClues={() => setShowClues(true)}
           onDeduce={() => setShowDeduce(true)}
@@ -300,7 +308,12 @@ function Game() {
         />
       )}
 
-      {view.kind === "victory" && <VictoryView onExit={() => navigate({ to: "/play", search: { role: "hanyan", mode: "solo", partner: "peirong" } })} />}
+      {view.kind === "victory" && (
+        <VictoryView
+          onExit={exitToStory}
+          ctaLabel={from === "scene" ? "回到主线" : "归去重启"}
+        />
+      )}
 
       {/* Discovery modal */}
       {discoveredClueId && (
@@ -355,6 +368,29 @@ function Game() {
 }
 
 function IntroView({ onStart }: { onStart: () => void }) {
+  const [visibleChars, setVisibleChars] = useState(0);
+  const isComplete = visibleChars >= INTRO_TOTAL_CHARS;
+
+  useEffect(() => {
+    if (isComplete) return;
+    const timer = window.setTimeout(() => {
+      setVisibleChars((n) => Math.min(n + 2, INTRO_TOTAL_CHARS));
+    }, 26);
+    return () => window.clearTimeout(timer);
+  }, [isComplete, visibleChars]);
+
+  const visiblePart = (index: number) => {
+    const charsBefore = INTRO_STREAM
+      .slice(0, index)
+      .reduce((sum, part) => sum + part.text.length, 0);
+    const count = Math.max(0, Math.min(INTRO_STREAM[index].text.length, visibleChars - charsBefore));
+    return INTRO_STREAM[index].text.slice(0, count);
+  };
+  const missionLine = visiblePart(5);
+  const missionPrefix = "现在，任务";
+  const missionTitle = "【揭开身世之谜】";
+  const missionSuffix = "已触发！";
+
   return (
     <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black px-4 py-6" style={{ animation: "fadeIn 0.4s ease-out" }}>
       <div className="w-full max-w-[360px]">
@@ -394,20 +430,34 @@ function IntroView({ onStart }: { onStart: () => void }) {
               <span className="h-px w-6" style={{ background: `${GOLD}66` }} />
             </div>
 
-            <div className="mt-5 text-left text-[13.5px] leading-[2]" style={{ color: "#e8d4a8" }}>
-              <p>你（庄寒雁）近日接连发现怪异之处：</p>
+            <div className="mt-5 min-h-[238px] text-left text-[13.5px] leading-[2]" style={{ color: "#e8d4a8" }}>
+              <p>{visiblePart(0)}</p>
               <ul className="mt-3 space-y-1.5">
-                <li>· 母亲庄夫人（媚姨娘）对你态度冷淡，甚至刻意疏远；</li>
-                <li>· 父亲庄仕洋虽慈爱，却总在你问及身世时神色闪躲；</li>
-                <li>· 府中老仆偶然提及「侯爷」二字，又匆匆噤声……</li>
+                {[1, 2, 3].map((index) => (
+                  <li key={index}>{visiblePart(index)}</li>
+                ))}
               </ul>
-              <p className="mt-4" style={{ color: "#f5d896" }}>你心中疑窦丛生——我究竟是谁的孩子？</p>
-              <p className="mt-4">现在，任务<span style={{ color: GOLD }}>【揭开身世之谜】</span>已触发！</p>
-              <p className="mt-1" style={{ color: `${GOLD}cc` }}>调查场景、对话人物、收集线索，找出真相！</p>
+              <p className="mt-4" style={{ color: "#f5d896" }}>{visiblePart(4)}</p>
+              <p className="mt-4">
+                {missionLine.slice(0, Math.min(missionPrefix.length, missionLine.length))}
+                {missionLine.length > missionPrefix.length && (
+                  <span style={{ color: GOLD }}>
+                    {missionLine.slice(missionPrefix.length, Math.min(missionPrefix.length + missionTitle.length, missionLine.length))}
+                  </span>
+                )}
+                {missionLine.length > missionPrefix.length + missionTitle.length &&
+                  missionLine.slice(missionPrefix.length + missionTitle.length, missionPrefix.length + missionTitle.length + missionSuffix.length)}
+              </p>
+              <p className="mt-1" style={{ color: `${GOLD}cc` }}>
+                {visiblePart(6)}
+                {!isComplete && <span className="ml-0.5 inline-block h-4 w-px translate-y-0.5 animate-pulse" style={{ background: GOLD }} />}
+              </p>
             </div>
 
             <div className="mt-6">
-              <GoldButton onClick={onStart}>开 始 解 谜</GoldButton>
+              <GoldButton onClick={isComplete ? onStart : () => setVisibleChars(INTRO_TOTAL_CHARS)}>
+                {isComplete ? "开 始 解 谜" : "跳 过"}
+              </GoldButton>
             </div>
           </div>
         </OrnateFrame>
@@ -459,6 +509,7 @@ function SceneView({
       <div className="relative z-10 flex items-center justify-between px-4 pt-10 pb-2">
         <button
           onClick={onBack}
+          aria-label="返回画堂春"
           className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 backdrop-blur active:scale-95"
           style={{ border: `1px solid ${GOLD}55` }}
         >
@@ -864,7 +915,6 @@ function PillOrnament({ side, color, dim }: { side: "left" | "right"; color: str
   );
 }
 
-
 /* ============ Map ============ */
 
 function MapDrawer({ currentId, visited, onGo, onClose }: {
@@ -1111,12 +1161,6 @@ function ClueDetailModal({ clue, onClose }: { clue: Clue; onClose: () => void })
 
 /* ============ Deduction ============ */
 
-const KEY_CLUES = new Set([
-  "clue_truth_birth", "clue_donghou_father", "clue_look_alike",
-  "letter_zhou", "tangmen_token", "silk_handkerchief",
-  "medical_record", "clue_tangmen", "clue_xiaoqiao",
-]);
-
 function DeductionPanel({ collected, onClose, onWin }: {
   collected: Set<string>;
   onClose: () => void;
@@ -1139,14 +1183,13 @@ function DeductionPanel({ collected, onClose, onWin }: {
   const submit = () => {
     const correctFather = father === "donghou";
     const correctMother = mother === "xiaoqiao";
-    const keyHits = [...picked].filter((id) => KEY_CLUES.has(id)).length;
-    if (correctFather && correctMother && keyHits >= 3) {
+    if (correctFather && correctMother && picked.size >= 3) {
       onWin();
       return;
     }
     if (!correctFather) setHint("生父之论，再思一思——画像与医案皆藏玄机。");
     else if (!correctMother) setHint("生母身份，唐门令牌与绣帕之间，必有真章。");
-    else setHint("证据稍欠火候，请择三条关键之物再断。");
+    else setHint("证据稍欠火候，请任选三条已收线索再断。");
   };
 
   return (
@@ -1169,7 +1212,7 @@ function DeductionPanel({ collected, onClose, onWin }: {
           <Radio key={o.v} checked={mother === o.v} label={o.l} onClick={() => setMother(o.v)} />
         ))}
       </Section>
-      <Section title={`选择关键证据（已选 ${picked.size}，至少 3 条）`}>
+      <Section title={`选择证据（已选 ${picked.size}，至少 3 条）`}>
         {collected.size === 0 ? (
           <div className="text-[12px]" style={{ color: `${GOLD}88` }}>尚无线索，先去寻访各处罢。</div>
         ) : (
@@ -1314,7 +1357,7 @@ function Drawer({ title, onClose, children }: { title: string; onClose: () => vo
 
 /* ============ Victory ============ */
 
-function VictoryView({ onExit }: { onExit: () => void }) {
+function VictoryView({ onExit, ctaLabel = "归去重启" }: { onExit: () => void; ctaLabel?: string }) {
   const [particles] = useState(() => Array.from({ length: 18 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
@@ -1519,7 +1562,7 @@ function VictoryView({ onExit }: { onExit: () => void }) {
               letterSpacing: "0.2em",
             }}
           >
-            归去重启
+            {ctaLabel}
           </span>
           <span style={{ color: "#d9b46a" }}>▶</span>
         </button>

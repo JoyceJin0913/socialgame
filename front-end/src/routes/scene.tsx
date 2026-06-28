@@ -11,7 +11,7 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Send, Sparkles } from "lucide-react";
+import { ChevronLeft, Send, Sparkles, Swords } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { PrismHUD } from "@/components/PrismHUD";
 import { EndingScreen } from "@/components/EndingScreen";
@@ -20,7 +20,7 @@ import { usePlay } from "@/hooks/use-play";
 import sceneBg from "@/assets/scene-cijitang.png";
 import type { ViewKey } from "@/lib/story";
 
-type SceneSearch = { role?: string };
+type SceneSearch = { role?: string; resume?: string; battle?: string };
 
 function roleToView(role?: string): ViewKey {
   return role === "moshen" ? "fyx" : "hanyan";
@@ -29,6 +29,8 @@ function roleToView(role?: string): ViewKey {
 export const Route = createFileRoute("/scene")({
   validateSearch: (s: Record<string, unknown>): SceneSearch => ({
     role: typeof s.role === "string" ? s.role : undefined,
+    resume: typeof s.resume === "string" ? s.resume : undefined,
+    battle: typeof s.battle === "string" ? s.battle : undefined,
   }),
   component: ScenePage,
   head: () => ({
@@ -95,7 +97,7 @@ function TagChip({ tag }: { tag: string }) {
 
 function Scene() {
   const navigate = useNavigate();
-  const { role } = Route.useSearch();
+  const { role, resume, battle } = Route.useSearch();
   const initialView = roleToView(role);
   const {
     state,
@@ -105,15 +107,24 @@ function Scene() {
     submitFreeInput,
     skipScene,
     goNext,
+    continueMainAfterSideQuest,
     restart,
     switchView,
     ending,
-  } = usePlay(initialView);
+  } = usePlay(initialView, resume);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const latestMessageRef = useRef<HTMLDivElement>(null);
   const [freeInput, setFreeInput] = useState("");
+  const [battleTextDone, setBattleTextDone] = useState(false);
+  const [battleText, setBattleText] = useState("");
   const latestMessageId = state.messages.at(-1)?.id;
+
+  const storedBattleEnding =
+    battle === "won" && typeof window !== "undefined"
+      ? window.sessionStorage.getItem("huatangchun:pendingEnding")
+      : null;
+  const battleEnding = storedBattleEnding ? JSON.parse(storedBattleEnding) : null;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -138,7 +149,44 @@ function Scene() {
     if (state.phase === "intro") {
       startGame();
     }
-  }, [state.phase, startGame]);
+  }, [battle, state.phase, startGame]);
+
+  useEffect(() => {
+    if (state.phase !== "battleIntro") return;
+    setBattleText("");
+    setBattleTextDone(false);
+
+    const text =
+      "偏殿灯火未熄，傅云夕终于撕开冷面：所谓和离，不过是替你挡下太后与七皇子的杀局。东侯旧案翻出水面，你的身世也随之惊动朝堂。有人怕你认祖归宗，有人怕傅云夕不再受制。夜色刚落，刺客便围住玄清王府，要在真相传入金銮殿前，将你们二人一并灭口。";
+    let index = 0;
+    const timer = window.setInterval(() => {
+      index += 1;
+      setBattleText(text.slice(0, index));
+      if (index >= text.length) {
+        window.clearInterval(timer);
+        setBattleTextDone(true);
+      }
+    }, 28);
+
+    return () => window.clearInterval(timer);
+  }, [state.phase]);
+
+  if (battleEnding) {
+    return (
+      <EndingScreen
+        ending={battleEnding.ending}
+        numerics={battleEnding.numerics}
+        decision={battleEnding.decision}
+        hookCount={battleEnding.hookCount}
+        onRestart={() => {
+          window.sessionStorage.removeItem("huatangchun:pendingEnding");
+          restart();
+          setFreeInput("");
+          navigate({ to: "/scene", search: { role: role || "hanyan" } });
+        }}
+      />
+    );
+  }
 
   if (state.phase === "ending" && ending) {
     return (
@@ -151,7 +199,30 @@ function Scene() {
           restart();
           setFreeInput("");
         }}
-        onEnterMinigame={() => navigate({ to: "/minigame" })}
+      />
+    );
+  }
+
+  if (state.phase === "battleIntro" && ending) {
+    return (
+      <BattleTransition
+        text={battleText}
+        ready={battleTextDone}
+        onEnter={() => {
+          window.sessionStorage.setItem(
+            "huatangchun:pendingEnding",
+            JSON.stringify({
+              ending,
+              numerics: state.numerics,
+              decision: state.endingDecision,
+              hookCount: state.hookLog.length,
+            })
+          );
+          navigate({
+            to: "/minigame2",
+            search: { from: "scene", returnTo: "/scene?role=hanyan&battle=won" },
+          });
+        }}
       />
     );
   }
@@ -299,7 +370,41 @@ function Scene() {
           </div>
         )}
 
-        {state.showContinue && (
+        {state.pendingSideQuest && (
+          <div className="rounded-xl border border-amber-300/45 bg-amber-500/15 px-4 py-3 text-center shadow-[0_16px_40px_-24px_rgba(251,191,36,0.9)]">
+            <div className="text-[10px] tracking-[0.28em] text-amber-200/75">
+              {state.pendingSideQuest.eyebrow}
+            </div>
+            <div className="mt-1 font-brush text-[21px] tracking-[0.16em] text-amber-50">
+              {state.pendingSideQuest.title}
+            </div>
+            <p className="mt-2 text-left text-[12.5px] leading-[1.8] text-amber-50/78">
+              {state.pendingSideQuest.description}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                onClick={() =>
+                  navigate({
+                    to: "/minigame",
+                    search: { from: "scene", role: view, resume: "sidehall_confront" },
+                  })
+                }
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400/25 px-3 py-2.5 text-[13px] tracking-wider text-amber-50 transition hover:bg-amber-300/30 active:scale-95"
+              >
+                <Sparkles size={14} />
+                {state.pendingSideQuest.enterLabel}
+              </button>
+              <button
+                onClick={continueMainAfterSideQuest}
+                className="rounded-xl border border-white/18 bg-black/30 px-3 py-2.5 text-[13px] tracking-wider text-amber-100/80 transition hover:bg-white/10 active:scale-95"
+              >
+                {state.pendingSideQuest.skipLabel}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {state.showContinue && !state.pendingSideQuest && (
           <button
             onClick={goNext}
             className="w-full rounded-xl border-2 border-amber-400/60 bg-amber-500/20 px-4 py-3 text-center text-[14px] tracking-wider text-amber-100 backdrop-blur transition-all hover:bg-amber-400/30 active:scale-95"
@@ -399,6 +504,44 @@ function Scene() {
               )}
             </>
           )}
+      </div>
+    </div>
+  );
+}
+
+function BattleTransition({
+  text,
+  ready,
+  onEnter,
+}: {
+  text: string;
+  ready: boolean;
+  onEnter: () => void;
+}) {
+  return (
+    <div className="relative h-full overflow-hidden bg-neutral-950 text-amber-50">
+      <img src={sceneBg} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-[#2a0d12]/50 to-black/90" />
+      <BGMPlayer />
+      <div className="relative z-10 flex h-full flex-col justify-end px-5 pb-10">
+        <div className="mb-5 text-center">
+          <div className="text-[10px] tracking-[0.36em] text-amber-200/70">第五幕之后</div>
+          <h1 className="mt-2 font-brush text-[30px] tracking-[0.18em] text-amber-100">
+            王府夜袭
+          </h1>
+        </div>
+        <div className="rounded-xl border border-amber-300/35 bg-black/50 px-4 py-4 text-[14px] leading-[2] tracking-wide text-amber-50/88 shadow-[0_18px_50px_-28px_rgba(251,191,36,0.8)] backdrop-blur">
+          {text}
+          {!ready && <StreamCursor />}
+        </div>
+        <button
+          disabled={!ready}
+          onClick={onEnter}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300/65 bg-amber-500/20 px-4 py-3 text-[14px] tracking-[0.18em] text-amber-100 transition active:scale-95 disabled:opacity-45"
+        >
+          <Swords size={16} />
+          王府御敌
+        </button>
       </div>
     </div>
   );

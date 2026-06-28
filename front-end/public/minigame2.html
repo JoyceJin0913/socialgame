@@ -388,13 +388,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg-dark);font-
  *  数值平衡设计
  * ============================================================
  *
- * 【目标】: 无组合技时 ~20%概率险胜/失败，需约3次组合技稳赢
+ * 【目标】: 通关率约 80%，不强制依赖多次组合技
  *
  * 【寒雁总伤（无组合技）】: 14*9 + 25*6 + 42*4 + 70*2 = 584
  * 【云夕总伤（无组合技）】: 12*9 + 20*6 + 35*4 + 30*2 = 428
  * 【基础合计】: 1012
- * 【敌人总血量】: 1160
- * 【缺口】: 148 → 需约3次组合技补足
+ * 【敌人总血量】: 960
+ * 【余量】: 52 → 普通操作也有较高容错
  * ============================================================
  */
 
@@ -418,11 +418,11 @@ var FU_SK=[
 
 // 每波一个敌人首领
 var WAVES=[
- {name:'初露锋芒', enemy:{name:'暗影刺客', hp:120, icon:'🗡️'}},
- {name:'暗流涌动', enemy:{name:'毒刃杀手', hp:160, icon:'🩸'}},
- {name:'危机四伏', enemy:{name:'影卫统领', hp:210, icon:'⚔️'}},
- {name:'生死一线', enemy:{name:'血煞修罗', hp:270, icon:'☠️'}},
- {name:'绝境反击', enemy:{name:'静虚道长', hp:400, icon:'👹', boss:true}},
+ {name:'初露锋芒', enemy:{name:'暗影刺客', hp:105, icon:'🗡️'}},
+ {name:'暗流涌动', enemy:{name:'毒刃杀手', hp:135, icon:'🩸'}},
+ {name:'危机四伏', enemy:{name:'影卫统领', hp:180, icon:'⚔️'}},
+ {name:'生死一线', enemy:{name:'血煞修罗', hp:280, icon:'☠️'}},
+ {name:'绝境反击', enemy:{name:'静虚道长', hp:260, icon:'👹', boss:true}},
 ];
 
 var COMBO_TXT=['⚡ 心有灵犀！','✨ 默契无间！','🔥 天作之合！','💎 终极共鸣！！'];
@@ -438,6 +438,7 @@ var hanCh=null,fuCh=null;
 var rndCount=0;
 var stats={dmg:0,combos:0,used:0};
 var particles=[],eShake=0,aId=null;
+var STORY_MODE=new URLSearchParams(location.search).get('from')==='scene';
 
 // ==================== 初始化 ====================
 function init(){
@@ -469,10 +470,10 @@ function init(){
 
  // 重玩
  document.getElementById('btnRestart').addEventListener('click',function(e){
-  e.stopPropagation();hideR();showScreen('story');
+  e.stopPropagation();handleResultButton();
  });
  document.getElementById('btnRestart').addEventListener('touchend',function(e){
-  e.preventDefault();e.stopPropagation();hideR();showScreen('story');
+  e.preventDefault();e.stopPropagation();handleResultButton();
  },{passive:false});
 
  buildGrid();
@@ -723,7 +724,16 @@ function showRes(isWin){
  document.getElementById('rStats').innerHTML=
   '抵御波数：'+(curWave+1)+'/5<br>总回合：'+rndCount+'<br>总伤害：'+stats.dmg+
   '<br>组合技：'+stats.combos+' 次<br>技能使用：'+stats.used+'<br>剩余技能：寒雁'+leftH+' 云夕'+leftF;
+ document.getElementById('btnRestart').textContent=STORY_MODE&&isWin?'继续结局':'再战一次';
+ document.getElementById('btnRestart').dataset.win=isWin?'1':'0';
  s.classList.add('show');
+}
+function handleResultButton(){
+ if(STORY_MODE&&document.getElementById('btnRestart').dataset.win==='1'){
+  window.parent.postMessage({type:'minigame2:complete'}, window.location.origin);
+  return;
+ }
+ hideR();showScreen('story');
 }
 function hideR(){
  document.getElementById('resScreen').classList.remove('show');

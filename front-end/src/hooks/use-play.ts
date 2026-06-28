@@ -13,6 +13,7 @@ import {
   ENDINGS,
   type SceneConfig,
   type SceneOption,
+  type SceneSideQuest,
   type ViewKey,
 } from "@/lib/story";
 import {
@@ -54,7 +55,7 @@ export interface PlayHookLog {
 }
 
 export interface PlayState {
-  phase: "intro" | "playing" | "qte" | "ending";
+  phase: "intro" | "playing" | "qte" | "battleIntro" | "ending";
   sceneIdx: number;
   scene: SceneConfig | null;
   messages: PlayMessage[];
@@ -74,6 +75,8 @@ export interface PlayState {
   numerics: NumericsState;
   lastChange: string[];           // 最近一次 hook 引起的数值变化（给 UI 飘字用）
   endingDecision: EndingDecision | null;
+  pendingSideQuest: SceneSideQuest | null;
+  completedSideQuests: string[];
 }
 
 const MAX_ROUNDS = 1;
@@ -81,6 +84,12 @@ const DEFAULT_VIEW: ViewKey = "hanyan";
 
 let _msgId = 0;
 const newId = () => `m${++_msgId}`;
+
+function getSceneIndexBefore(view: ViewKey, sceneId?: string) {
+  if (!sceneId) return -1;
+  const index = VIEWS[view].scenes.findIndex((scene) => scene.id === sceneId);
+  return index > -1 ? index - 1 : -1;
+}
 
 function toRefractedOption(
   option: SceneOption,
@@ -101,13 +110,15 @@ function toRefractedOption(
   };
 }
 
-export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
+export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: string) {
   const [view, setView] = useState<ViewKey>(initialView);
   const scenesRef = useRef(VIEWS[initialView].scenes);
+  const startedRef = useRef(false);
+  const initialSceneIdx = getSceneIndexBefore(initialView, initialSceneId);
 
   const [state, setState] = useState<PlayState>({
     phase: "intro",
-    sceneIdx: -1,
+    sceneIdx: initialSceneIdx,
     scene: null,
     messages: [],
     options: null,
@@ -125,6 +136,8 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     numerics: INITIAL_STATE,
     lastChange: [],
     endingDecision: null,
+    pendingSideQuest: null,
+    completedSideQuests: [],
   });
 
   // 用 ref 持有当前场景的对话历史（不进 React state，频繁变动）
@@ -190,7 +203,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
         console.log("[Ending decision · by-choices]", decision);
         return {
           ...s,
-          phase: "ending",
+          phase: "battleIntro",
           endingKey: decision.ending,
           endingDecision: decision,
           showContinue: false,
@@ -303,12 +316,18 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
               : m
           );
           const newRound = s.roundInScene + 1;
+          const sideQuest = scene.sideQuest;
+          const shouldShowSideQuest =
+            newRound >= s.maxRoundsPerScene &&
+            sideQuest &&
+            !s.completedSideQuests.includes(sideQuest.id);
           return {
             ...s,
             messages,
             busy: false,
             roundInScene: newRound,
-            showContinue: newRound >= s.maxRoundsPerScene,
+            pendingSideQuest: shouldShowSideQuest ? sideQuest : s.pendingSideQuest,
+            showContinue: newRound >= s.maxRoundsPerScene && !shouldShowSideQuest,
             options: newRound >= s.maxRoundsPerScene ? null : s.options,
           };
         });
@@ -377,20 +396,67 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
 
   // ── 跳过这幕 / 进入下一幕 ───────────────────────────────
   const skipScene = useCallback(() => {
-    setState((s) => ({ ...s, options: null, showContinue: true }));
+    setState((s) => {
+      const sideQuest = s.scene?.sideQuest;
+      if (sideQuest && !s.completedSideQuests.includes(sideQuest.id)) {
+        return {
+          ...s,
+          options: null,
+          showContinue: false,
+          pendingSideQuest: sideQuest,
+        };
+      }
+
+      return { ...s, options: null, showContinue: true };
+    });
   }, []);
 
   const goNext = useCallback(() => {
+    const sideQuest = state.scene?.sideQuest;
+    if (
+      sideQuest &&
+      !state.pendingSideQuest &&
+      !state.completedSideQuests.includes(sideQuest.id)
+    ) {
+      setState((s) => ({
+        ...s,
+        pendingSideQuest: sideQuest,
+        showContinue: false,
+        options: null,
+      }));
+      return;
+    }
+
     nextScene();
-  }, [nextScene]);
+  }, [nextScene, state.completedSideQuests, state.pendingSideQuest, state.scene]);
+
+  const continueMainAfterSideQuest = useCallback(() => {
+    const sideQuest = state.pendingSideQuest;
+    if (!sideQuest) {
+      nextScene();
+      return;
+    }
+
+    setState((s) => ({
+      ...s,
+      pendingSideQuest: null,
+      completedSideQuests: s.completedSideQuests.includes(sideQuest.id)
+        ? s.completedSideQuests
+        : [...s.completedSideQuests, sideQuest.id],
+    }));
+    setTimeout(nextScene, 0);
+  }, [nextScene, state.pendingSideQuest]);
 
   // ── 开始游戏 ────────────────────────────────────────────
   const startGame = useCallback(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     nextScene();
   }, [nextScene]);
 
   // ── 重玩 ────────────────────────────────────────────────
   const restart = useCallback((newView?: ViewKey) => {
+    startedRef.current = false;
     historyRef.current = [];
     if (newView) {
       setView(newView);
@@ -416,6 +482,8 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
       numerics: INITIAL_STATE,
       lastChange: [],
       endingDecision: null,
+      pendingSideQuest: null,
+      completedSideQuests: [],
     });
   }, []);
 
@@ -436,6 +504,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW) {
     submitFreeInput,
     skipScene,
     goNext,
+    continueMainAfterSideQuest,
     restart,
     switchView,
     ending: state.endingKey ? ENDINGS[state.endingKey] : null,
