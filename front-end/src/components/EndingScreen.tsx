@@ -3,18 +3,15 @@
  */
 
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import {
   RotateCcw,
   Search,
-  Sparkles,
   Target,
   ScrollText,
   Heart,
   Trophy,
   Quote,
   X,
-  Swords,
 } from "lucide-react";
 import type { EndingConfig } from "@/lib/story";
 import {
@@ -34,7 +31,6 @@ interface Props {
   numerics?: NumericsState;
   decision?: EndingDecision | null;
   hookCount?: number;
-  onEnterMinigame?: () => void;
 }
 
 const LABEL: Record<keyof NumericsState, string> = {
@@ -160,9 +156,7 @@ export function EndingScreen({
   numerics,
   decision,
   hookCount = 0,
-  onEnterMinigame,
 }: Props) {
-  const navigate = useNavigate();
   const [selected, setSelected] = useState<string>("moshen");
   const [showReport, setShowReport] = useState(false);
   const player = getCharacter(PLAYER_ID);
@@ -427,44 +421,6 @@ export function EndingScreen({
               </div>
             </div>
           ) : null}
-
-          {/* 王府御敌 · 战斗小游戏入口（写死） */}
-          <div className="mt-4 rounded-xl border border-[#7a2a2a]/20 bg-gradient-to-b from-[#d4a373]/20 to-[#7a2a2a]/[0.06] p-4 text-center">
-            <div className="text-[10px] tracking-[0.3em] text-[#7a2a2a]/70">
-              番外 · 王府御敌
-            </div>
-            <p className="mt-2 text-[12.5px] leading-[1.85] text-[#3a2a22]/80">
-              贼寇夜袭玄清王府，狼烟四起。你与傅云夕并肩持刃，
-              <br />
-              一波又一波来敌压境——这一战，护得住这十里红妆吗？
-            </p>
-            <button
-              onClick={() => navigate({ to: "/minigame2" })}
-              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#7a2a2a] py-2.5 text-[13px] font-medium tracking-[0.15em] text-white shadow-[0_6px_16px_-6px_rgba(122,42,42,0.6)] transition active:scale-[0.99]"
-            >
-              <Swords size={14} /> 携手御敌
-            </button>
-          </div>
-
-          {/* 身世之谜 · 后续小游戏入口 */}
-          {onEnterMinigame && (
-            <div className="mt-4 rounded-xl border border-[#7a2a2a]/20 bg-gradient-to-b from-[#d4a373]/20 to-[#7a2a2a]/[0.06] p-4 text-center">
-              <div className="text-[10px] tracking-[0.3em] text-[#7a2a2a]/70">
-                尾声 · 未解之谜
-              </div>
-              <p className="mt-2 text-[12.5px] leading-[1.85] text-[#3a2a22]/80">
-                恩怨虽了，可你究竟是谁的孩子？娘亲的欲言又止、画像里的疑点、老仆口中的"侯爷"……
-                <br />
-                是时候，亲手揭开那段被掩埋的身世了。
-              </p>
-              <button
-                onClick={onEnterMinigame}
-                className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#7a2a2a] py-2.5 text-[13px] font-medium tracking-[0.15em] text-white shadow-[0_6px_16px_-6px_rgba(122,42,42,0.6)] transition active:scale-[0.99]"
-              >
-                <Sparkles size={14} /> 揭开身世之谜
-              </button>
-            </div>
-          )}
 
           {/* 再玩一次 */}
           <div className="mt-5">

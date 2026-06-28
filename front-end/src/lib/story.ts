@@ -20,6 +20,15 @@ export interface DialogueBeat {
   options: SceneOption[];
 }
 
+export interface SceneSideQuest {
+  id: "heritage";
+  title: string;
+  eyebrow: string;
+  description: string;
+  enterLabel: string;
+  skipLabel: string;
+}
+
 export interface SceneConfig {
   id: string;
   sceneTag: string;
@@ -34,6 +43,7 @@ export interface SceneConfig {
   options?: SceneOption[];
   allowFreeInput?: boolean;
   freeInputHint?: string;
+  sideQuest?: SceneSideQuest;
 }
 
 export interface EndingConfig {
@@ -166,6 +176,15 @@ const HANYAN_SCENES: SceneConfig[] = [
     aiPersona: "yilinna",
     aiOpening: "庄王妃，伊琳娜不远千里而来，只为玄清王一人。望王妃能成全。",
     prism: { script: "act5_separation", view: "hanyan", preset: "beta" },
+    sideQuest: {
+      id: "heritage",
+      eyebrow: "支线已触发",
+      title: "寻找身世",
+      description:
+        "蓝玉鱼簪沉入湖底，唐门“小乔”的名字却浮上来。若他们以“出身存疑”逼你退场，那你偏要亲手查清：你究竟是谁的孩子。",
+      enterLabel: "追查身世",
+      skipLabel: "暂且压下",
+    },
     dialogueBeats: [
       {
         id: "probe",

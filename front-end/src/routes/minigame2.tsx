@@ -1,8 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
 
 export const Route = createFileRoute("/minigame2")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    from: typeof s.from === "string" ? s.from : undefined,
+    returnTo: typeof s.returnTo === "string" ? s.returnTo : undefined,
+  }),
   component: Minigame2Page,
   ssr: false,
   head: () => ({
@@ -15,6 +20,24 @@ export const Route = createFileRoute("/minigame2")({
 
 function Minigame2Page() {
   const navigate = useNavigate();
+  const { from, returnTo } = Route.useSearch();
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "minigame2:complete") return;
+      if (from === "scene" && returnTo) {
+        navigate({ href: returnTo });
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [from, navigate, returnTo]);
+
+  const frameSrc =
+    from === "scene" ? "/minigame2.html?from=scene" : "/minigame2.html";
+
   return (
     <PhoneMockup>
       <div className="relative h-full w-full overflow-hidden bg-black">
@@ -28,7 +51,7 @@ function Minigame2Page() {
           <ChevronLeft size={18} />
         </button>
         <iframe
-          src="/minigame2.html"
+          src={frameSrc}
           title="王府御敌"
           className="h-full w-full border-0"
         />
