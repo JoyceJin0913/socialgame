@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SceneRouteImport } from './routes/scene'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PlayEndingRouteImport } from './routes/play-ending'
 import { Route as PlayRouteImport } from './routes/play'
 import { Route as NovelRouteImport } from './routes/novel'
@@ -35,6 +36,11 @@ const SceneRoute = SceneRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayEndingRoute = PlayEndingRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/novel': typeof NovelRoute
   '/play': typeof PlayRoute
   '/play-ending': typeof PlayEndingRoute
+  '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/scene': typeof SceneRoute
   '/character/$id': typeof CharacterIdRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/novel': typeof NovelRoute
   '/play': typeof PlayRoute
   '/play-ending': typeof PlayEndingRoute
+  '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/scene': typeof SceneRoute
   '/character/$id': typeof CharacterIdRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/novel': typeof NovelRoute
   '/play': typeof PlayRoute
   '/play-ending': typeof PlayEndingRoute
+  '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/scene': typeof SceneRoute
   '/character/$id': typeof CharacterIdRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/novel'
     | '/play'
     | '/play-ending'
+    | '/profile'
     | '/report'
     | '/scene'
     | '/character/$id'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/novel'
     | '/play'
     | '/play-ending'
+    | '/profile'
     | '/report'
     | '/scene'
     | '/character/$id'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/novel'
     | '/play'
     | '/play-ending'
+    | '/profile'
     | '/report'
     | '/scene'
     | '/character/$id'
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   NovelRoute: typeof NovelRoute
   PlayRoute: typeof PlayRoute
   PlayEndingRoute: typeof PlayEndingRoute
+  ProfileRoute: typeof ProfileRoute
   ReportRoute: typeof ReportRoute
   SceneRoute: typeof SceneRoute
   CharacterIdRoute: typeof CharacterIdRoute
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/play-ending': {
@@ -390,6 +410,7 @@ const rootRouteChildren: RootRouteChildren = {
   NovelRoute: NovelRoute,
   PlayRoute: PlayRoute,
   PlayEndingRoute: PlayEndingRoute,
+  ProfileRoute: ProfileRoute,
   ReportRoute: ReportRoute,
   SceneRoute: SceneRoute,
   CharacterIdRoute: CharacterIdRoute,

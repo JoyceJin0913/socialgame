@@ -4,4 +4,18 @@
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MATCHMAKER",
+        "class_name": "Matchmaker"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Matchmaker"]
+    }
+  ]
 }

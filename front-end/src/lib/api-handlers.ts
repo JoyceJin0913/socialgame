@@ -5,6 +5,8 @@
  *   - stream:true : 转发 DeepSeek 的 SSE 流给前端（text/event-stream）
  */
 
+import { routeMatchmakingAPI } from "./matchmaker";
+
 interface ChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
@@ -113,5 +115,6 @@ export async function handleChat(request: Request, env: any): Promise<Response> 
 export function routeAPI(request: Request, env: any): Promise<Response> | null {
   const url = new URL(request.url);
   if (url.pathname === "/api/chat") return handleChat(request, env);
+  if (url.pathname.startsWith("/api/matchmaking")) return routeMatchmakingAPI(request, env);
   return null;
 }

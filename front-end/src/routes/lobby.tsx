@@ -50,12 +50,19 @@ function Lobby() {
   const toggleScript = (id: string) => {
     setScripts((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   };
+  const MAX_TAGS = 2;
+  const tagsFull = tags.length >= MAX_TAGS;
   const toggleTag = (id: string) => {
-    setTags((t) => (t.includes(id) ? t.filter((x) => x !== id) : [...t, id]));
+    setTags((t) => {
+      if (t.includes(id)) return t.filter((x) => x !== id);
+      if (t.length >= MAX_TAGS) return t;
+      return [...t, id];
+    });
   };
   const addCustomTag = () => {
     const v = tagInput.trim();
     if (!v) return;
+    if (tags.length >= MAX_TAGS) return;
     if (!customTags.includes(v)) setCustomTags((c) => [...c, v]);
     if (!tags.includes(v)) setTags((t) => [...t, v]);
     setTagInput("");
@@ -70,14 +77,18 @@ function Lobby() {
 
   const canStart = !!charId && scripts.length > 0;
 
+  const tagLabels = tags
+    .map((id) => TAGS.find((t) => t.id === id)?.label ?? id)
+    .filter(Boolean);
+
   const handleStart = () => {
     if (!charId) return;
     if (mode === "solo") {
-      // 单人沉浸：直接进游戏，带上选中的角色（决定视角）
-      navigate({ to: "/scene", search: { role: charId } });
+      // 单人沉浸：直接进游戏，带上角色与标签
+      navigate({ to: "/scene", search: { role: charId, tags: tagLabels.join(",") } });
     } else {
       // 站内匹配：先去匹配页（matching → 承接页 → /scene）
-      navigate({ to: "/matching", search: { role: charId } });
+      navigate({ to: "/matching", search: { role: charId, tags: tagLabels.join(",") } });
     }
   };
 
@@ -150,14 +161,18 @@ function Lobby() {
             <div className="mt-3 flex flex-wrap gap-1.5">
               {TAGS.map((t) => {
                 const on = tags.includes(t.id);
+                const disabled = !on && tagsFull;
                 return (
                   <button
                     key={t.id}
                     onClick={() => toggleTag(t.id)}
+                    disabled={disabled}
                     className={`rounded-full border px-3 py-1.5 text-[11px] transition active:scale-95 ${
                       on
                         ? "border-transparent text-white"
-                        : "border-black/10 bg-white text-neutral-600"
+                        : disabled
+                          ? "cursor-not-allowed border-black/5 bg-neutral-100 text-neutral-300"
+                          : "border-black/10 bg-white text-neutral-600"
                     }`}
                     style={on ? { background: "var(--gradient-rouge)" } : undefined}
                   >
@@ -182,6 +197,9 @@ function Lobby() {
                 </span>
               ))}
             </div>
+            <p className="mt-2 text-[11px] text-neutral-400">
+              最多选择 {MAX_TAGS} 个标签{tagsFull ? "（已满）" : `（已选 ${tags.length}/${MAX_TAGS}）`}
+            </p>
             <div className="mt-3 flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5">
               <Plus className="h-3 w-3 text-neutral-400" />
               <input
@@ -193,8 +211,9 @@ function Lobby() {
                     addCustomTag();
                   }
                 }}
-                placeholder="自定义标签，按回车添加"
-                className="flex-1 bg-transparent text-[11px] text-neutral-700 placeholder:text-neutral-400 focus:outline-none"
+                disabled={tagsFull}
+                placeholder={tagsFull ? "已达上限，删除标签后可继续添加" : "自定义标签，按回车添加"}
+                className="flex-1 bg-transparent text-[11px] text-neutral-700 placeholder:text-neutral-400 focus:outline-none disabled:opacity-50"
               />
               {tagInput.trim() && (
                 <button
@@ -322,7 +341,7 @@ function Lobby() {
             <>
               <p className="animate-fade-up mt-3 flex items-center gap-1.5 px-1 text-[11px] text-neutral-500">
                 <Bot className="h-3 w-3" />
-                确认角色后将直接进入匹配大厅
+                确认角色后将直接开启单人沉浸
               </p>
               <div className="mt-6">
                 <button
@@ -330,7 +349,7 @@ function Lobby() {
                   className="flex h-14 w-full items-center justify-center rounded-full text-white shadow-[var(--shadow-card)] transition active:scale-[0.98]"
                   style={{ background: "var(--gradient-rouge)" }}
                 >
-                  <span className="font-brush text-lg tracking-wider">进入匹配大厅</span>
+                  <span className="font-brush text-lg tracking-wider">一键入戏</span>
                 </button>
               </div>
             </>
@@ -394,20 +413,27 @@ function Lobby() {
             <div className="mt-4">
               <div className="mb-2 text-[11px] text-neutral-400">体验试选（不会保存）</div>
               <div className="flex flex-wrap gap-1.5">
-                {TAGS.slice(0, 4).map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => confirmTag(t.id)}
-                    className={`rounded-full border px-3 py-1.5 text-[11px] ${
-                      tags.includes(t.id)
-                        ? "border-transparent text-white"
-                        : "border-black/10 bg-white text-neutral-600"
-                    }`}
-                    style={tags.includes(t.id) ? { background: "var(--gradient-rouge)" } : undefined}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {TAGS.slice(0, 4).map((t) => {
+                  const on = tags.includes(t.id);
+                  const disabled = !on && tagsFull;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => confirmTag(t.id)}
+                      disabled={disabled}
+                      className={`rounded-full border px-3 py-1.5 text-[11px] ${
+                        on
+                          ? "border-transparent text-white"
+                          : disabled
+                            ? "cursor-not-allowed border-black/5 bg-neutral-100 text-neutral-300"
+                            : "border-black/10 bg-white text-neutral-600"
+                      }`}
+                      style={on ? { background: "var(--gradient-rouge)" } : undefined}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

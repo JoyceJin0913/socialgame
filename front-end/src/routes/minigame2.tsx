@@ -43,7 +43,9 @@ function Minigame2Page() {
       <div className="relative h-full w-full overflow-hidden bg-black">
         <button
           onClick={() =>
-            navigate({ to: "/play", search: { role: "hanyan", mode: "solo", partner: "peirong" } })
+            returnTo
+              ? navigate({ href: returnTo })
+              : navigate({ to: "/play", search: { role: "hanyan", mode: "solo", partner: "peirong" } })
           }
           className="absolute left-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white/90 backdrop-blur-md active:scale-95"
           aria-label="返回"

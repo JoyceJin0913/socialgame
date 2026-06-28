@@ -154,6 +154,31 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: st
     }));
   }, []);
 
+  const recordChoiceMeta = useCallback((sceneId: string, prismMeta: PrismMeta | null) => {
+    if (!prismMeta?.hook) return;
+    setState((s) => {
+      if (s.hookLog.some((item) => item.id === prismMeta.id)) return s;
+      const nextNum = applyHook(s.numerics, prismMeta.delta);
+      const change = summarizeChange(s.numerics, nextNum);
+      console.log("[Prism hook]", prismMeta.hook, prismMeta.delta || {}, "→", change);
+      return {
+        ...s,
+        numerics: nextNum,
+        lastChange: change,
+        hookLog: [
+          ...s.hookLog,
+          {
+            scene: sceneId,
+            hook: prismMeta.hook,
+            tag: prismMeta.tag,
+            delta: prismMeta.delta,
+            id: prismMeta.id,
+          },
+        ],
+      };
+    });
+  }, []);
+
   // ── 加载选项（三段式 beat 控制选项；PRISM 仍负责 HUD / 轴信息）────────
   const loadOptions = useCallback(async (scene: SceneConfig, round = 0) => {
     setState((s) => ({ ...s, optionsLoading: true, options: null }));
@@ -252,27 +277,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: st
       const scene = state.scene;
       if (!scene || state.busy) return;
 
-      if (prismMeta?.hook) {
-        const prevNum = state.numerics;
-        const nextNum = applyHook(prevNum, prismMeta.delta);
-        const change = summarizeChange(prevNum, nextNum);
-        setState((s) => ({
-          ...s,
-          numerics: nextNum,
-          lastChange: change,
-          hookLog: [
-            ...s.hookLog,
-            {
-              scene: scene.id,
-              hook: prismMeta.hook,
-              tag: prismMeta.tag,
-              delta: prismMeta.delta,
-              id: prismMeta.id,
-            },
-          ],
-        }));
-        console.log("[Prism hook]", prismMeta.hook, prismMeta.delta || {}, "→", change);
-      }
+      recordChoiceMeta(scene.id, prismMeta);
 
       // 玩家消息 + 立刻 push 一条空的 streaming AI 气泡
       const meId = newId();
@@ -351,7 +356,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: st
         });
       }
     },
-    [state.scene, state.busy, loadOptions]
+    [state.scene, state.busy, loadOptions, recordChoiceMeta]
   );
 
   // ── 用户点击 Prism 选项（含翻译）────────────────────────
@@ -505,6 +510,7 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: st
     skipScene,
     goNext,
     continueMainAfterSideQuest,
+    recordChoiceMeta,
     restart,
     switchView,
     ending: state.endingKey ? ENDINGS[state.endingKey] : null,

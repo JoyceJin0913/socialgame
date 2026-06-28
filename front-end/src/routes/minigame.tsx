@@ -15,6 +15,8 @@ export const Route = createFileRoute("/minigame")({
     from: typeof s.from === "string" ? s.from : undefined,
     role: typeof s.role === "string" ? s.role : undefined,
     resume: typeof s.resume === "string" ? s.resume : undefined,
+    room: typeof s.room === "string" ? s.room : undefined,
+    userId: typeof s.userId === "string" ? s.userId : undefined,
   }),
   component: MinigamePage,
   ssr: false,
@@ -216,7 +218,7 @@ function MinigamePage() {
 
 function Game() {
   const navigate = useNavigate();
-  const { from, role, resume } = Route.useSearch();
+  const { from, role, resume, room, userId } = Route.useSearch();
   const [showIntro, setShowIntro] = useState(true);
   const [view, setView] = useState<View>({ kind: "scene", sceneId: "qingqiu" });
   const [collected, setCollected] = useState<Set<string>>(new Set());
@@ -256,6 +258,8 @@ function Game() {
         search: {
           role: role === "fyx" ? "moshen" : "hanyan",
           resume: resume || "sidehall_confront",
+          room,
+          userId,
         },
       });
       return;

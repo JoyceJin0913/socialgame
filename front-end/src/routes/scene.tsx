@@ -17,10 +17,20 @@ import { PrismHUD } from "@/components/PrismHUD";
 import { EndingScreen } from "@/components/EndingScreen";
 import { BGMPlayer } from "@/components/BGMPlayer";
 import { usePlay } from "@/hooks/use-play";
+import { useRoomChat } from "@/hooks/use-room-chat";
+import { CHARACTERS, getCharacter } from "@/lib/characters";
+import { translateIntent } from "@/lib/chat";
 import sceneBg from "@/assets/scene-cijitang.png";
 import type { ViewKey } from "@/lib/story";
 
-type SceneSearch = { role?: string; resume?: string; battle?: string };
+type SceneSearch = {
+  role?: string;
+  tags?: string;
+  resume?: string;
+  battle?: string;
+  room?: string;
+  userId?: string;
+};
 
 function roleToView(role?: string): ViewKey {
   return role === "moshen" ? "fyx" : "hanyan";
@@ -29,8 +39,11 @@ function roleToView(role?: string): ViewKey {
 export const Route = createFileRoute("/scene")({
   validateSearch: (s: Record<string, unknown>): SceneSearch => ({
     role: typeof s.role === "string" ? s.role : undefined,
+    tags: typeof s.tags === "string" ? s.tags : undefined,
     resume: typeof s.resume === "string" ? s.resume : undefined,
     battle: typeof s.battle === "string" ? s.battle : undefined,
+    room: typeof s.room === "string" ? s.room : undefined,
+    userId: typeof s.userId === "string" ? s.userId : undefined,
   }),
   component: ScenePage,
   head: () => ({
@@ -97,8 +110,29 @@ function TagChip({ tag }: { tag: string }) {
 
 function Scene() {
   const navigate = useNavigate();
-  const { role, resume, battle } = Route.useSearch();
+  const { role, tags, resume, battle, room: roomCode, userId: paramUserId } = Route.useSearch();
   const initialView = roleToView(role);
+
+  // 多人模式：有 room 和 userId 参数时启用房间聊天
+  const stableUserId = useRef(
+    typeof window !== "undefined"
+      ? (paramUserId || window.localStorage.getItem("ruxi.matchmaking.userId") || "")
+      : "",
+  ).current;
+
+  const isMultiplayer = Boolean(roomCode && stableUserId);
+  const roomChat = useRoomChat(isMultiplayer ? roomCode! : null, stableUserId);
+  const buildSceneHref = (extra: Record<string, string>) => {
+    const params = new URLSearchParams({ role: role || "hanyan" });
+    if (tags) params.set("tags", tags);
+    if (isMultiplayer && roomCode && stableUserId) {
+      params.set("room", roomCode);
+      params.set("userId", stableUserId);
+    }
+    Object.entries(extra).forEach(([key, value]) => params.set(key, value));
+    return `/scene?${params.toString()}`;
+  };
+
   const {
     state,
     view,
@@ -108,6 +142,7 @@ function Scene() {
     skipScene,
     goNext,
     continueMainAfterSideQuest,
+    recordChoiceMeta,
     restart,
     switchView,
     ending,
@@ -118,6 +153,7 @@ function Scene() {
   const [freeInput, setFreeInput] = useState("");
   const [battleTextDone, setBattleTextDone] = useState(false);
   const [battleText, setBattleText] = useState("");
+  const [mpBusy, setMpBusy] = useState(false);
   const latestMessageId = state.messages.at(-1)?.id;
 
   const storedBattleEnding =
@@ -171,6 +207,28 @@ function Scene() {
     return () => window.clearInterval(timer);
   }, [state.phase]);
 
+  // 多人模式：检测对方发送的「推进场景」信号
+  useEffect(() => {
+    if (!isMultiplayer || roomChat.messages.length === 0) return;
+    const lastMsg = roomChat.messages[roomChat.messages.length - 1];
+    if (lastMsg.text === "__NEXT_SCENE__" && !lastMsg.isMine) {
+      goNext();
+    }
+  }, [roomChat.messages, isMultiplayer, goNext]);
+
+  useEffect(() => {
+    if (!isMultiplayer) return;
+    roomChat.messages.forEach((m) => {
+      if (m.isMine || !m.meta?.hook) return;
+      recordChoiceMeta(m.meta.sceneId || state.scene?.id || "remote", {
+        id: m.id,
+        hook: m.meta.hook,
+        tag: m.meta.tag,
+        delta: m.meta.delta,
+      });
+    });
+  }, [isMultiplayer, recordChoiceMeta, roomChat.messages, state.scene?.id]);
+
   if (battleEnding) {
     return (
       <EndingScreen
@@ -187,6 +245,97 @@ function Scene() {
       />
     );
   }
+
+  // 多人模式：把对方消息合并到消息列表渲染
+  // kind "player" 表示真人消息（不显示 AI 标签），"me" 表示自己发的
+  const mpMessages = isMultiplayer
+    ? roomChat.messages.map((m) => {
+        const char = getCharacter(m.roleId) ?? CHARACTERS[0];
+        return {
+          id: m.id,
+          kind: m.isMine ? "me" : "player",
+          name: char.name,
+          text: m.text,
+          roleName: char.name,
+        } as const;
+      })
+    : [];
+
+  const allMessages = isMultiplayer && mpMessages.length > 0
+    ? [...state.messages, ...mpMessages]
+    : state.messages;
+
+  const latestMId = allMessages.at(-1)?.id;
+
+  // 多人模式：轮次 = 双方各说一次算一轮（2 条消息 = 1 轮）
+  const mpRound = isMultiplayer ? Math.floor(roomChat.messages.length / 2) : 0;
+  const mpShowContinue = isMultiplayer && mpRound >= state.maxRoundsPerScene;
+
+  // 多人模式：点击选项 → 翻译 → 发到房间
+  const handleMpChoose = async (opt: typeof state.options extends (infer T)[] | null ? T : never) => {
+    if (!opt || mpBusy) return;
+    const scene = state.scene;
+    if (!scene) return;
+
+    setMpBusy(true);
+
+    try {
+      let spokenLine = opt.text;
+      if (opt._prism?.hook) {
+        spokenLine = await translateIntent(
+          {
+            sceneId: scene.id,
+            sceneTag: scene.sceneTag,
+            sceneName: scene.sceneName,
+            aiCharacter: scene.aiCharacter,
+          },
+          opt.text,
+          opt._prism,
+        );
+      }
+      const sent = await roomChat.sendMessage(
+        spokenLine,
+        opt._prism?.hook
+          ? {
+              sceneId: scene.id,
+              choiceId: opt._prism.id,
+              tag: opt._prism.tag,
+              hook: opt._prism.hook,
+              delta: opt._prism.delta,
+            }
+          : undefined,
+      );
+      if (sent && opt._prism?.hook) {
+        recordChoiceMeta(scene.id, { ...opt._prism, id: sent.id });
+      }
+      // 选项保持可见，让双方可以持续对话
+    } catch (err: any) {
+      console.error("[MP] send failed", err);
+    } finally {
+      setMpBusy(false);
+    }
+  };
+
+  // 多人模式：进入下一幕（同时通知对方）
+  const handleMpGoNext = async () => {
+    if (mpBusy) return;
+    // 先发信号让对方也推进
+    await roomChat.sendMessage("__NEXT_SCENE__");
+    goNext();
+  };
+
+  const handleMpFreeInput = async () => {
+    if (!freeInput.trim() || mpBusy) return;
+    setMpBusy(true);
+    try {
+      await roomChat.sendMessage(freeInput);
+      setFreeInput("");
+    } catch (err: any) {
+      console.error("[MP] send failed", err);
+    } finally {
+      setMpBusy(false);
+    }
+  };
 
   if (state.phase === "ending" && ending) {
     return (
@@ -220,7 +369,7 @@ function Scene() {
           );
           navigate({
             to: "/minigame2",
-            search: { from: "scene", returnTo: "/scene?role=hanyan&battle=won" },
+            search: { from: "scene", returnTo: buildSceneHref({ battle: "won" }) },
           });
         }}
       />
@@ -258,13 +407,20 @@ function Scene() {
           </div>
         </div>
         {/* 视角切换 */}
-        <button
-          onClick={() => switchView(view === "hanyan" ? "fyx" : "hanyan")}
-          className="flex h-9 items-center gap-1 rounded-full bg-black/40 px-3 text-[10px] tracking-wider text-amber-100 backdrop-blur active:scale-95"
-          title="切换视角（会重启）"
-        >
-          {view === "hanyan" ? "👁 寒雁" : "❄ 云夕"}
-        </button>
+        {isMultiplayer ? (
+          <div className="flex h-9 items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 text-[10px] tracking-wider text-emerald-100 backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
+            联机中
+          </div>
+        ) : (
+          <button
+            onClick={() => switchView(view === "hanyan" ? "fyx" : "hanyan")}
+            className="flex h-9 items-center gap-1 rounded-full bg-black/40 px-3 text-[10px] tracking-wider text-amber-100 backdrop-blur active:scale-95"
+            title="切换视角（会重启）"
+          >
+            {view === "hanyan" ? "👁 寒雁" : "❄ 云夕"}
+          </button>
+        )}
       </div>
 
       <div className="relative z-10 mx-4 mb-2 h-[3px] overflow-hidden rounded-full bg-white/10">
@@ -282,8 +438,8 @@ function Scene() {
         ref={scrollRef}
         className="absolute inset-x-0 bottom-[260px] top-[108px] z-10 overflow-y-auto px-4 pb-4"
       >
-        {state.messages.map((m) => {
-          const isLatestMessage = m.id === latestMessageId;
+        {allMessages.map((m) => {
+          const isLatestMessage = m.id === latestMId;
           if (m.kind === "narration") {
             return (
               <div
@@ -315,7 +471,27 @@ function Scene() {
               </div>
             );
           }
+          if (m.kind === "player") {
+            return (
+              <div
+                key={m.id}
+                ref={isLatestMessage ? latestMessageRef : undefined}
+                className="my-3 max-w-[85%]"
+              >
+                <div className="mb-1 text-[11px] tracking-wider text-amber-200/80">
+                  {m.name}
+                  <span className="ml-2 inline-flex items-center rounded-full border border-emerald-300/40 bg-emerald-500/15 px-1.5 py-[1px] text-[8px] leading-none tracking-wider text-emerald-100">
+                    真人
+                  </span>
+                </div>
+                <div className="rounded-2xl rounded-tl-md bg-sky-50/95 px-4 py-2.5 text-[14px] leading-relaxed text-stone-800 shadow-md">
+                  {m.text}
+                </div>
+              </div>
+            );
+          }
           if (m.kind === "me") {
+            const myChar = isMultiplayer ? (getCharacter(role ?? "hanyan") ?? CHARACTERS[0]) : null;
             return (
               <div
                 key={m.id}
@@ -324,7 +500,7 @@ function Scene() {
               >
                 <div className="max-w-[85%]">
                   <div className="mb-1 text-right text-[11px] tracking-wider text-amber-100/80">
-                    庄寒雁
+                    {myChar ? myChar.name : "庄寒雁"}
                   </div>
                   <div className="rounded-2xl rounded-tr-md bg-rose-900/70 px-4 py-2.5 text-[14px] leading-relaxed text-amber-50 shadow-md backdrop-blur">
                     {m.text}
@@ -386,7 +562,13 @@ function Scene() {
                 onClick={() =>
                   navigate({
                     to: "/minigame",
-                    search: { from: "scene", role: view, resume: "sidehall_confront" },
+                    search: {
+                      from: "scene",
+                      role: view,
+                      resume: "sidehall_confront",
+                      room: isMultiplayer ? roomCode : undefined,
+                      userId: isMultiplayer ? stableUserId : undefined,
+                    },
                   })
                 }
                 className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400/25 px-3 py-2.5 text-[13px] tracking-wider text-amber-50 transition hover:bg-amber-300/30 active:scale-95"
@@ -406,7 +588,16 @@ function Scene() {
 
         {state.showContinue && !state.pendingSideQuest && (
           <button
-            onClick={goNext}
+            onClick={isMultiplayer ? handleMpGoNext : goNext}
+            className="w-full rounded-xl border-2 border-amber-400/60 bg-amber-500/20 px-4 py-3 text-center text-[14px] tracking-wider text-amber-100 backdrop-blur transition-all hover:bg-amber-400/30 active:scale-95"
+          >
+            → 进入下一幕
+          </button>
+        )}
+
+        {isMultiplayer && mpShowContinue && !state.showContinue && (
+          <button
+            onClick={handleMpGoNext}
             className="w-full rounded-xl border-2 border-amber-400/60 bg-amber-500/20 px-4 py-3 text-center text-[14px] tracking-wider text-amber-100 backdrop-blur transition-all hover:bg-amber-400/30 active:scale-95"
           >
             → 进入下一幕
@@ -414,20 +605,26 @@ function Scene() {
         )}
 
         {!state.showContinue &&
+          !mpShowContinue &&
           !state.optionsLoading &&
           state.options &&
           state.options.length > 0 && (
             <>
               <div className="mb-2 flex items-center justify-between gap-2 text-[11px] text-amber-50/60">
                 <span>
-                  💬 第 <b className="text-amber-200">{state.roundInScene + 1}</b> /{" "}
+                  💬 第 <b className="text-amber-200">
+                    {isMultiplayer ? mpRound + 1 : state.roundInScene + 1}
+                  </b> /{" "}
                   {state.maxRoundsPerScene} 组
                   {state.currentBeatLabel && (
                     <span className="ml-1 text-amber-200/80">· {state.currentBeatLabel}</span>
                   )}
                 </span>
-                {state.roundInScene >= 1 && (
-                  <button onClick={skipScene} className="shrink-0 text-amber-300 hover:text-amber-200">
+                {(isMultiplayer ? mpRound >= 1 : state.roundInScene >= 1) && (
+                  <button
+                    onClick={isMultiplayer ? handleMpGoNext : skipScene}
+                    className="shrink-0 text-amber-300 hover:text-amber-200"
+                  >
                     够了，进入下一幕 →
                   </button>
                 )}
@@ -451,8 +648,8 @@ function Scene() {
                 {state.options.map((opt, i) => (
                   <button
                     key={i}
-                    disabled={state.translating || state.busy}
-                    onClick={() => chooseOption(opt)}
+                    disabled={isMultiplayer ? mpBusy : (state.translating || state.busy)}
+                    onClick={() => isMultiplayer ? handleMpChoose(opt) : chooseOption(opt)}
                     className={[
                       "block w-full rounded-xl border px-3.5 py-2.5 text-left text-[13px] leading-relaxed transition-all disabled:opacity-50 active:scale-[0.98]",
                       opt.cls === "recommended"
@@ -474,26 +671,32 @@ function Scene() {
                 <div className="mt-3 flex items-center gap-2 rounded-xl border border-white/15 bg-black/40 px-2 py-1.5">
                   <input
                     value={freeInput}
-                    disabled={state.translating || state.busy}
+                    disabled={isMultiplayer ? mpBusy : (state.translating || state.busy)}
                     placeholder={scene.freeInputHint || "自由发挥…"}
                     onChange={(e) => setFreeInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         if (freeInput.trim()) {
-                          submitFreeInput(freeInput);
-                          setFreeInput("");
+                          if (isMultiplayer) handleMpFreeInput();
+                          else {
+                            submitFreeInput(freeInput);
+                            setFreeInput("");
+                          }
                         }
                       }
                     }}
                     className="flex-1 bg-transparent px-2 py-1 text-[13px] text-amber-50 placeholder:text-amber-50/35 focus:outline-none disabled:opacity-50"
                   />
                   <button
-                    disabled={state.translating || state.busy || !freeInput.trim()}
+                    disabled={isMultiplayer ? (mpBusy || !freeInput.trim()) : (state.translating || state.busy || !freeInput.trim())}
                     onClick={() => {
                       if (freeInput.trim()) {
-                        submitFreeInput(freeInput);
-                        setFreeInput("");
+                        if (isMultiplayer) handleMpFreeInput();
+                        else {
+                          submitFreeInput(freeInput);
+                          setFreeInput("");
+                        }
                       }
                     }}
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/30 text-amber-100 disabled:opacity-30"
