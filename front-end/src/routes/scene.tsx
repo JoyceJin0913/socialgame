@@ -203,6 +203,14 @@ function Scene() {
     ending,
   } = usePlay(initialView, resume, tagList);
 
+  // 前情提要视频：进第五幕前给观众引入（按视角男/女主各一版，看过不重播，可跳过）
+  const introSeen = typeof window !== "undefined" && window.sessionStorage.getItem(`intro:${initialView}`) === "1";
+  const [showIntro, setShowIntro] = useState(!resume && battle !== "won" && !introSeen);
+  const dismissIntro = () => {
+    if (typeof window !== "undefined") window.sessionStorage.setItem(`intro:${initialView}`, "1");
+    setShowIntro(false);
+  };
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const latestMessageRef = useRef<HTMLDivElement>(null);
   const [freeInput, setFreeInput] = useState("");
@@ -283,6 +291,10 @@ function Scene() {
       });
     });
   }, [isMultiplayer, recordChoiceMeta, roomChat.messages, state.scene?.id]);
+
+  if (showIntro) {
+    return <IntroVideo view={initialView} onDone={dismissIntro} />;
+  }
 
   if (battleEnding) {
     return (
@@ -765,6 +777,33 @@ function Scene() {
             </>
           )}
       </div>
+    </div>
+  );
+}
+
+function IntroVideo({ view, onDone }: { view: ViewKey; onDone: () => void }) {
+  const src = view === "fyx" ? "/intro/fyx.mp4" : "/intro/hanyan.mp4";
+  const title = view === "fyx" ? "傅云夕 · 前情" : "庄寒雁 · 前情";
+  return (
+    <div className="relative h-full overflow-hidden bg-black text-amber-50">
+      <video
+        src={src}
+        autoPlay
+        playsInline
+        controls={false}
+        onEnded={onDone}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/60 to-transparent px-5 pt-12 pb-8 text-center">
+        <div className="text-[10px] tracking-[0.36em] text-amber-200/70">第五幕 · 前情提要</div>
+        <div className="mt-1 font-brush text-[18px] tracking-[0.18em] text-amber-100">{title}</div>
+      </div>
+      <button
+        onClick={onDone}
+        className="absolute bottom-8 right-5 z-10 rounded-full border border-white/30 bg-black/45 px-4 py-2 text-[12px] tracking-wider text-amber-50 backdrop-blur transition active:scale-95"
+      >
+        跳过 ▶
+      </button>
     </div>
   );
 }
