@@ -51,7 +51,7 @@ export const Route = createFileRoute("/scene")({
   beforeLoad: () => {
     const profile = readPlayerProfile();
     if (!profile.nick || profile.nick === DEFAULT_PROFILE.nick) {
-      throw redirect({ to: "/", search: { redirect: "lobby" } });
+      throw redirect({ to: "/", search: { redirect: "huatangchun" } });
     }
   },
   component: ScenePage,

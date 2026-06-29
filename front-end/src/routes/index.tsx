@@ -56,7 +56,9 @@ function Entry() {
       createdAt: saved.createdAt,
     });
     // 登记后跳转
-    if (redirect === "lobby") {
+    if (redirect === "huatangchun") {
+      navigate({ to: "/huatangchun" });
+    } else if (redirect === "lobby") {
       navigate({ to: "/lobby" });
     } else if (redirect === "scene") {
       navigate({ to: "/scene" });
