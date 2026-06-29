@@ -32,4 +32,7 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
-.env
+
+# Tencent Cloud EdgeOne
+.edgeone/*
+.tef_dist/*

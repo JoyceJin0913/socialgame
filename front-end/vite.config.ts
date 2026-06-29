@@ -5,6 +5,10 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { edgeoneTanStackStartAdapter } from "@edgeone/tanstack-start";
+
+const edgeOnePlugins =
+  process.env.EDGEONE_BUILD === "1" ? [edgeoneTanStackStartAdapter()] : [];
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
@@ -13,6 +17,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: edgeOnePlugins,
     server: {
       allowedHosts: ["meter-folder-assets-trackback.trycloudflare.com"],
       // 不再需要 proxy 到外部后端：/api/chat 已经在 server.ts 中由
