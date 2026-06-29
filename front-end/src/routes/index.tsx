@@ -5,11 +5,12 @@ import heroHuatang from "@/assets/hero-huatangchun.jpg";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { DEFAULT_PROFILE, normalizeNick, readPlayerProfile, savePlayerProfile } from "@/lib/player-profile";
 
-type EntrySearch = { entered?: string };
+type EntrySearch = { entered?: string; redirect?: string };
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>): EntrySearch => ({
     entered: typeof s.entered === "string" ? s.entered : undefined,
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
   }),
   component: EntryPage,
   head: () => ({
@@ -26,7 +27,7 @@ const PLAY_STYLES = ["剧情沉浸", "高能对戏", "轻松社交"];
 
 function Entry() {
   const navigate = useNavigate();
-  const { entered } = Route.useSearch();
+  const { entered, redirect } = Route.useSearch();
   const saved = readPlayerProfile();
   const [nick, setNick] = useState(saved.nick === DEFAULT_PROFILE.nick ? "" : saved.nick);
   const [ageRange, setAgeRange] = useState(saved.ageRange);
@@ -56,7 +57,12 @@ function Entry() {
       guest,
       createdAt: saved.createdAt,
     });
-    navigate({ to: "/huatangchun" });
+    // 登记后跳转：有 redirect=scene 则回 /scene，否则默认 /huatangchun
+    if (redirect === "scene") {
+      navigate({ to: "/scene" });
+    } else {
+      navigate({ to: "/huatangchun" });
+    }
   };
 
   return (
