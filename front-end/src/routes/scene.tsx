@@ -9,7 +9,7 @@
  *  - 结局展示
  */
 
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send, Sparkles, Swords } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
@@ -47,15 +47,6 @@ export const Route = createFileRoute("/scene")({
     room: typeof s.room === "string" ? s.room : undefined,
     userId: typeof s.userId === "string" ? s.userId : undefined,
   }),
-  beforeLoad: () => {
-    // 未登记用户（昵称仍为默认值）重定向到登记页，登记后再回到 /scene
-    if (typeof window !== "undefined") {
-      const profile = readPlayerProfile();
-      if (!profile.nick || profile.nick === DEFAULT_PROFILE.nick) {
-        throw redirect({ to: "/", search: { redirect: "scene" } });
-      }
-    }
-  },
   component: ScenePage,
   head: () => ({
     meta: [
@@ -66,6 +57,16 @@ export const Route = createFileRoute("/scene")({
 });
 
 function ScenePage() {
+  const navigate = useNavigate();
+
+  // 客户端守卫：未登记用户（昵称为默认值）重定向到登记页，登记后再回 /scene
+  useEffect(() => {
+    const profile = readPlayerProfile();
+    if (!profile.nick || profile.nick === DEFAULT_PROFILE.nick) {
+      navigate({ to: "/", search: { redirect: "scene" }, replace: true });
+    }
+  }, [navigate]);
+
   return (
     <PhoneMockup>
       <Scene />
