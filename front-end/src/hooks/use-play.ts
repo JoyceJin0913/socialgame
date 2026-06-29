@@ -36,6 +36,7 @@ import {
   type NumericsState,
   type EndingDecision,
 } from "@/lib/numerics";
+import { buildTonePromptHint, resolveTone } from "@/lib/tone";
 
 // ── Message types ─────────────────────────────────────────
 
@@ -110,10 +111,12 @@ function toRefractedOption(
   };
 }
 
-export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: string) {
+export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: string, tags: string[] = []) {
   const [view, setView] = useState<ViewKey>(initialView);
   const scenesRef = useRef(VIEWS[initialView].scenes);
   const startedRef = useRef(false);
+  const tagsRef = useRef<string[]>(tags);
+  tagsRef.current = tags;
   const initialSceneIdx = getSceneIndexBefore(initialView, initialSceneId);
 
   const [state, setState] = useState<PlayState>({
@@ -239,6 +242,13 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: st
 
       const msgs: PlayMessage[] = [];
       scene.narrations.forEach((n) => msgs.push({ id: newId(), kind: "narration", text: n }));
+      // 第一幕开场：按玩家选的标签基调，追加一句氛围旁白（让标签差异"看得见"）
+      if (nextIdx === 0) {
+        const tone = resolveTone(tagsRef.current);
+        if (tone) {
+          msgs.push({ id: newId(), kind: "narration", text: tone.narrationTint });
+        }
+      }
       msgs.push({ id: newId(), kind: "ai", name: scene.aiCharacter, text: scene.aiOpening });
       historyRef.current.push({ role: "assistant", content: scene.aiOpening });
 
@@ -296,7 +306,12 @@ export function usePlay(initialView: ViewKey = DEFAULT_VIEW, initialSceneId?: st
       historyRef.current.push({ role: "user", content: text });
 
       try {
-        const persona = PERSONAS[scene.aiPersona];
+        const basePersona = PERSONAS[scene.aiPersona];
+        // 注入玩家选择的剧情标签基调，改变 NPC 对白风格
+        const toneHint = buildTonePromptHint(tagsRef.current);
+        const persona = toneHint
+          ? { ...basePersona, system: `${basePersona.system}\n\n${toneHint}` }
+          : basePersona;
 
         // 流式：每收到一段就更新 aiId 那条消息的 text
         const reply = await chatWithAIStream(persona, historyRef.current, {
