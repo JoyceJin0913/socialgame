@@ -47,14 +47,11 @@ export const Route = createFileRoute("/scene")({
     room: typeof s.room === "string" ? s.room : undefined,
     userId: typeof s.userId === "string" ? s.userId : undefined,
   }),
-  // 登记守卫：readPlayerProfile() 内部已处理服务端/客户端差异
-  // - 服务端(无 window)  → DEFAULT_PROFILE → 302 重定向到 / 登记页
-  // - 客户端未登记       → DEFAULT_PROFILE → 跳转到 / 登记页
-  // - 客户端已登记       → 真实昵称       → 正常渲染场景页
+  // 登记守卫：未登记 → 跳转到登记页，登记后进入 lobby 大厅
   beforeLoad: () => {
     const profile = readPlayerProfile();
     if (!profile.nick || profile.nick === DEFAULT_PROFILE.nick) {
-      throw redirect({ to: "/", search: { redirect: "scene" } });
+      throw redirect({ to: "/", search: { redirect: "lobby" } });
     }
   },
   component: ScenePage,

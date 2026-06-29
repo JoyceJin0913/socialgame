@@ -57,8 +57,10 @@ function Entry() {
       guest,
       createdAt: saved.createdAt,
     });
-    // 登记后跳转：有 redirect=scene 则回 /scene，否则默认 /huatangchun
-    if (redirect === "scene") {
+    // 登记后跳转
+    if (redirect === "lobby") {
+      navigate({ to: "/lobby" });
+    } else if (redirect === "scene") {
       navigate({ to: "/scene" });
     } else {
       navigate({ to: "/huatangchun" });
