@@ -44,10 +44,8 @@ function Entry() {
   }, [entered, navigate]);
 
   const cleanNick = normalizeNick(nick);
-  const canEnter = nick.trim().length > 0;
 
   const enter = (guest: boolean) => {
-    if (!canEnter) return;
     savePlayerProfile({
       nick: cleanNick,
       ageRange,
@@ -127,18 +125,16 @@ function Entry() {
 
         <section className="space-y-3">
           <button
-            disabled={!canEnter}
             onClick={() => enter(false)}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[14px] font-medium text-white shadow-[0_16px_34px_-18px_rgba(178,65,58,0.7)] transition active:scale-[0.98] disabled:opacity-45"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[14px] font-medium text-white shadow-[0_16px_34px_-18px_rgba(178,65,58,0.7)] transition active:scale-[0.98]"
             style={{ background: "var(--gradient-rouge)" }}
           >
             完成登记并进入
             <ChevronRight className="h-4 w-4" />
           </button>
           <button
-            disabled={!canEnter}
             onClick={() => enter(true)}
-            className="h-12 w-full rounded-full border border-black/10 bg-white text-[13px] text-neutral-700 transition active:scale-[0.98] disabled:opacity-45"
+            className="h-12 w-full rounded-full border border-black/10 bg-white text-[13px] text-neutral-700 transition active:scale-[0.98]"
           >
             以游客身份进入
           </button>
