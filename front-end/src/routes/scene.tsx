@@ -784,20 +784,53 @@ function Scene() {
 function IntroVideo({ view, onDone }: { view: ViewKey; onDone: () => void }) {
   const src = view === "fyx" ? "/intro/fyx.mp4" : "/intro/hanyan.mp4";
   const title = view === "fyx" ? "傅云夕 · 前情" : "庄寒雁 · 前情";
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+
+  // 浏览器只允许「静音」自动播放；先静音起播保证画面出来，再让用户一键开声
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(() => {
+      /* 若仍被拦截，画面停在首帧，用户可点「跳过」或点屏开声重播 */
+    });
+  }, []);
+
+  const enableSound = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = false;
+    setMuted(false);
+    v.play().catch(() => undefined);
+  };
+
   return (
     <div className="relative h-full overflow-hidden bg-black text-amber-50">
       <video
+        ref={videoRef}
         src={src}
         autoPlay
+        muted
         playsInline
+        preload="auto"
         controls={false}
         onEnded={onDone}
+        onError={onDone}
         className="absolute inset-0 h-full w-full object-cover"
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/60 to-transparent px-5 pt-12 pb-8 text-center">
         <div className="text-[10px] tracking-[0.36em] text-amber-200/70">第五幕 · 前情提要</div>
         <div className="mt-1 font-brush text-[18px] tracking-[0.18em] text-amber-100">{title}</div>
       </div>
+      {muted && (
+        <button
+          onClick={enableSound}
+          className="absolute bottom-8 left-5 z-10 rounded-full border border-amber-300/50 bg-black/45 px-4 py-2 text-[12px] tracking-wider text-amber-100 backdrop-blur transition active:scale-95"
+        >
+          🔇 点击开声
+        </button>
+      )}
       <button
         onClick={onDone}
         className="absolute bottom-8 right-5 z-10 rounded-full border border-white/30 bg-black/45 px-4 py-2 text-[12px] tracking-wider text-amber-50 backdrop-blur transition active:scale-95"
