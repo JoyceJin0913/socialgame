@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Share2, Bookmark, ChevronDown, Sparkles, Users, Clock, X, UserRound } from "lucide-react";
 import heroImg from "@/assets/hero-huatangchun.jpg";
-import { PLAYABLE_CHARACTERS } from "@/lib/characters";
+import { CHARACTERS, PLAYABLE_CHARACTER_IDS } from "@/lib/characters";
 import { PhoneMockup } from "@/components/PhoneMockup";
 
 export const Route = createFileRoute("/huatangchun")({
@@ -73,7 +73,7 @@ function HuatangChun() {
   }, []);
 
   const setActiveSafe = (i: number) => {
-    const idx = Math.max(0, Math.min(PLAYABLE_CHARACTERS.length - 1, i));
+    const idx = Math.max(0, Math.min(CHARACTERS.length - 1, i));
     setActive(idx);
     centerCard(idx);
   };
@@ -140,8 +140,9 @@ function HuatangChun() {
         </div>
 
         <div ref={trackRef} className="no-scrollbar mt-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[22%] pb-6 pt-4">
-          {PLAYABLE_CHARACTERS.map((c, i) => {
+          {CHARACTERS.map((c, i) => {
             const isActive = i === active;
+            const isPlayable = PLAYABLE_CHARACTER_IDS.has(c.id);
             return (
               <button
                 key={c.id}
@@ -161,9 +162,16 @@ function HuatangChun() {
                   <div className={`font-brush text-white ${isActive ? "text-3xl" : "text-2xl"}`}>{c.name}</div>
                   <div className="mt-1 text-[10px] text-white/80">{c.gender} · {c.age} 岁</div>
                   {isActive && (
-                    <span className="mt-2 inline-block rounded-sm bg-white/15 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm">
-                      {c.tag}
-                    </span>
+                    <>
+                      <span className="mt-2 inline-block rounded-sm bg-white/15 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm">
+                        {c.tag}
+                      </span>
+                      {isPlayable && (
+                        <span className="ml-1 inline-block rounded-sm bg-rose-500/60 px-1.5 py-0.5 text-[9px] text-white backdrop-blur-sm">
+                          可扮演
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
               </button>
@@ -173,7 +181,7 @@ function HuatangChun() {
 
         {/* Dots */}
         <div className="flex justify-center gap-1.5">
-          {PLAYABLE_CHARACTERS.map((_, i) => (
+          {CHARACTERS.map((_, i) => (
             <span key={i} className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-white" : "w-1.5 bg-white/40"}`} />
           ))}
         </div>
