@@ -9,7 +9,7 @@
  *  - 结局展示
  */
 
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send, Sparkles, Swords } from "lucide-react";
 import { PhoneMockup } from "@/components/PhoneMockup";
@@ -23,6 +23,7 @@ import { translateIntent } from "@/lib/chat";
 import { resolveTone, type ToneSpec } from "@/lib/tone";
 import sceneBg from "@/assets/scene-cijitang.png";
 import type { ViewKey } from "@/lib/story";
+import { readPlayerProfile, DEFAULT_PROFILE } from "@/lib/player-profile";
 
 type SceneSearch = {
   role?: string;
@@ -46,6 +47,13 @@ export const Route = createFileRoute("/scene")({
     room: typeof s.room === "string" ? s.room : undefined,
     userId: typeof s.userId === "string" ? s.userId : undefined,
   }),
+  // 登记守卫：未登记 → 跳转到登记页，登记后进入 lobby 大厅
+  beforeLoad: () => {
+    const profile = readPlayerProfile();
+    if (!profile.nick || profile.nick === DEFAULT_PROFILE.nick) {
+      throw redirect({ to: "/", search: { redirect: "huatangchun" } });
+    }
+  },
   component: ScenePage,
   head: () => ({
     meta: [

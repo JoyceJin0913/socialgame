@@ -5,11 +5,12 @@ import heroHuatang from "@/assets/hero-huatangchun.jpg";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { DEFAULT_PROFILE, normalizeNick, readPlayerProfile, savePlayerProfile } from "@/lib/player-profile";
 
-type EntrySearch = { entered?: string };
+type EntrySearch = { entered?: string; redirect?: string };
 
 export const Route = createFileRoute("/")({
   validateSearch: (s: Record<string, unknown>): EntrySearch => ({
     entered: typeof s.entered === "string" ? s.entered : undefined,
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
   }),
   component: EntryPage,
   head: () => ({
@@ -26,7 +27,7 @@ const PLAY_STYLES = ["剧情沉浸", "高能对戏", "轻松社交"];
 
 function Entry() {
   const navigate = useNavigate();
-  const { entered } = Route.useSearch();
+  const { entered, redirect } = Route.useSearch();
   const saved = readPlayerProfile();
   const [nick, setNick] = useState(saved.nick === DEFAULT_PROFILE.nick ? "" : saved.nick);
   const [ageRange, setAgeRange] = useState(saved.ageRange);
@@ -43,10 +44,8 @@ function Entry() {
   }, [entered, navigate]);
 
   const cleanNick = normalizeNick(nick);
-  const canEnter = nick.trim().length > 0;
 
   const enter = (guest: boolean) => {
-    if (!canEnter) return;
     savePlayerProfile({
       nick: cleanNick,
       ageRange,
@@ -56,7 +55,16 @@ function Entry() {
       guest,
       createdAt: saved.createdAt,
     });
-    navigate({ to: "/huatangchun" });
+    // 登记后跳转
+    if (redirect === "huatangchun") {
+      navigate({ to: "/huatangchun" });
+    } else if (redirect === "lobby") {
+      navigate({ to: "/lobby" });
+    } else if (redirect === "scene") {
+      navigate({ to: "/scene" });
+    } else {
+      navigate({ to: "/huatangchun" });
+    }
   };
 
   return (
@@ -119,18 +127,16 @@ function Entry() {
 
         <section className="space-y-3">
           <button
-            disabled={!canEnter}
             onClick={() => enter(false)}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[14px] font-medium text-white shadow-[0_16px_34px_-18px_rgba(178,65,58,0.7)] transition active:scale-[0.98] disabled:opacity-45"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[14px] font-medium text-white shadow-[0_16px_34px_-18px_rgba(178,65,58,0.7)] transition active:scale-[0.98]"
             style={{ background: "var(--gradient-rouge)" }}
           >
             完成登记并进入
             <ChevronRight className="h-4 w-4" />
           </button>
           <button
-            disabled={!canEnter}
             onClick={() => enter(true)}
-            className="h-12 w-full rounded-full border border-black/10 bg-white text-[13px] text-neutral-700 transition active:scale-[0.98] disabled:opacity-45"
+            className="h-12 w-full rounded-full border border-black/10 bg-white text-[13px] text-neutral-700 transition active:scale-[0.98]"
           >
             以游客身份进入
           </button>
