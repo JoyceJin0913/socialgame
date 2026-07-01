@@ -9,6 +9,7 @@
  * DEEPSEEK_API_KEY 通过容器环境变量注入，worker 内部会从 env 读取。
  */
 import { createServer } from "node:http";
+import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join, normalize } from "node:path";
@@ -36,6 +37,11 @@ const MIME = {
   ".ttf": "font/ttf",
   ".map": "application/json",
   ".txt": "text/plain; charset=utf-8",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".m4a": "audio/mp4",
+  ".mp3": "audio/mpeg",
 };
 
 function extOf(p) {
@@ -57,8 +63,11 @@ async function tryStaticFile(pathname) {
   try {
     const s = await stat(filePath);
     if (!s.isFile()) return null;
-    const data = await readFile(filePath);
-    return { data, type: MIME[extOf(filePath)] || "application/octet-stream" };
+    return {
+      path: filePath,
+      size: s.size,
+      type: MIME[extOf(filePath)] || "application/octet-stream",
+    };
   } catch {
     return null;
   }
@@ -97,11 +106,36 @@ const server = createServer(async (req, res) => {
     if (req.method === "GET" || req.method === "HEAD") {
       const file = await tryStaticFile(u.pathname);
       if (file) {
+        const range = req.headers.range;
+        // 支持 Range 请求（视频 seek/分段加载依赖 206，否则播放器可能拒播）
+        const m = range && /^bytes=(\d*)-(\d*)$/.exec(range);
+        if (m && (m[1] || m[2])) {
+          const start = m[1] ? parseInt(m[1], 10) : 0;
+          const end = m[2] ? parseInt(m[2], 10) : file.size - 1;
+          if (start > end || start >= file.size) {
+            res.writeHead(416, { "Content-Range": `bytes */${file.size}` });
+            res.end();
+            return;
+          }
+          res.writeHead(206, {
+            "Content-Type": file.type,
+            "Content-Range": `bytes ${start}-${end}/${file.size}`,
+            "Accept-Ranges": "bytes",
+            "Content-Length": end - start + 1,
+            "Cache-Control": "public, max-age=3600",
+          });
+          if (req.method === "HEAD") return res.end();
+          createReadStream(file.path, { start, end }).pipe(res);
+          return;
+        }
         res.writeHead(200, {
           "Content-Type": file.type,
+          "Content-Length": file.size,
+          "Accept-Ranges": "bytes",
           "Cache-Control": "public, max-age=3600",
         });
-        res.end(req.method === "HEAD" ? undefined : file.data);
+        if (req.method === "HEAD") return res.end();
+        createReadStream(file.path).pipe(res);
         return;
       }
     }
