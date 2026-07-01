@@ -28,6 +28,8 @@ const MIME = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".mp4": "video/mp4",
+  ".m4a": "audio/mp4",
   ".gif": "image/gif",
   ".webp": "image/webp",
   ".ico": "image/x-icon",

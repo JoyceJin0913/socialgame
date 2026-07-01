@@ -32,6 +32,7 @@ type SceneSearch = {
   battle?: string;
   room?: string;
   userId?: string;
+  from?: string;
 };
 
 function roleToView(role?: string): ViewKey {
@@ -46,12 +47,14 @@ export const Route = createFileRoute("/scene")({
     battle: typeof s.battle === "string" ? s.battle : undefined,
     room: typeof s.room === "string" ? s.room : undefined,
     userId: typeof s.userId === "string" ? s.userId : undefined,
+    from: typeof s.from === "string" ? s.from : undefined,
   }),
-  // 登记守卫：未登记 → 跳转到登记页，登记后进入 lobby 大厅
-  beforeLoad: () => {
+  // 登记守卫：仅外部直接访问 /scene 时拦截，内部导航(from=lobby)跳过
+  beforeLoad: ({ search }) => {
+    if (search.from === "lobby") return;
     const profile = readPlayerProfile();
     if (!profile.nick || profile.nick === DEFAULT_PROFILE.nick) {
-      throw redirect({ to: "/", search: { redirect: "huatangchun" } });
+      throw redirect({ to: "/", search: { redirect: "lobby" } });
     }
   },
   component: ScenePage,
@@ -789,8 +792,10 @@ function Scene() {
   );
 }
 
+const CDN = "https://immersed-d7g3oj41x1eb54ce2-1305035004.tcloudbaseapp.com";
+
 function IntroVideo({ view, onDone }: { view: ViewKey; onDone: () => void }) {
-  const src = view === "fyx" ? "/intro/fyx.mp4" : "/intro/hanyan.mp4";
+  const src = view === "fyx" ? `${CDN}/intro/fyx.mp4` : `${CDN}/intro/hanyan.mp4`;
   const title = view === "fyx" ? "傅云夕 · 前情" : "庄寒雁 · 前情";
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -824,7 +829,6 @@ function IntroVideo({ view, onDone }: { view: ViewKey; onDone: () => void }) {
         preload="auto"
         controls={false}
         onEnded={onDone}
-        onError={onDone}
         className="absolute inset-0 h-full w-full object-cover"
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/60 to-transparent px-5 pt-12 pb-8 text-center">

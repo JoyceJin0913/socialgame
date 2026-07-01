@@ -84,8 +84,8 @@ function Lobby() {
   const handleStart = () => {
     if (!charId) return;
     if (mode === "solo") {
-      // 单人沉浸：直接进游戏，带上角色与标签
-      navigate({ to: "/scene", search: { role: charId, tags: tagLabels.join(",") } });
+      // 单人沉浸：直接进游戏，带上角色与标签，from=lobby 跳过登记守卫
+      navigate({ to: "/scene", search: { role: charId, tags: tagLabels.join(","), from: "lobby" } });
     } else {
       // 站内匹配：先去匹配页（matching → 承接页 → /scene）
       navigate({ to: "/matching", search: { role: charId, tags: tagLabels.join(",") } });
