@@ -75,6 +75,10 @@ export async function handleChat(request: Request, env: any): Promise<Response> 
   }
 
   try {
+    // 超时控制：25s 内 DeepSeek 无响应则返回 504
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25_000);
+
     const upstream = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -88,7 +92,9 @@ export async function handleChat(request: Request, env: any): Promise<Response> 
         max_tokens,
         stream,
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!upstream.ok) {
       const errText = await upstream.text();
