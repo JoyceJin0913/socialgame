@@ -1,18 +1,15 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist/client",
-  "framework": null,
-  "installCommand": "npm install",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "functions": {
-    "api/[[...all]].mjs": {
-      "maxDuration": 60
-    }
+    "api/chat.js": { "runtime": "nodejs22.x", "includeFiles": "dist/**", "maxDuration": 30 },
+    "api/ssr.js": { "runtime": "nodejs22.x", "includeFiles": "dist/**", "maxDuration": 30 }
   },
   "rewrites": [
-    {
-      "source": "/((?!assets/|prism/|.*\\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|map|txt|json|mjs)$).*)",
-      "destination": "/api/[[...all]]"
-    }
+    { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/api/matchmaking/(.*)", "destination": "/api/chat" },
+    { "source": "/((?!assets/|favicon|intro/|prism/|@|src/).*)", "destination": "/api/ssr" }
   ]
 }
