@@ -3,10 +3,6 @@
   "outputDirectory": "dist/client",
   "cleanUrls": true,
   "trailingSlash": false,
-  "functions": {
-    "api/chat.js": { "runtime": "nodejs22.x", "includeFiles": "dist/**", "maxDuration": 30 },
-    "api/ssr.js": { "runtime": "nodejs22.x", "includeFiles": "dist/**", "maxDuration": 30 }
-  },
   "rewrites": [
     { "source": "/api/chat", "destination": "/api/chat" },
     { "source": "/api/matchmaking/(.*)", "destination": "/api/chat" },

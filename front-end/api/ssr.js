@@ -12,7 +12,9 @@ async function getHandler() {
 
 export default async function (req, res) {
   try {
-    const fn = await getHandler();
+    const mod = await getHandler();
+    const fn = mod.fetch ?? mod.default?.fetch ?? mod.default;
+    if (typeof fn !== "function") throw new Error("SSR handler not found");
     const url = `https://${req.headers.host || "localhost"}${req.url}`;
 
     const body = req.method === "POST" ? await readBody(req) : undefined;
